@@ -1,0 +1,46 @@
+{
+  "name": "dest",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A testing framework for database",
+  "keywords": [
+    "test",
+    "database"
+  ],
+  "homepage": "https://github.com/peidongxie/dest#readme",
+  "bugs": {
+    "url": "https://github.com/peidongxie/dest/issues",
+    "email": "peidongxie@outlook.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/peidongxie/dest.git"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "谢沛东",
+    "email": "peidongxie@outlook.com",
+    "url": "https://github.com/peidongxie"
+  },
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "prepare": "husky install",
+    "stats": "cloc $(git ls-files) && echo 'Commits:' $(git log --oneline | wc -l)"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.28.0",
+    "@typescript-eslint/parser": "^5.28.0",
+    "eslint": "^8.18.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.2",
+    "prettier": "^2.7.1",
+    "sort-package-json": "^1.57.0",
+    "typescript": "^4.7.4"
+  },
+  "packageManager": "pnpm@7.2.1"
+}
