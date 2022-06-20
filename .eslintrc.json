@@ -1,0 +1,22 @@
+{
+  "root": true,
+  "ignorePatterns": [],
+  "env": {},
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "globals": {},
+  "overrides": [],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": "latest"
+  },
+  "plugins": [],
+  "processor": "",
+  "rules": {},
+  "settings": {},
+  "noInlineConfig": true,
+  "reportUnusedDisableDirectives": true
+}
