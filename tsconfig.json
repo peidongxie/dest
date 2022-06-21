@@ -1,7 +1,7 @@
 {
   "include": [],
   "exclude": ["node_modules/"],
-  "references": [],
+  "references": [{ "path": "packages/http-server" }],
   "compilerOptions": {
     // Type Checking
     "alwaysStrict": true,
