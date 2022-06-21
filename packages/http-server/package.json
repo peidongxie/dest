@@ -1,0 +1,61 @@
+{
+  "name": "@dest/http-server",
+  "version": "0.1.0",
+  "private": false,
+  "description": "A testing framework for database",
+  "keywords": [
+    "test",
+    "database"
+  ],
+  "homepage": "https://github.com/peidongxie/dest#readme",
+  "bugs": {
+    "url": "https://github.com/peidongxie/dest/issues",
+    "email": "peidongxie@outlook.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/peidongxie/dest.git",
+    "directory": "packages/http-server"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "谢沛东",
+    "email": "peidongxie@outlook.com",
+    "url": "https://github.com/peidongxie"
+  },
+  "type": "module",
+  "exports": {
+    "import": "./dist/index.mjs",
+    "require": "./dist/index.cjs"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "index.d.ts",
+  "files": [
+    "/dist/",
+    "/src/",
+    "/index.d.ts"
+  ],
+  "scripts": {
+    "build": "rm -f dist/* && eslint src --ext .ts --fix && echo todo",
+    "fix": "eslint src --ext .ts --fix",
+    "lint": "eslint src --ext .ts"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.28.0",
+    "@typescript-eslint/parser": "^5.28.0",
+    "eslint": "^8.18.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "prettier": "^2.7.1",
+    "sort-package-json": "^1.57.0",
+    "typescript": "^4.7.4"
+  },
+  "packageManager": "pnpm@7.2.1",
+  "dependencies": {
+    "co-body": "^6.1.0",
+    "formidable": "^2.0.1",
+    "type-is": "^1.6.18"
+  }
+}
