@@ -1,23 +1,21 @@
 import {
-  createServer as createHttpServer,
-  type IncomingHttpHeaders as HttpServerRequestHeaders,
-  type IncomingMessage as HttpServerRequest,
-  type OutgoingHttpHeaders,
+  createServer as httpCreateServer,
+  type IncomingHttpHeaders as HttpIncomingHttpHeaders,
+  type IncomingMessage as HttpIncomingMessage,
+  type OutgoingHttpHeaders as HttpOutgoingHttpHeaders,
   type ServerResponse as HttpServerResponse,
   type ServerOptions as HttpServerOptions,
 } from 'http';
 import {
-  createSecureServer as createHttp2SecureServer,
-  createServer as createHttp2Server,
+  createSecureServer,
   type Http2ServerRequest,
   type Http2ServerResponse,
-  type IncomingHttpHeaders as Http2ServerRequestHeaders,
+  type IncomingHttpHeaders as Http2IncomingHttpHeaders,
   type SecureServerOptions as Http2SecureServerOptions,
-  type ServerOptions as Http2ServerOptions,
 } from 'http2';
 import {
-  createServer as createHttpSecureServer,
-  type ServerOptions as HttpSecureServerOptions,
+  createServer as httpsCreateServer,
+  type ServerOptions as HttpsServerOptions,
 } from 'https';
 import Cors from './access-controller';
 import defaultHandler, { type Handler } from './handler';
@@ -25,102 +23,99 @@ import Request from './request';
 import Response from './response';
 import Router from './restful-router';
 
-type ServerOptions<
-  Secure extends boolean,
-  Version extends 1 | 2,
-> = Version extends 1
-  ? Secure extends false
-    ? HttpServerOptions
-    : HttpSecureServerOptions
-  : Version extends 2
-  ? Secure extends false
-    ? Http2ServerOptions
-    : Http2SecureServerOptions
-  : never;
+type HttpType = 'HTTP' | 'HTTPS' | 'HTTP2';
 
-type ServerOriginalValue<
-  Secure extends boolean,
-  Version extends 1 | 2,
-> = Version extends 1
-  ? Secure extends false
-    ? ReturnType<typeof createHttpServer>
-    : ReturnType<typeof createHttpSecureServer>
-  : Version extends 2
-  ? Secure extends false
-    ? ReturnType<typeof createHttp2Server>
-    : ReturnType<typeof createHttp2SecureServer>
-  : never;
+interface ServerTypeMap {
+  HTTP: 'http';
+  HTTPS: 'https';
+  HTTP2: 'http2';
+}
 
-type ServerRequest<Version extends 1 | 2> = Version extends 1
-  ? HttpServerRequest
-  : Version extends 2
-  ? Http2ServerRequest
-  : never;
+type ServerType<T extends HttpType = 'HTTP'> = ServerTypeMap[T];
 
-type ServerRequestHeaders<Version extends 1 | 2> = Version extends 1
-  ? HttpServerRequestHeaders
-  : Version extends 2
-  ? Http2ServerRequestHeaders
-  : never;
+interface ServerOptionsMap {
+  HTTP: HttpServerOptions;
+  HTTPS: HttpsServerOptions;
+  HTTP2: Http2SecureServerOptions;
+}
 
-type ServerResponse<Version extends 1 | 2> = Version extends 1
-  ? HttpServerResponse
-  : Version extends 2
-  ? Http2ServerResponse
-  : never;
+type ServerOptions<T extends HttpType = 'HTTP'> = ServerOptionsMap[T];
 
-type ServerResponseHeaders = OutgoingHttpHeaders;
+interface ServerOriginalValueMap {
+  HTTP: ReturnType<typeof httpCreateServer>;
+  HTTPS: ReturnType<typeof httpsCreateServer>;
+  HTTP2: ReturnType<typeof createSecureServer>;
+}
 
-type ServerListener<Version extends 1 | 2> = (
-  req: ServerRequest<Version>,
-  res: ServerResponse<Version>,
+type ServerOriginalValue<T extends HttpType = 'HTTP'> =
+  ServerOriginalValueMap[T];
+
+interface ServerRequestMap {
+  HTTP: HttpIncomingMessage;
+  HTTPS: HttpIncomingMessage;
+  HTTP2: Http2ServerRequest;
+}
+
+type ServerRequest<T extends HttpType = 'HTTP'> = ServerRequestMap[T];
+
+interface ServerRequestHeadersMap {
+  HTTP: HttpIncomingHttpHeaders;
+  HTTPS: HttpIncomingHttpHeaders;
+  HTTP2: Http2IncomingHttpHeaders;
+}
+
+type ServerRequestHeaders<T extends HttpType = 'HTTP'> =
+  ServerRequestHeadersMap[T];
+
+interface ServerResponseMap {
+  HTTP: HttpServerResponse;
+  HTTPS: HttpServerResponse;
+  HTTP2: Http2ServerResponse;
+}
+
+type ServerResponse<T extends HttpType = 'HTTP'> = ServerResponseMap[T];
+
+interface ServerResponseHeadersMap {
+  HTTP: HttpOutgoingHttpHeaders;
+  HTTPS: HttpOutgoingHttpHeaders;
+  HTTP2: HttpOutgoingHttpHeaders;
+}
+
+type ServerResponseHeaders<T extends HttpType = 'HTTP'> =
+  ServerResponseHeadersMap[T];
+
+type ServerCreator<T extends HttpType = 'HTTP'> = (
+  options?: ServerOptions<T>,
+) => ServerOriginalValue<T>;
+
+type ServerListener<T extends HttpType = 'HTTP'> = (
+  req: ServerRequest<T>,
+  res: ServerResponse<T>,
 ) => void;
 
-class Server<Secure extends boolean = false, Version extends 1 | 2 = 1> {
+class Server<T extends HttpType = 'HTTP'> {
   private accessController: Cors;
   private restfulRouter: Router;
-  private originalValue: ServerOriginalValue<Secure, Version>;
-  private secure: boolean;
+  private originalValue: ServerOriginalValue<T>;
+  private type: ServerType<T>;
 
-  public constructor(
-    options?: ServerOptions<Secure, Version> & {
-      secure?: Secure;
-      version?: Version;
-    },
-  ) {
-    const { secure, version, ...serverOptions } = options || {};
+  public constructor(type: ServerType<T>, options?: ServerOptions<T>) {
     this.accessController = new Cors();
     this.restfulRouter = new Router();
-    this.secure = secure ?? false;
-    switch (version) {
-      case 1:
-        this.originalValue = (
-          !secure
-            ? createHttpServer(serverOptions)
-            : createHttpSecureServer(serverOptions)
-        ) as ServerOriginalValue<Secure, Version>;
-        break;
-      case 2:
-        this.originalValue = (
-          !secure
-            ? createHttp2Server(serverOptions)
-            : createHttp2SecureServer(serverOptions)
-        ) as ServerOriginalValue<Secure, Version>;
-        break;
-      default:
-        this.originalValue = (
-          !secure
-            ? createHttpServer(serverOptions)
-            : createHttpSecureServer(serverOptions)
-        ) as ServerOriginalValue<Secure, Version>;
-        break;
-    }
+    this.type = type;
+    const map = {
+      http: httpCreateServer,
+      https: httpsCreateServer,
+      http2: createSecureServer,
+    };
+    const creator = map[type] as ServerCreator<T>;
+    this.originalValue = creator(options);
   }
 
-  public callback(): ServerListener<Version> {
+  public callback(): ServerListener<T> {
     return async (req, res) => {
-      const request = new Request<Version>(req);
-      const response = new Response<Version>(res);
+      const request = new Request<T>(req);
+      const response = new Response<T>(res);
       const extraHeaders = this.getExtraHeaders(request);
       const handler = this.getHandler(request);
       try {
@@ -143,7 +138,7 @@ class Server<Secure extends boolean = false, Version extends 1 | 2 = 1> {
     };
   }
 
-  public async close(): Promise<ServerOriginalValue<Secure, Version>> {
+  public async close(): Promise<ServerOriginalValue<T>> {
     return new Promise((resolve, reject) =>
       this.originalValue.close((e) => {
         if (e) {
@@ -181,13 +176,10 @@ class Server<Secure extends boolean = false, Version extends 1 | 2 = 1> {
     }
   }
 
-  public listen(
-    port?: number,
-    hostname?: string,
-  ): ServerOriginalValue<Secure, Version> {
+  public listen(port?: number, hostname?: string): ServerOriginalValue<T> {
     this.originalValue.on('request', this.callback());
     this.originalValue.listen(
-      port || (this.secure ? 443 : 80),
+      port || (this.type === 'http' ? 80 : 443),
       hostname || 'localhost',
     );
     return this.originalValue;
@@ -201,7 +193,7 @@ class Server<Secure extends boolean = false, Version extends 1 | 2 = 1> {
     this.restfulRouter.setRoute(method, pathname, handler);
   }
 
-  private getExtraHeaders(request: Request<Version>): ServerResponseHeaders {
+  private getExtraHeaders(request: Request<T>): ServerResponseHeaders {
     return {
       ...this.accessController.getExtraHeaders(
         request.getMethod(),
@@ -211,7 +203,7 @@ class Server<Secure extends boolean = false, Version extends 1 | 2 = 1> {
     };
   }
 
-  private getHandler(request: Request<Version>): Handler {
+  private getHandler(request: Request<T>): Handler {
     return (
       this.accessController.getHandler(
         request.getMethod(),
@@ -228,10 +220,14 @@ class Server<Secure extends boolean = false, Version extends 1 | 2 = 1> {
 
 export {
   Server as default,
+  type HttpType,
+  type ServerCreator,
   type ServerListener,
   type ServerOptions,
+  type ServerOriginalValue,
   type ServerRequest,
   type ServerRequestHeaders,
   type ServerResponse,
   type ServerResponseHeaders,
+  type ServerType,
 };
