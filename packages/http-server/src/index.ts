@@ -5,15 +5,17 @@ import {
 } from './handler';
 import { MultipartFile } from './request';
 import { JsonItem } from './response';
-import Server, { type ServerOptions } from './server';
+import Server, {
+  type HttpType,
+  type ServerOptions,
+  type ServerType,
+} from './server';
 
-const createServer = <Secure extends boolean, Version extends 1>(
-  options?: ServerOptions<Secure, Version> & {
-    secure?: Secure;
-    version?: Version;
-  },
-): Server<Secure, Version> => {
-  return new Server(options);
+const createServer = <T extends HttpType = 'HTTP'>(
+  type: ServerType<T>,
+  options?: ServerOptions<T>,
+): Server<T> => {
+  return new Server(type, options);
 };
 
 export {

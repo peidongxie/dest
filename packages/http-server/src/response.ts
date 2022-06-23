@@ -1,13 +1,17 @@
 import { Stream } from 'stream';
 import { type HandlerResponse } from './handler';
-import { type ServerResponse, type ServerResponseHeaders } from './server';
+import {
+  type HttpType,
+  type ServerResponse,
+  type ServerResponseHeaders,
+} from './server';
 
 type JsonItem = object;
 
-class Response<Version extends 1 | 2 = 1> {
-  private originalValue: ServerResponse<Version>;
+class Response<T extends HttpType = 'HTTP'> {
+  private originalValue: ServerResponse<T>;
 
-  public constructor(res: ServerResponse<Version>) {
+  public constructor(res: ServerResponse<T>) {
     this.originalValue = res;
   }
 

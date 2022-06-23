@@ -3,7 +3,11 @@ import formidable from 'formidable';
 import { type IncomingMessage } from 'http';
 import typeis from 'type-is';
 import { type HandlerRequest } from './handler';
-import { type ServerRequest, type ServerRequestHeaders } from './server';
+import {
+  type HttpType,
+  type ServerRequest,
+  type ServerRequestHeaders,
+} from './server';
 
 const form = formidable({ multiples: true });
 
@@ -26,10 +30,10 @@ interface MultipartFile {
   size: number;
   type: string | null;
 }
-class Request<Version extends 1 | 2 = 1> {
-  private originalValue: ServerRequest<Version>;
+class Request<T extends HttpType = 'HTTP'> {
+  private originalValue: ServerRequest<T>;
 
-  public constructor(req: ServerRequest<Version>) {
+  public constructor(req: ServerRequest<T>) {
     this.originalValue = req;
   }
 
@@ -46,8 +50,8 @@ class Request<Version extends 1 | 2 = 1> {
     }
   }
 
-  public getHeaders(): ServerRequestHeaders<Version> {
-    return this.originalValue.headers as ServerRequestHeaders<Version>;
+  public getHeaders(): ServerRequestHeaders<T> {
+    return this.originalValue.headers;
   }
 
   public getMethod(): string {
