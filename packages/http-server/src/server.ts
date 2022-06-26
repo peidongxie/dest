@@ -17,11 +17,13 @@ import {
   createServer as httpsCreateServer,
   type ServerOptions as HttpsServerOptions,
 } from 'https';
-import Cors from './access-controller';
-import defaultHandler, { type Handler } from './handler';
+import {
+  type Handler,
+  type HandlerRequest,
+  type HandlerResponse,
+} from './handler';
 import Request from './request';
 import Response from './response';
-import Router from './restful-router';
 
 type HttpType = 'HTTP' | 'HTTPS' | 'HTTP2';
 
@@ -93,47 +95,58 @@ type ServerListener<T extends HttpType = 'HTTP'> = (
   res: ServerResponse<T>,
 ) => void;
 
+const map = {
+  http: httpCreateServer,
+  https: httpsCreateServer,
+  http2: createSecureServer,
+};
+
 class Server<T extends HttpType = 'HTTP'> {
-  private accessController: Cors;
-  private restfulRouter: Router;
+  private handlers: Handler<T>[];
   private originalValue: ServerOriginalValue<T>;
   private type: ServerType<T>;
 
   public constructor(type: ServerType<T>, options?: ServerOptions<T>) {
-    this.accessController = new Cors();
-    this.restfulRouter = new Router();
     this.type = type;
-    const map = {
-      http: httpCreateServer,
-      https: httpsCreateServer,
-      http2: createSecureServer,
-    };
     const creator = map[type] as ServerCreator<T>;
     this.originalValue = creator(options);
+    this.handlers = [];
   }
 
   public callback(): ServerListener<T> {
     return async (req, res) => {
       const request = new Request<T>(req);
       const response = new Response<T>(res);
-      const extraHeaders = this.getExtraHeaders(request);
-      const handler = this.getHandler(request);
+      const handlerRequest: HandlerRequest<T> = request.getRequest();
+      const handlerResponse: HandlerResponse<T> = {};
       try {
-        const handlerRequest = request.getRequest();
-        const handlerResponse = (await handler(handlerRequest)) ?? {};
-        response.setResponse({
-          ...handlerResponse,
-          headers: {
-            ...extraHeaders,
-            ...handlerResponse.headers,
-          },
-        });
-      } catch (e) {
-        if (e instanceof Error) {
-          response.setResponse({ headers: extraHeaders, body: e });
-        } else {
-          response.setResponse({ code: 500, headers: extraHeaders });
+        for (const handler of this.handlers) {
+          const { code, message, headers, body } =
+            (await handler(handlerRequest)) ?? {};
+          if (code !== undefined) {
+            handlerResponse.code = code;
+          }
+          if (message !== undefined) {
+            handlerResponse.message = message;
+          }
+          if (headers !== undefined) {
+            handlerResponse.headers = {
+              ...handlerResponse.headers,
+              ...headers,
+            };
+          }
+          if (body !== undefined) {
+            handlerResponse.body = body;
+            break;
+          }
         }
+        response.setResponse(handlerResponse);
+      } catch (e) {
+        response.setResponse({
+          code: 500,
+          ...handlerResponse,
+          body: e instanceof Error ? e : String(e),
+        });
       }
     };
   }
@@ -150,32 +163,6 @@ class Server<T extends HttpType = 'HTTP'> {
     );
   }
 
-  public cors(
-    options?:
-      | {
-          allowHeaders?: string;
-          allowMethods?: string;
-          allowOrigin?: (origin: string) => boolean;
-          maxAge?: number;
-        }
-      | boolean,
-  ): void {
-    if (options === undefined || options === true) {
-      this.accessController.setEnable(true);
-    } else if (options === false) {
-      this.accessController.setEnable(false);
-    } else {
-      const { allowHeaders, allowMethods, allowOrigin, maxAge } = options;
-      this.accessController.setEnable(true);
-      this.accessController.setAllowOptions({
-        ...(allowHeaders && { headers: allowHeaders }),
-        ...(allowMethods && { methods: allowMethods }),
-        ...(allowOrigin && { origin: allowOrigin }),
-      });
-      if (maxAge !== undefined) this.accessController.setMaxAge(maxAge);
-    }
-  }
-
   public listen(port?: number, hostname?: string): ServerOriginalValue<T> {
     this.originalValue.on('request', this.callback());
     this.originalValue.listen(
@@ -185,46 +172,15 @@ class Server<T extends HttpType = 'HTTP'> {
     return this.originalValue;
   }
 
-  public route(
-    method: string | string[],
-    pathname: string | RegExp,
-    handler?: Handler,
-  ): void {
-    this.restfulRouter.setRoute(method, pathname, handler);
-  }
-
-  private getExtraHeaders(request: Request<T>): ServerResponseHeaders {
-    return {
-      ...this.accessController.getExtraHeaders(
-        request.getMethod(),
-        request.getHeaders().origin,
-      ),
-      ...this.restfulRouter.getExtraHeaders(),
-    };
-  }
-
-  private getHandler(request: Request<T>): Handler {
-    return (
-      this.accessController.getHandler(
-        request.getMethod(),
-        request.getHeaders().origin,
-      ) ||
-      this.restfulRouter.getHandler(
-        request.getMethod(),
-        request.getUrl().pathname,
-      ) ||
-      defaultHandler
-    );
+  public use(handler: Handler<T>): void {
+    this.handlers.push(handler);
   }
 }
 
 export {
   Server as default,
   type HttpType,
-  type ServerCreator,
-  type ServerListener,
   type ServerOptions,
-  type ServerOriginalValue,
   type ServerRequest,
   type ServerRequestHeaders,
   type ServerResponse,

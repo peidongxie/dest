@@ -1,30 +1,23 @@
 import type Request from './request';
 import type Response from './response';
-interface HandlerRequest {
-  getMethod: Request['getMethod'];
-  getUrl: Request['getUrl'];
-  getHeaders: Request['getHeaders'];
-  getBody: Request['getBody'];
+import { type HttpType } from './server';
+
+interface HandlerRequest<T extends HttpType = 'HTTP'> {
+  getMethod: Request<T>['getMethod'];
+  getUrl: Request<T>['getUrl'];
+  getHeaders: Request<T>['getHeaders'];
+  getBody: Request<T>['getBody'];
 }
 
-interface HandlerResponse {
-  code?: Parameters<Response['setCode']>[0];
-  message?: Parameters<Response['setMessage']>[0];
-  headers?: Parameters<Response['setHeaders']>[0];
-  body?: Parameters<Response['setBody']>[0];
+interface HandlerResponse<T extends HttpType = 'HTTP'> {
+  code?: Parameters<Response<T>['setCode']>[0];
+  message?: Parameters<Response<T>['setMessage']>[0];
+  headers?: Parameters<Response<T>['setHeaders']>[0];
+  body?: Parameters<Response<T>['setBody']>[0];
 }
 
-type Handler = (
-  req: HandlerRequest,
-) => void | HandlerResponse | Promise<void | HandlerResponse>;
+type Handler<T extends HttpType = 'HTTP'> = (
+  req: HandlerRequest<T>,
+) => void | HandlerResponse<T> | Promise<void | HandlerResponse<T>>;
 
-const defaultHandler: Handler = () => {
-  return { code: 404 };
-};
-
-export {
-  defaultHandler as default,
-  type Handler,
-  type HandlerRequest,
-  type HandlerResponse,
-};
+export { type Handler, type HandlerRequest, type HandlerResponse };

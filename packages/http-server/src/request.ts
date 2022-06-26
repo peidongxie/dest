@@ -1,13 +1,20 @@
 import { json, text } from 'co-body';
 import formidable from 'formidable';
 import { type IncomingMessage } from 'http';
-import typeis from 'type-is';
+import typeIs from 'type-is';
 import { type HandlerRequest } from './handler';
 import {
   type HttpType,
   type ServerRequest,
   type ServerRequestHeaders,
 } from './server';
+
+interface MultipartFile {
+  name: string | null;
+  path: string;
+  size: number;
+  type: string | null;
+}
 
 const form = formidable({ multiples: true });
 
@@ -24,12 +31,6 @@ const textTypes = ['text/plain'];
 
 const xmlTypes = ['text/xml', 'application/xml'];
 
-interface MultipartFile {
-  name: string | null;
-  path: string;
-  size: number;
-  type: string | null;
-}
 class Request<T extends HttpType = 'HTTP'> {
   private originalValue: ServerRequest<T>;
 
@@ -39,13 +40,13 @@ class Request<T extends HttpType = 'HTTP'> {
 
   public async getBody<Body>(): Promise<Body | undefined> {
     const req = this.originalValue as IncomingMessage;
-    if (typeis(req, formTypes)) {
+    if (typeIs(req, formTypes)) {
       return this.getBodyForm<Body>();
-    } else if (typeis(req, jsonTypes)) {
+    } else if (typeIs(req, jsonTypes)) {
       return this.getBodyJson<Body>();
-    } else if (typeis(req, textTypes)) {
+    } else if (typeIs(req, textTypes)) {
       return this.getBodyText<Body>();
-    } else if (typeis(req, xmlTypes)) {
+    } else if (typeIs(req, xmlTypes)) {
       return this.getBodyXml<Body>();
     }
   }
@@ -58,7 +59,7 @@ class Request<T extends HttpType = 'HTTP'> {
     return this.originalValue.method || '';
   }
 
-  public getRequest(): HandlerRequest {
+  public getRequest(): HandlerRequest<T> {
     return {
       getMethod: this.getMethod.bind(this),
       getUrl: this.getUrl.bind(this),
@@ -150,4 +151,4 @@ class Request<T extends HttpType = 'HTTP'> {
   }
 }
 
-export { Request as default, type MultipartFile };
+export { Request as default };
