@@ -3,8 +3,6 @@ import {
   type HandlerRequest,
   type HandlerResponse,
 } from './handler';
-import { MultipartFile } from './request';
-import { JsonItem } from './response';
 import Server, {
   type HttpType,
   type ServerOptions,
@@ -15,7 +13,7 @@ const createServer = <T extends HttpType = 'HTTP'>(
   type: ServerType<T>,
   options?: ServerOptions<T>,
 ): Server<T> => {
-  return new Server(type, options);
+  return new Server<T>(type, options);
 };
 
 export {
@@ -24,6 +22,4 @@ export {
   type Handler,
   type HandlerRequest,
   type HandlerResponse,
-  type JsonItem,
-  type MultipartFile,
 };

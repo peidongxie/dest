@@ -1,10 +1,15 @@
-import { type Handler } from './handler';
-import { type ServerResponseHeaders } from './server';
+import { type Plugin } from '.';
+import { type Handler } from '../handler';
+import { type HttpType } from '../server';
 
-interface Route {
+interface Route<T extends HttpType = 'HTTP'> {
   method: string[];
   pathname: RegExp;
-  handler: Handler;
+  handler: Handler<T>;
+}
+
+interface Options {
+  defaultCode?: number;
 }
 
 const validMethod = [
@@ -19,57 +24,52 @@ const validMethod = [
   'TRACE',
 ];
 
-class RestfulRouter {
-  private routingTable: Route[];
+class Router<T extends HttpType = 'HTTP'> implements Plugin<T> {
+  private defaultCode: number;
+  private routingTable: Route<T>[];
 
-  public constructor() {
+  public constructor(options?: Options) {
+    this.defaultCode = options?.defaultCode || 200;
     this.routingTable = [];
   }
 
-  public getExtraHeaders(): ServerResponseHeaders {
-    return {};
-  }
-
-  public getHandler(method: string, pathname: string): Handler | null {
-    const route = this.routingTable.find((route) => {
-      if (!route.method.includes(method)) return false;
-      if (!route.pathname.test(pathname)) return false;
-      return true;
-    });
-    return route?.handler || null;
+  public getHandler(): Handler<T> {
+    return async (req) => {
+      const method = req.getMethod();
+      const pathname = req.getUrl().pathname;
+      const route = this.routingTable.find((route) => {
+        if (!route.method.includes(method)) return false;
+        if (!route.pathname.test(pathname)) return false;
+        return true;
+      });
+      return {
+        code: this.defaultCode,
+        ...(await route?.handler(req)),
+      };
+    };
   }
 
   public setRoute(
     method: string | string[],
     pathname: string | RegExp,
-    handler?: Handler,
+    handler: Handler<T>,
   ): void {
     const validMethod = this.getValidMethod(method);
     const validPathname = this.getValidPathname(pathname);
-    const validHandler = this.getValidHandler(handler);
     const route = this.routingTable.find((route) => {
       if (route.method.toString() !== validMethod.toString()) return false;
       if (route.pathname.toString() !== validPathname.toString()) return false;
       return true;
     });
     if (route) {
-      route.handler = validHandler;
+      route.handler = handler;
     } else {
       this.routingTable.push({
         method: validMethod,
         pathname: validPathname,
-        handler: validHandler,
+        handler: handler,
       });
     }
-  }
-
-  private getValidHandler(handler?: Handler): Handler {
-    return (
-      handler ||
-      (() => {
-        return;
-      })
-    );
   }
 
   private getValidMethod(method: string | string[]): string[] {
@@ -90,4 +90,4 @@ class RestfulRouter {
   }
 }
 
-export { RestfulRouter as default };
+export { Router as default };

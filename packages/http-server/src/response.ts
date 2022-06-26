@@ -38,7 +38,7 @@ class Response<T extends HttpType = 'HTTP'> {
     this.originalValue.statusCode = code;
   }
 
-  public setHeaders(headers: ServerResponseHeaders): void {
+  public setHeaders(headers: ServerResponseHeaders<T>): void {
     for (const key in headers) {
       const value = headers[key];
       if (value !== undefined) this.setHeadersItem(key, value);
@@ -49,7 +49,7 @@ class Response<T extends HttpType = 'HTTP'> {
     this.originalValue.statusMessage = message;
   }
 
-  public setResponse(res: HandlerResponse): void {
+  public setResponse(res: HandlerResponse<T>): void {
     const { body, code, headers, message } = res;
     if (code !== undefined) this.setCode(code);
     if (message !== undefined) this.setMessage(message);
@@ -123,4 +123,4 @@ class Response<T extends HttpType = 'HTTP'> {
   }
 }
 
-export { Response as default, type JsonItem };
+export { Response as default };
