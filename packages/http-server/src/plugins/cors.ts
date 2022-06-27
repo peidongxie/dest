@@ -1,5 +1,5 @@
 import { type Plugin } from '.';
-import { type Handler, type HandlerRequest } from '../handler';
+import { type Handler } from '../handler';
 import { type HttpType } from '../server';
 
 interface AllowOptions {
@@ -46,7 +46,7 @@ class Cors<T extends HttpType = 'HTTP'> implements Plugin<T> {
   }
 
   public getHandler(): Handler<T> {
-    return (req: HandlerRequest<T>) => {
+    return (req) => {
       const method = req.getMethod();
       const origin = req.getHeaders().origin;
       // not cors

@@ -9,7 +9,7 @@ interface Route<T extends HttpType = 'HTTP'> {
 }
 
 interface Options {
-  defaultCode?: number;
+  prefix?: string;
 }
 
 const validMethod = [
@@ -25,16 +25,16 @@ const validMethod = [
 ];
 
 class Router<T extends HttpType = 'HTTP'> implements Plugin<T> {
-  private defaultCode: number;
+  private prefix: string;
   private routingTable: Route<T>[];
 
   public constructor(options?: Options) {
-    this.defaultCode = options?.defaultCode || 200;
+    this.prefix = options?.prefix || '';
     this.routingTable = [];
   }
 
   public getHandler(): Handler<T> {
-    return async (req) => {
+    return (req) => {
       const method = req.getMethod();
       const pathname = req.getUrl().pathname;
       const route = this.routingTable.find((route) => {
@@ -42,10 +42,13 @@ class Router<T extends HttpType = 'HTTP'> implements Plugin<T> {
         if (!route.pathname.test(pathname)) return false;
         return true;
       });
-      return {
-        code: this.defaultCode,
-        ...(await route?.handler(req)),
-      };
+      if (!route?.handler) {
+        return {
+          code: 501,
+          body: null,
+        };
+      }
+      return route?.handler(req);
     };
   }
 
