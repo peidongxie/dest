@@ -1,3 +1,4 @@
+import { type Plugin } from './plugins';
 import {
   type Handler,
   type HandlerRequest,
@@ -22,4 +23,6 @@ export {
   type Handler,
   type HandlerRequest,
   type HandlerResponse,
+  type HttpType,
+  type Plugin,
 };
