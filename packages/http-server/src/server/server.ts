@@ -177,8 +177,16 @@ class Server<T extends HttpType = 'HTTP'> {
   }
 }
 
+const createServer = <T extends HttpType = 'HTTP'>(
+  type: ServerType<T>,
+  options?: ServerOptions<T>,
+): Server<T> => {
+  return new Server<T>(type, options);
+};
+
 export {
-  Server as default,
+  Server,
+  createServer,
   type HttpType,
   type ServerOptions,
   type ServerRequest,

@@ -20,4 +20,8 @@ type Handler<T extends HttpType = 'HTTP'> = (
   req: HandlerRequest<T>,
 ) => void | HandlerResponse<T> | Promise<void | HandlerResponse<T>>;
 
-export { type Handler, type HandlerRequest, type HandlerResponse };
+interface Plugin<T extends HttpType = 'HTTP'> {
+  getHandler(): Handler<T>;
+}
+
+export { type Handler, type HandlerRequest, type HandlerResponse, type Plugin };

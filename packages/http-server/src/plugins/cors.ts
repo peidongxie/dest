@@ -1,6 +1,4 @@
-import { type Plugin } from '.';
-import { type Handler } from '../handler';
-import { type HttpType } from '../server';
+import { type Handler, type HttpType, type Plugin } from '../server';
 
 interface AllowOptions {
   headers?: string;
