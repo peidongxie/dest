@@ -23,7 +23,7 @@
     "email": "peidongxie@outlook.com",
     "url": "https://github.com/peidongxie"
   },
-  "type": "module",
+  "type": "commonjs",
   "exports": {
     "import": "./dist/index.mjs",
     "require": "./dist/index.cjs"
@@ -37,7 +37,7 @@
     "/index.d.ts"
   ],
   "scripts": {
-    "build": "rm -f dist/* && eslint src --ext .ts --fix && echo todo",
+    "build": "rm -rf dist && eslint src --ext .ts --fix && swc src -d dist",
     "fix": "eslint src --ext .ts --fix",
     "lint": "eslint src --ext .ts"
   },
@@ -47,6 +47,8 @@
     "type-is": "^1.6.18"
   },
   "devDependencies": {
+    "@swc/cli": "^0.1.57",
+    "@swc/core": "^1.2.207",
     "@types/co-body": "^6.1.0",
     "@types/formidable": "^2.0.5",
     "@types/node": "^18.0.0",
