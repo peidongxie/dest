@@ -1,5 +1,5 @@
 {
-  "ignorePatterns": ["/dist/"],
+  "ignorePatterns": ["chunks", "/plugins/", "/server/", "/index.*"],
   "env": {
     "node": true
   }
