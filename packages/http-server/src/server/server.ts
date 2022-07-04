@@ -21,6 +21,7 @@ import {
   type Handler,
   type HandlerRequest,
   type HandlerResponse,
+  type Plugin,
 } from './handler';
 import Request from './request';
 import Response from './response';
@@ -122,7 +123,7 @@ class Server<T extends HttpType = 'HTTP'> {
       try {
         for (const handler of this.handlers) {
           const { code, message, headers, body } =
-            (await handler(handlerRequest)) ?? {};
+            (await handler(handlerRequest)) || {};
           if (code !== undefined) {
             handlerResponse.code = code;
           }
@@ -172,21 +173,15 @@ class Server<T extends HttpType = 'HTTP'> {
     return this.originalValue;
   }
 
-  public use(handler: Handler<T>): void {
-    this.handlers.push(handler);
+  public use(plugin: Handler<T> | Plugin<T>): void {
+    const handler =
+      typeof plugin === 'function' ? plugin : plugin?.getHandler();
+    handler && this.handlers.push(handler);
   }
 }
 
-const createServer = <T extends HttpType = 'HTTP'>(
-  type: ServerType<T>,
-  options?: ServerOptions<T>,
-): Server<T> => {
-  return new Server<T>(type, options);
-};
-
 export {
-  Server,
-  createServer,
+  Server as default,
   type HttpType,
   type ServerOptions,
   type ServerRequest,
