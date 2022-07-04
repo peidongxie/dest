@@ -6,8 +6,6 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-/chunks/
-/plugins/
-/server/
-/index.*
+*.d.ts
+*.js
 /tsconfig.tsbuildinfo

@@ -1,5 +1,5 @@
 {
-  "ignorePatterns": ["chunks", "/plugins/", "/server/", "/index.*"],
+  "ignorePatterns": ["*.d.ts", "*.js"],
   "env": {
     "node": true
   }
