@@ -9,12 +9,16 @@ const getEntryPoints = (dir: string): string[] => {
       const path = join(dir, file);
       const stats = statSync(path);
       if (stats.isDirectory()) {
+        if (path === 'chunks') return null;
+        if (path === 'node_modules') return null;
+        if (path === 'scripts') return null;
         return getEntryPoints(path);
-      } else if (/.ts$/.test(file)) {
+      } else if (stats.isFile()) {
+        if (/\.d\.ts$/.test(file)) return null;
+        if (!/\.ts$/.test(file)) return null;
         return path;
-      } else {
-        return null;
       }
+      return null;
     })
     .filter((v): v is string[] | string => v !== null)
     .flat();
@@ -23,7 +27,7 @@ const getEntryPoints = (dir: string): string[] => {
 const buildOptions: BuildOptions = {
   bundle: true,
   define: {},
-  entryPoints: getEntryPoints('src'),
+  entryPoints: getEntryPoints('.'),
   external: ['co-body', 'formidable', 'type-is'],
   format: 'esm',
   inject: [],
