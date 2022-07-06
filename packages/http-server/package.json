@@ -40,7 +40,9 @@
     "/index.*"
   ],
   "scripts": {
-    "build": "cat scripts/build.ts | esbuild --format=iife --loader=ts | node && tsc -p tsconfig.build.json",
+    "clean": "cat scripts/clean.ts | esbuild --format=iife --loader=ts | node",
+    "build": "pnpm run build:js && tsc -p tsconfig.build.json",
+    "build:js": "cat scripts/build.ts | esbuild --format=iife --loader=ts | node",
     "fix": "eslint src --ext .ts --fix",
     "lint": "eslint src --ext .ts"
   },

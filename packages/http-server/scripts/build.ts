@@ -9,8 +9,8 @@ const getEntryPoints = (dir: string): string[] => {
       const path = join(dir, file);
       const stats = statSync(path);
       if (stats.isDirectory()) {
-        if (path === 'chunks') return null;
         if (path === 'node_modules') return null;
+        if (path === 'chunks') return null;
         if (path === 'scripts') return null;
         return getEntryPoints(path);
       } else if (stats.isFile()) {
