@@ -1,5 +1,5 @@
 {
-  "ignorePatterns": ["*.d.ts", "*.js"],
+  "ignorePatterns": ["/chunks/", "*.d.ts", "*.js", "/tsconfig.tsbuildinfo"],
   "env": {
     "node": true
   }
