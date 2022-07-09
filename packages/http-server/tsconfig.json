@@ -1,8 +1,5 @@
 {
   "extends": "../../tsconfig.json",
-  "include": ["./**/*"],
-  "exclude": ["./**/*.d.ts", "./**/*.js"],
-  "compilerOptions": {
-    "target": "es2018"
-  }
+  "include": ["**/*.ts"],
+  "exclude": []
 }
