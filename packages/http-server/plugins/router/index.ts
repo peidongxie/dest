@@ -27,7 +27,7 @@ class Router<T extends HttpType = 'HTTP'> implements Plugin<T> {
   private routingTable: Route<T>[];
 
   public constructor(options?: Options) {
-    this.prefix = options?.prefix || '';
+    this.prefix = (options?.prefix || '').trim();
     this.routingTable = [];
   }
 
@@ -50,9 +50,13 @@ class Router<T extends HttpType = 'HTTP'> implements Plugin<T> {
     };
   }
 
+  public setPrefix(prefix: string): void {
+    this.prefix = (prefix || '').trim();
+  }
+
   public setRoute(
     method: string | string[],
-    pathname: string | RegExp,
+    pathname: string,
     handler: Handler<T>,
   ): void {
     const validMethod = this.getValidMethod(method);
@@ -83,11 +87,12 @@ class Router<T extends HttpType = 'HTTP'> implements Plugin<T> {
     });
   }
 
-  private getValidPathname(pathname: string | RegExp): RegExp {
-    if (pathname instanceof RegExp) return pathname;
-    const prefix = pathname.startsWith('/') ? '^' : '^/';
-    const suffix = pathname.endsWith('/') ? '' : '/?$';
-    return RegExp(prefix + pathname + suffix);
+  private getValidPathname(pathname: string): RegExp {
+    const content = this.prefix + pathname;
+    const start = content.startsWith('/') ? '^' : '^/';
+    const mid = content.replaceAll(/\[.*?\]/g, '[^/]*');
+    const end = content.endsWith('/') ? '?' : '/?';
+    return RegExp(start + mid + end);
   }
 }
 
