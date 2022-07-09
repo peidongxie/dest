@@ -35,14 +35,16 @@
   "module": "index.js",
   "types": "index.d.ts",
   "files": [
-    "/plugins/",
-    "/server/",
-    "/index.*"
+    "*.js",
+    "*.md",
+    "*.ts",
+    "!/scripts/"
   ],
   "scripts": {
-    "clean": "cat scripts/clean.ts | esbuild --format=iife --loader=ts | node",
-    "build": "pnpm run build:js && tsc -p tsconfig.build.json",
-    "build:js": "cat scripts/build.ts | esbuild --format=iife --loader=ts | node",
+    "build": "pnpm run build:clean && pnpm run build:js && pnpm run build:type",
+    "build:clean": "cat scripts/build-clean.ts | esbuild --format=iife --loader=ts | node",
+    "build:js": "cat scripts/build-js.ts | esbuild --format=iife --loader=ts | node",
+    "build:type": "tsc -p tsconfig.build.json",
     "fix": "eslint src --ext .ts --fix",
     "lint": "eslint src --ext .ts"
   },

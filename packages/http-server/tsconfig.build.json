@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.json",
-  "include": ["./**/*"],
-  "exclude": ["./**/*.d.ts", "./**/*.js", "scripts/**/*.ts"],
+  "include": ["**/*.ts"],
+  "exclude": ["**/*.d.ts", "scripts/**/*.ts"],
   "compilerOptions": {
     "declaration": true,
     "emitDeclarationOnly": true,

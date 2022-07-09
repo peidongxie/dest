@@ -9,7 +9,6 @@ const getBuildFiles = (dir: string): string[] => {
       const stats = statSync(path);
       if (stats.isDirectory()) {
         if (path === 'node_modules') return null;
-        if (path === 'chunks') return path;
         return getBuildFiles(path);
       } else if (stats.isFile()) {
         if (/\.d\.ts$/.test(file)) return path;
