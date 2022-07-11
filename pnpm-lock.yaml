@@ -26,6 +26,35 @@ importers:
       sort-package-json: 1.57.0
       typescript: 4.7.4
 
+  packages/db-agent:
+    specifiers:
+      '@dest/http-server': ^0.1.0
+      '@types/node': ^18.0.0
+      '@types/type-is': ^1.6.3
+      '@typescript-eslint/eslint-plugin': ^5.30.3
+      '@typescript-eslint/parser': ^5.30.3
+      esbuild: ^0.14.48
+      eslint: ^8.19.0
+      eslint-config-prettier: ^8.5.0
+      eslint-plugin-prettier: ^4.2.1
+      prettier: ^2.7.1
+      sort-package-json: ^1.57.0
+      typescript: ^4.7.4
+    dependencies:
+      '@dest/http-server': link:../http-server
+    devDependencies:
+      '@types/node': 18.0.0
+      '@types/type-is': 1.6.3
+      '@typescript-eslint/eslint-plugin': 5.30.3_xuuykav7urhdozug7htlfgar3u
+      '@typescript-eslint/parser': 5.30.3_4x5o4skxv6sl53vpwefgt23khm
+      esbuild: 0.14.48
+      eslint: 8.19.0
+      eslint-config-prettier: 8.5.0_eslint@8.19.0
+      eslint-plugin-prettier: 4.2.1_7uxdfn2xinezdgvmbammh6ev5i
+      prettier: 2.7.1
+      sort-package-json: 1.57.0
+      typescript: 4.7.4
+
   packages/http-server:
     specifiers:
       '@types/co-body': ^6.1.0

@@ -1,0 +1,56 @@
+{
+  "name": "@dest/db-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A testing framework for database",
+  "keywords": [
+    "test",
+    "database"
+  ],
+  "homepage": "https://github.com/peidongxie/dest#readme",
+  "bugs": {
+    "url": "https://github.com/peidongxie/dest/issues",
+    "email": "peidongxie@outlook.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/peidongxie/dest.git",
+    "directory": "packages/db-agent"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "谢沛东",
+    "email": "peidongxie@outlook.com",
+    "url": "https://github.com/peidongxie"
+  },
+  "type": "module",
+  "exports": "./dist/index.js",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "index.d.ts",
+  "files": [],
+  "scripts": {
+    "build": "cat scripts/build.ts | esbuild --format=iife --loader=ts | node",
+    "dev": "cat scripts/dev.ts | esbuild --format=iife --loader=ts | node",
+    "start": "node dist/index.js",
+    "fix": "eslint src --ext .ts --fix",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@dest/http-server": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/type-is": "^1.6.3",
+    "@typescript-eslint/eslint-plugin": "^5.30.3",
+    "@typescript-eslint/parser": "^5.30.3",
+    "esbuild": "^0.14.48",
+    "eslint": "^8.19.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.7.1",
+    "sort-package-json": "^1.57.0",
+    "typescript": "^4.7.4"
+  },
+  "packageManager": "pnpm@7.2.1"
+}
