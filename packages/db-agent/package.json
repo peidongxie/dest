@@ -37,14 +37,14 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "@dest/http-server": "^0.1.0"
+    "@dest/http-server": "workspace:^0.1.0"
   },
   "devDependencies": {
-    "@types/node": "^18.0.0",
+    "@types/node": "^18.0.4",
     "@types/type-is": "^1.6.3",
-    "@typescript-eslint/eslint-plugin": "^5.30.3",
-    "@typescript-eslint/parser": "^5.30.3",
-    "esbuild": "^0.14.48",
+    "@typescript-eslint/eslint-plugin": "^5.30.6",
+    "@typescript-eslint/parser": "^5.30.6",
+    "esbuild": "^0.14.49",
     "eslint": "^8.19.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
