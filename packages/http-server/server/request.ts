@@ -2,7 +2,7 @@ import formidable from 'formidable';
 import { type IncomingMessage } from 'http';
 import getRawBody from 'raw-body';
 import { type Readable } from 'stream';
-import typeIs from 'type-is';
+import MIMEType from 'whatwg-mimetype';
 import { createBrotliDecompress, createGunzip, createInflate } from 'zlib';
 import { type HandlerRequest } from './handler';
 import {
@@ -42,13 +42,21 @@ class Request<T extends HttpType = 'HTTP'> {
 
   public async getBody<Body = Readable>(): Promise<Body> {
     const req = this.originalValue as IncomingMessage;
-    if (typeIs(req, formTypes)) {
+    const type = req.headers['content-type'];
+    const mime = type ? new MIMEType(type) : null;
+    if (!mime) {
+      return req as unknown as Body;
+    }
+    if (formTypes.includes(mime.essence)) {
       return this.getBodyForm() as Promise<Body>;
-    } else if (typeIs(req, jsonTypes)) {
+    }
+    if (jsonTypes.includes(mime.essence)) {
       return this.getBodyJson() as Promise<Body>;
-    } else if (typeIs(req, textTypes)) {
+    }
+    if (textTypes.includes(mime.essence)) {
       return this.getBodyText() as Promise<unknown> as Promise<Body>;
-    } else if (typeIs(req, xmlTypes)) {
+    }
+    if (xmlTypes.includes(mime.essence)) {
       return this.getBodyXml() as Promise<unknown> as Promise<Body>;
     }
     return req as unknown as Body;
@@ -129,7 +137,9 @@ class Request<T extends HttpType = 'HTTP'> {
         : encoding === 'deflate'
         ? this.originalValue.pipe(createInflate())
         : this.originalValue;
-    const options = { encoding: 'UTF-8' };
+    const type = this.originalValue.headers['content-type'];
+    const mime = type ? new MIMEType(type) : null;
+    const options = { encoding: mime?.parameters.get('charset') || 'utf-8' };
     return new Promise((resolve, reject) => {
       stream.on('error', reject);
       getRawBody(stream, options, (err, body) => {
