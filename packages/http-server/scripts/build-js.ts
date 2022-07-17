@@ -27,7 +27,7 @@ const buildOptions: BuildOptions = {
   bundle: true,
   define: {},
   entryPoints: getEntryPoints('.'),
-  external: ['co-body', 'formidable', 'type-is'],
+  external: ['formidable', 'raw-body', 'type-is'],
   format: 'esm',
   inject: [],
   loader: {},

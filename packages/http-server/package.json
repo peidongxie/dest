@@ -49,12 +49,11 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "co-body": "^6.1.0",
     "formidable": "^2.0.1",
+    "raw-body": "^2.5.1",
     "type-is": "^1.6.18"
   },
   "devDependencies": {
-    "@types/co-body": "^6.1.0",
     "@types/formidable": "^2.0.5",
     "@types/fs-extra": "^9.0.13",
     "@types/node": "^18.0.4",
