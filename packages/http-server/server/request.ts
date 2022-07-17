@@ -1,7 +1,9 @@
-import { json, text } from 'co-body';
 import formidable from 'formidable';
 import { type IncomingMessage } from 'http';
+import getRawBody from 'raw-body';
+import { type Readable } from 'stream';
 import typeIs from 'type-is';
+import { createBrotliDecompress, createGunzip, createInflate } from 'zlib';
 import { type HandlerRequest } from './handler';
 import {
   type HttpType,
@@ -38,17 +40,18 @@ class Request<T extends HttpType = 'HTTP'> {
     this.originalValue = req;
   }
 
-  public async getBody<Body>(): Promise<Body | undefined> {
+  public async getBody<Body = Readable>(): Promise<Body> {
     const req = this.originalValue as IncomingMessage;
     if (typeIs(req, formTypes)) {
-      return this.getBodyForm<Body>();
+      return this.getBodyForm() as Promise<Body>;
     } else if (typeIs(req, jsonTypes)) {
-      return this.getBodyJson<Body>();
+      return this.getBodyJson() as Promise<Body>;
     } else if (typeIs(req, textTypes)) {
-      return this.getBodyText<Body>();
+      return this.getBodyText() as Promise<unknown> as Promise<Body>;
     } else if (typeIs(req, xmlTypes)) {
-      return this.getBodyXml<Body>();
+      return this.getBodyXml() as Promise<unknown> as Promise<Body>;
     }
+    return req as unknown as Body;
   }
 
   public getHeaders(): ServerRequestHeaders<T> {
@@ -75,7 +78,7 @@ class Request<T extends HttpType = 'HTTP'> {
     );
   }
 
-  private async getBodyForm<Body>(): Promise<Body> {
+  private async getBodyForm(): Promise<unknown> {
     return new Promise((resolve, reject) => {
       form.parse(
         this.originalValue as IncomingMessage,
@@ -105,23 +108,39 @@ class Request<T extends HttpType = 'HTTP'> {
               }
             }
             const value: unknown = { ...fields, ...newFiles };
-            resolve(value as Body);
+            resolve(value);
           }
         },
       );
     });
   }
 
-  private async getBodyJson<Body>(): Promise<Body> {
-    return json(this.originalValue as IncomingMessage);
+  private async getBodyJson(): Promise<unknown> {
+    return JSON.parse(await this.getBodyText());
   }
 
-  private async getBodyText<Body>(): Promise<Body> {
-    return text(this.originalValue as IncomingMessage);
+  private async getBodyText(): Promise<string> {
+    const encoding = this.originalValue.headers['content-encoding'];
+    const stream =
+      encoding === 'br'
+        ? this.originalValue.pipe(createBrotliDecompress())
+        : encoding === 'gzip'
+        ? this.originalValue.pipe(createGunzip())
+        : encoding === 'deflate'
+        ? this.originalValue.pipe(createInflate())
+        : this.originalValue;
+    const options = { encoding: 'UTF-8' };
+    return new Promise((resolve, reject) => {
+      stream.on('error', reject);
+      getRawBody(stream, options, (err, body) => {
+        if (err) reject(err);
+        if (body) resolve(body);
+      });
+    });
   }
 
-  private async getBodyXml<Body>(): Promise<Body> {
-    return text(this.originalValue as IncomingMessage);
+  private async getBodyXml(): Promise<string> {
+    return this.getBodyText();
   }
 
   private getHeadersItem(name: string): string {
