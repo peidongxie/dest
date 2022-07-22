@@ -1,7 +1,12 @@
-import formidable from 'formidable';
-import { type IncomingMessage } from 'http';
-import getRawBody from 'raw-body';
+import { Blob } from 'buffer';
+import busboy from 'busboy';
+import { randomUUID } from 'crypto';
+import { createWriteStream } from 'fs';
+import getStream from 'get-stream';
+import { decodeStream } from 'iconv-lite';
+import { tmpdir } from 'os';
 import { type Readable } from 'stream';
+import { URL } from 'url';
 import MIMEType from 'whatwg-mimetype';
 import { createBrotliDecompress, createGunzip, createInflate } from 'zlib';
 import { type HandlerRequest } from './handler';
@@ -11,27 +16,15 @@ import {
   type ServerRequestHeaders,
 } from './server';
 
-interface MultipartFile {
-  name: string | null;
-  path: string;
-  size: number;
-  type: string | null;
+interface Body {
+  readonly body: Readable;
+  readonly bodyUsed: boolean;
+  arrayBuffer(): Promise<ArrayBuffer>;
+  blob(): Promise<Blob>;
+  formData(): Promise<Map<string, string | URL>>;
+  json<T>(): Promise<T>;
+  text(): Promise<string>;
 }
-
-const form = formidable({ multiples: true });
-
-const formTypes = ['multipart/form-data', 'application/x-www-form-urlencoded'];
-
-const jsonTypes = [
-  'application/json',
-  'application/json-patch+json',
-  'application/vnd.api+json',
-  'application/csp-report',
-];
-
-const textTypes = ['text/plain'];
-
-const xmlTypes = ['text/xml', 'application/xml'];
 
 class Request<T extends HttpType = 'HTTP'> {
   private originalValue: ServerRequest<T>;
@@ -40,26 +33,57 @@ class Request<T extends HttpType = 'HTTP'> {
     this.originalValue = req;
   }
 
-  public async getBody<Body = Readable>(): Promise<Body> {
-    const req = this.originalValue as IncomingMessage;
-    const type = req.headers['content-type'];
-    const mime = type ? new MIMEType(type) : null;
-    if (!mime) {
-      return req as unknown as Body;
-    }
-    if (formTypes.includes(mime.essence)) {
-      return this.getBodyForm() as Promise<Body>;
-    }
-    if (jsonTypes.includes(mime.essence)) {
-      return this.getBodyJson() as Promise<Body>;
-    }
-    if (textTypes.includes(mime.essence)) {
-      return this.getBodyText() as Promise<unknown> as Promise<Body>;
-    }
-    if (xmlTypes.includes(mime.essence)) {
-      return this.getBodyXml() as Promise<unknown> as Promise<Body>;
-    }
-    return req as unknown as Body;
+  public getBody(): Body {
+    let bodyUsed = false;
+    return {
+      body: this.originalValue,
+      bodyUsed: bodyUsed,
+      arrayBuffer: () => {
+        if (bodyUsed) {
+          throw new TypeError(
+            "Failed to execute 'arrayBuffer' on 'Body': body stream already read",
+          );
+        }
+        bodyUsed = true;
+        return this.getBodyArrayBuffer();
+      },
+      blob: () => {
+        if (bodyUsed) {
+          throw new TypeError(
+            "Failed to execute 'blob' on 'Body': body stream already read",
+          );
+        }
+        bodyUsed = true;
+        return this.getBodyBlob();
+      },
+      formData: () => {
+        if (bodyUsed) {
+          throw new TypeError(
+            "Failed to execute 'formData' on 'Body': body stream already read",
+          );
+        }
+        bodyUsed = true;
+        return this.getBodyFormData();
+      },
+      json: <T>() => {
+        if (bodyUsed) {
+          throw new TypeError(
+            "Failed to execute 'json' on 'Body': body stream already read",
+          );
+        }
+        bodyUsed = true;
+        return this.getBodyJson<T>();
+      },
+      text: () => {
+        if (bodyUsed) {
+          throw new TypeError(
+            "Failed to execute 'text' on 'Body': body stream already read",
+          );
+        }
+        bodyUsed = true;
+        return this.getBodyText();
+      },
+    };
   }
 
   public getHeaders(): ServerRequestHeaders<T> {
@@ -86,71 +110,65 @@ class Request<T extends HttpType = 'HTTP'> {
     );
   }
 
-  private async getBodyForm(): Promise<unknown> {
+  private async getBodyArrayBuffer(): Promise<ArrayBuffer> {
     return new Promise((resolve, reject) => {
-      form.parse(
-        this.originalValue as IncomingMessage,
-        (err, fields, files) => {
-          if (err) {
-            const reason = err;
-            reject(reason);
-          } else {
-            const newFiles: Record<string, MultipartFile | MultipartFile[]> =
-              {};
-            for (const key in files) {
-              const value = files[key];
-              if (!Array.isArray(value)) {
-                newFiles[key] = {
-                  name: value.originalFilename,
-                  path: value.filepath,
-                  size: value.size,
-                  type: value.mimetype,
-                };
-              } else {
-                newFiles[key] = value.map((value) => ({
-                  name: value.originalFilename,
-                  path: value.filepath,
-                  size: value.size,
-                  type: value.mimetype,
-                }));
-              }
-            }
-            const value: unknown = { ...fields, ...newFiles };
-            resolve(value);
-          }
-        },
+      getStream
+        .buffer(this.readStream(reject))
+        .then((buffer) =>
+          resolve(
+            buffer.buffer.slice(
+              buffer.byteOffset,
+              buffer.byteOffset + buffer.byteLength,
+            ),
+          ),
+        );
+    });
+  }
+
+  private getBodyBlob(): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      getStream.buffer(this.readStream(reject)).then((buffer) =>
+        resolve(
+          new Blob([buffer], {
+            type: this.getMime()?.essence,
+          }),
+        ),
       );
     });
   }
 
-  private async getBodyJson(): Promise<unknown> {
-    return JSON.parse(await this.getBodyText());
-  }
-
-  private async getBodyText(): Promise<string> {
-    const encoding = this.originalValue.headers['content-encoding'];
-    const stream =
-      encoding === 'br'
-        ? this.originalValue.pipe(createBrotliDecompress())
-        : encoding === 'gzip'
-        ? this.originalValue.pipe(createGunzip())
-        : encoding === 'deflate'
-        ? this.originalValue.pipe(createInflate())
-        : this.originalValue;
-    const type = this.originalValue.headers['content-type'];
-    const mime = type ? new MIMEType(type) : null;
-    const options = { encoding: mime?.parameters.get('charset') || 'utf-8' };
+  private getBodyFormData(): Promise<Map<string, string | URL>> {
     return new Promise((resolve, reject) => {
-      stream.on('error', reject);
-      getRawBody(stream, options, (err, body) => {
-        if (err) reject(err);
-        if (body) resolve(body);
+      const stream = busboy({});
+      const formData = new Map<string, string | URL>();
+      this.originalValue.pipe(stream);
+      stream.on('field', (name, value) => {
+        formData.set(name, value);
       });
+      stream.on('file', (name, value) => {
+        const url = new URL(
+          `file://${tmpdir()}/dest-http-server-${Date.now()}-${randomUUID()}`,
+        );
+        value.pipe(createWriteStream(url));
+        formData.set(name, url);
+      });
+      stream.on('finish', () => resolve(formData));
+      stream.on('error', reject);
     });
   }
 
-  private async getBodyXml(): Promise<string> {
-    return this.getBodyText();
+  private getBodyJson<T>(): Promise<T> {
+    return new Promise((resolve, reject) => {
+      getStream(this.readStream(reject)).then((text) =>
+        resolve(JSON.parse(text)),
+      );
+    });
+  }
+
+  private getBodyText(): Promise<string> {
+    return new Promise((resolve, reject) => {
+      getStream(this.readStream(reject)).then((text) => resolve(text));
+    });
   }
 
   private getHeadersItem(name: string): string {
@@ -158,6 +176,11 @@ class Request<T extends HttpType = 'HTTP'> {
     if (Array.isArray(header)) return header[0].split(/\s*,\s*/, 1)[0];
     if (header) return header.split(/\s*,\s*/, 1)[0];
     return '';
+  }
+
+  private getMime(): MIMEType | null {
+    const type = this.originalValue.headers['content-type'];
+    return type ? new MIMEType(type) : null;
   }
 
   private getUrlHost(): string {
@@ -177,6 +200,32 @@ class Request<T extends HttpType = 'HTTP'> {
       this.getHeadersItem('x-forwarded-proto') ||
       'http'
     );
+  }
+
+  private readStream(callback: (err: Error) => void): NodeJS.ReadableStream {
+    const encoding = this.originalValue.headers['content-encoding'];
+    const charset = this.getMime()?.parameters.get('charset');
+    const sourceStream: Readable = this.originalValue;
+    const encodingStream: NodeJS.ReadWriteStream | null =
+      encoding === 'br'
+        ? createBrotliDecompress()
+        : encoding === 'gzip'
+        ? createGunzip()
+        : encoding === 'deflate'
+        ? createInflate()
+        : null;
+    const charsetStream: NodeJS.ReadWriteStream | null = charset
+      ? decodeStream(charset)
+      : null;
+    let stream: NodeJS.ReadableStream = sourceStream;
+    if (encodingStream) {
+      stream = stream.pipe<NodeJS.ReadWriteStream>(encodingStream);
+    }
+    if (charsetStream) {
+      stream = stream.pipe<NodeJS.ReadWriteStream>(charsetStream);
+    }
+    stream.on('error', callback);
+    return stream;
   }
 }
 
