@@ -3,10 +3,10 @@ import type Response from './response';
 import { type HttpType } from './server';
 
 interface HandlerRequest<T extends HttpType = 'HTTP'> {
-  getMethod: Request<T>['getMethod'];
-  getUrl: Request<T>['getUrl'];
-  getHeaders: Request<T>['getHeaders'];
-  getBody: Request<T>['getBody'];
+  method: ReturnType<Request<T>['getMethod']>;
+  url: ReturnType<Request<T>['getUrl']>;
+  headers: ReturnType<Request<T>['getHeaders']>;
+  body: ReturnType<Request<T>['getBody']>;
 }
 
 interface HandlerResponse<T extends HttpType = 'HTTP'> {

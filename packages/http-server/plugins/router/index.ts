@@ -33,8 +33,8 @@ class Router<T extends HttpType = 'HTTP'> implements Plugin<T> {
 
   public getHandler(): Handler<T> {
     return (req) => {
-      const method = req.getMethod();
-      const pathname = req.getUrl().pathname;
+      const { method, url } = req;
+      const pathname = url.pathname;
       const route = this.routingTable.find((route) => {
         if (!route.method.includes(method)) return false;
         if (!route.pathname.test(pathname)) return false;

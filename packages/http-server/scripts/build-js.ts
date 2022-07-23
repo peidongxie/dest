@@ -27,7 +27,7 @@ const buildOptions: BuildOptions = {
   bundle: true,
   define: {},
   entryPoints: getEntryPoints('.'),
-  external: ['formidable', 'raw-body', 'whatwg-mimetype'],
+  external: ['busboy', 'get-stream', 'iconv-lite', 'whatwg-mimetype'],
   format: 'esm',
   inject: [],
   loader: {},

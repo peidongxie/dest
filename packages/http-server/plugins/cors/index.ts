@@ -45,8 +45,8 @@ class Cors<T extends HttpType = 'HTTP'> implements Plugin<T> {
 
   public getHandler(): Handler<T> {
     return (req) => {
-      const method = req.getMethod();
-      const origin = req.getHeaders().origin;
+      const { method, headers } = req;
+      const origin = headers.origin;
       // not cors
       if (!this.enable || origin === undefined) {
         return {};

@@ -3,7 +3,7 @@ import busboy from 'busboy';
 import { randomUUID } from 'crypto';
 import { createWriteStream } from 'fs';
 import getStream from 'get-stream';
-import { decodeStream } from 'iconv-lite';
+import iconv from 'iconv-lite';
 import { tmpdir } from 'os';
 import { type Readable } from 'stream';
 import { URL } from 'url';
@@ -38,50 +38,76 @@ class Request<T extends HttpType = 'HTTP'> {
     return {
       body: this.originalValue,
       bodyUsed: bodyUsed,
-      arrayBuffer: () => {
+      arrayBuffer: async () => {
         if (bodyUsed) {
           throw new TypeError(
             "Failed to execute 'arrayBuffer' on 'Body': body stream already read",
           );
         }
         bodyUsed = true;
-        return this.getBodyArrayBuffer();
+        bodyUsed = true;
+        try {
+          const arrayBuffer = await this.getBodyArrayBuffer();
+          return arrayBuffer;
+        } catch {
+          throw new TypeError('Failed to decode body stream');
+        }
       },
-      blob: () => {
+      blob: async () => {
         if (bodyUsed) {
           throw new TypeError(
             "Failed to execute 'blob' on 'Body': body stream already read",
           );
         }
         bodyUsed = true;
-        return this.getBodyBlob();
+        try {
+          const blob = await this.getBodyBlob();
+          return blob;
+        } catch {
+          throw new TypeError('Failed to decode body stream');
+        }
       },
-      formData: () => {
+      formData: async () => {
         if (bodyUsed) {
           throw new TypeError(
             "Failed to execute 'formData' on 'Body': body stream already read",
           );
         }
         bodyUsed = true;
-        return this.getBodyFormData();
+        try {
+          const formData = await this.getBodyFormData();
+          return formData;
+        } catch {
+          throw new TypeError('Failed to decode body stream');
+        }
       },
-      json: <T>() => {
+      json: async <T>() => {
         if (bodyUsed) {
           throw new TypeError(
             "Failed to execute 'json' on 'Body': body stream already read",
           );
         }
         bodyUsed = true;
-        return this.getBodyJson<T>();
+        try {
+          const json = await this.getBodyJson<T>();
+          return json;
+        } catch {
+          throw new TypeError('Failed to decode body stream');
+        }
       },
-      text: () => {
+      text: async () => {
         if (bodyUsed) {
           throw new TypeError(
             "Failed to execute 'text' on 'Body': body stream already read",
           );
         }
         bodyUsed = true;
-        return this.getBodyText();
+        try {
+          const text = await this.getBodyText();
+          return text;
+        } catch {
+          throw new TypeError('Failed to decode body stream');
+        }
       },
     };
   }
@@ -96,10 +122,10 @@ class Request<T extends HttpType = 'HTTP'> {
 
   public getRequest(): HandlerRequest<T> {
     return {
-      getMethod: this.getMethod.bind(this),
-      getUrl: this.getUrl.bind(this),
-      getHeaders: this.getHeaders.bind(this),
-      getBody: this.getBody.bind(this),
+      method: this.getMethod(),
+      url: this.getUrl(),
+      headers: this.getHeaders(),
+      body: this.getBody(),
     };
   }
 
@@ -111,64 +137,55 @@ class Request<T extends HttpType = 'HTTP'> {
   }
 
   private async getBodyArrayBuffer(): Promise<ArrayBuffer> {
-    return new Promise((resolve, reject) => {
-      getStream
-        .buffer(this.readStream(reject))
-        .then((buffer) =>
-          resolve(
-            buffer.buffer.slice(
-              buffer.byteOffset,
-              buffer.byteOffset + buffer.byteLength,
-            ),
-          ),
-        );
+    const stream = this.pipeStream();
+    const buffer = await getStream.buffer(stream);
+    return buffer.buffer.slice(
+      buffer.byteOffset,
+      buffer.byteOffset + buffer.byteLength,
+    );
+  }
+
+  private async getBodyBlob(): Promise<Blob> {
+    const stream = this.pipeStream();
+    const buffer = await getStream.buffer(stream);
+    return new Blob([buffer], {
+      type: this.getMime()?.essence,
     });
   }
 
-  private getBodyBlob(): Promise<Blob> {
+  private async getBodyFormData(): Promise<Map<string, string | URL>> {
     return new Promise((resolve, reject) => {
-      getStream.buffer(this.readStream(reject)).then((buffer) =>
-        resolve(
-          new Blob([buffer], {
-            type: this.getMime()?.essence,
-          }),
-        ),
-      );
-    });
-  }
-
-  private getBodyFormData(): Promise<Map<string, string | URL>> {
-    return new Promise((resolve, reject) => {
-      const stream = busboy({});
       const formData = new Map<string, string | URL>();
-      this.originalValue.pipe(stream);
-      stream.on('field', (name, value) => {
+      const sourceStream = this.pipeStream();
+      sourceStream.on('error', reject);
+      const formStream = busboy({ headers: this.originalValue.headers });
+      formStream.on('field', (name, value) => {
         formData.set(name, value);
       });
-      stream.on('file', (name, value) => {
+      formStream.on('file', (name, value, info) => {
+        const mime = info.mimeType.replace('/', '-');
         const url = new URL(
-          `file://${tmpdir()}/dest-http-server-${Date.now()}-${randomUUID()}`,
+          `file://${tmpdir()}/${Date.now()}-${mime}-${randomUUID()}`,
         );
         value.pipe(createWriteStream(url));
         formData.set(name, url);
       });
-      stream.on('finish', () => resolve(formData));
-      stream.on('error', reject);
+      formStream.on('finish', () => resolve(formData));
+      formStream.on('error', reject);
+      sourceStream.pipe(formStream);
     });
   }
 
-  private getBodyJson<T>(): Promise<T> {
-    return new Promise((resolve, reject) => {
-      getStream(this.readStream(reject)).then((text) =>
-        resolve(JSON.parse(text)),
-      );
-    });
+  private async getBodyJson<T>(): Promise<T> {
+    const stream = this.pipeStream();
+    const text = await getStream(stream);
+    return JSON.parse(text);
   }
 
-  private getBodyText(): Promise<string> {
-    return new Promise((resolve, reject) => {
-      getStream(this.readStream(reject)).then((text) => resolve(text));
-    });
+  private async getBodyText(): Promise<string> {
+    const stream = this.pipeStream();
+    const text = await getStream(stream);
+    return text;
   }
 
   private getHeadersItem(name: string): string {
@@ -202,7 +219,7 @@ class Request<T extends HttpType = 'HTTP'> {
     );
   }
 
-  private readStream(callback: (err: Error) => void): NodeJS.ReadableStream {
+  private pipeStream(): NodeJS.ReadableStream {
     const encoding = this.originalValue.headers['content-encoding'];
     const charset = this.getMime()?.parameters.get('charset');
     const sourceStream: Readable = this.originalValue;
@@ -215,7 +232,7 @@ class Request<T extends HttpType = 'HTTP'> {
         ? createInflate()
         : null;
     const charsetStream: NodeJS.ReadWriteStream | null = charset
-      ? decodeStream(charset)
+      ? iconv.decodeStream(charset)
       : null;
     let stream: NodeJS.ReadableStream = sourceStream;
     if (encodingStream) {
@@ -224,7 +241,6 @@ class Request<T extends HttpType = 'HTTP'> {
     if (charsetStream) {
       stream = stream.pipe<NodeJS.ReadWriteStream>(charsetStream);
     }
-    stream.on('error', callback);
     return stream;
   }
 }
