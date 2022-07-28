@@ -1,3 +1,4 @@
+import { Buffer } from 'buffer';
 import { Stream } from 'stream';
 import { type HandlerResponse } from './handler';
 import {
@@ -5,8 +6,6 @@ import {
   type ServerResponse,
   type ServerResponseHeaders,
 } from './server';
-
-type JsonItem = object;
 
 class Response<T extends HttpType = 'HTTP'> {
   private originalValue: ServerResponse<T>;
@@ -16,16 +15,16 @@ class Response<T extends HttpType = 'HTTP'> {
   }
 
   public setBody(
-    value: null | string | Error | Buffer | Stream | JsonItem,
+    value: null | Error | string | Uint8Array | Stream | object,
   ): void {
     if (this.originalValue.writableEnded) return;
     if (value === null) {
       this.setBodyNothing();
-    } else if (typeof value === 'string') {
-      this.setBodyText(value);
     } else if (value instanceof Error) {
       this.setBodyError(value);
-    } else if (Buffer.isBuffer(value)) {
+    } else if (typeof value === 'string') {
+      this.setBodyText(value);
+    } else if (value instanceof Uint8Array) {
       this.setBodyBuffer(value);
     } else if (value instanceof Stream) {
       this.setBodyStream(value);
@@ -58,12 +57,12 @@ class Response<T extends HttpType = 'HTTP'> {
     else this.setBody(null);
   }
 
-  private setBodyBuffer(value: Buffer): void {
+  private setBodyBuffer(value: Uint8Array): void {
     const res = this.originalValue;
     if (!this.originalValue.hasHeader('Content-Type')) {
       this.setHeadersItem('Content-Type', 'application/octet-stream');
     }
-    this.setHeadersItem('Content-Length', value.length);
+    this.setHeadersItem('Content-Length', value.byteLength);
     res.end(value);
   }
 
@@ -78,7 +77,7 @@ class Response<T extends HttpType = 'HTTP'> {
     res.end(str);
   }
 
-  private setBodyJson(value: JsonItem): void {
+  private setBodyJson(value: object): void {
     const res = this.originalValue;
     const str = JSON.stringify(value, (key, value) => {
       return typeof value === 'bigint' ? value.toString() + 'n' : value;
