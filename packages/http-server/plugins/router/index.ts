@@ -90,7 +90,7 @@ class Router<T extends HttpType = 'HTTP'> implements Plugin<T> {
   private getValidPathname(pathname: string): RegExp {
     const content = this.prefix + pathname;
     const start = content.startsWith('/') ? '^' : '^/';
-    const mid = content.replaceAll(/\[.*?\]/g, '[^/]*');
+    const mid = content.replace(/\[.*?\]/g, '[^/]*');
     const end = content.endsWith('/') ? '?' : '/?';
     return RegExp(start + mid + end);
   }

@@ -163,9 +163,10 @@ class Request<T extends HttpType = 'HTTP'> {
         formData.set(name, value);
       });
       formStream.on('file', (name, value, info) => {
-        const mime = info.mimeType.replace('/', '-');
+        const mimeType = info.mimeType.replace('/', '-');
+        const filename = info.filename.replace(/\W/g, '');
         const url = new URL(
-          `file://${tmpdir()}/${Date.now()}-${mime}-${randomUUID()}`,
+          `file://${tmpdir()}/${Date.now()}-${randomUUID()}-${mimeType}-${filename}`,
         );
         value.pipe(createWriteStream(url));
         formData.set(name, url);
