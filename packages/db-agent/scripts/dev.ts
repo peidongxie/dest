@@ -20,7 +20,7 @@ const buildOptions: BuildOptions = {
   bundle: true,
   define: {},
   entryPoints: ['src/index.ts'],
-  external: ['@dest/http-server'],
+  external: ['@dest-toolkit/http-server'],
   format: 'esm',
   inject: [],
   loader: {},
