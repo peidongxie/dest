@@ -16,12 +16,18 @@ import {
   type ServerRequestHeaders,
 } from './server';
 
+type FormKey = string;
+
+type FormValue = string | URL;
+
+type FormEntry = [FormKey, FormValue] | Promise<[FormKey, FormValue]>;
+
 interface Body {
   readonly body: Readable;
   readonly bodyUsed: boolean;
   arrayBuffer(): Promise<ArrayBuffer>;
   blob(): Promise<Blob>;
-  formData(): Promise<Map<string, string | URL>>;
+  formData(): Promise<Map<FormKey, FormValue>>;
   json<T>(): Promise<T>;
   text(): Promise<string>;
 }
@@ -154,27 +160,36 @@ class Request<T extends HttpType = 'HTTP'> {
   }
 
   private async getBodyFormData(): Promise<Map<string, string | URL>> {
-    return new Promise((resolve, reject) => {
-      const formData = new Map<string, string | URL>();
-      const sourceStream = this.pipeStream();
-      sourceStream.on('error', reject);
+    const sourceStream = this.pipeStream();
+    const formEntries = await new Promise<FormEntry[]>((resolve, reject) => {
+      const formEntries: FormEntry[] = [];
       const formStream = busboy({ headers: this.originalValue.headers });
       formStream.on('field', (name, value) => {
-        formData.set(name, value);
+        formEntries.push([name, value]);
       });
       formStream.on('file', (name, value, info) => {
-        const mimeType = info.mimeType.replace('/', '-');
-        const filename = info.filename.replace(/[^-.0-9A-Za-z]/g, '');
-        const url = new URL(
-          `file://${tmpdir()}/${Date.now()}_${randomUUID()}_${mimeType}_${filename}`,
+        formEntries.push(
+          new Promise((resolve, reject) => {
+            const mimeType = info.mimeType.replace('/', '-');
+            const filename = info.filename.replace(/[^-.0-9A-Za-z]/g, '');
+            const input = `${Date.now()}_${randomUUID()}_${mimeType}_${filename}`;
+            const url = new URL(input, 'file://' + tmpdir());
+            const fileStream = createWriteStream(url);
+            fileStream.on('close', () => resolve([name, url]));
+            fileStream.on('error', reject);
+            value.on('error', reject);
+            value.pipe(fileStream);
+          }),
         );
-        value.pipe(createWriteStream(url));
-        formData.set(name, url);
       });
-      formStream.on('finish', () => resolve(formData));
+      formStream.on('close', () => {
+        resolve(formEntries);
+      });
       formStream.on('error', reject);
+      sourceStream.on('error', reject);
       sourceStream.pipe(formStream);
     });
+    return new Map(await Promise.all(formEntries));
   }
 
   private async getBodyJson<T>(): Promise<T> {
