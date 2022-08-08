@@ -4,7 +4,7 @@ const buildOptions: BuildOptions = {
   bundle: true,
   define: {},
   entryPoints: ['src/index.ts'],
-  external: ['@dest-toolkit/http-server'],
+  external: ['@dest-toolkit/http-server', 'typeorm'],
   format: 'esm',
   inject: [],
   loader: {},
