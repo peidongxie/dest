@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  mariadb:
+    container_name: dest-mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: dest-toolkit
+    image: mariadb:latest
+    ports:
+      - 3306:3306
+    restart: always
