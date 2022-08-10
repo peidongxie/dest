@@ -1,118 +1,78 @@
 import { DataSource, EntitySchema, type EntitySchemaOptions } from 'typeorm';
-
-type DatabaseType = 'mariadb' | 'mysql:8';
-type DatabaseTypeAlias = 'mysql';
+import {
+  adapterMapper,
+  createAdapter,
+  type Adapter,
+  type AdapterType,
+  type AdapterTypeAlias,
+} from './adapter';
 
 class Database {
-  static store: Record<DatabaseType, Map<string, Database>> = {
+  static store: Record<AdapterType, Map<string, Database>> = {
     mariadb: new Map(),
     'mysql:8': new Map(),
   };
 
   static find(
-    type: DatabaseType | DatabaseTypeAlias,
+    type: AdapterType | AdapterTypeAlias,
     name: string,
   ): Database | null {
-    switch (type) {
-      case 'mariadb':
-        return this.store.mariadb.get(name) || null;
-      case 'mysql':
-      case 'mysql:8':
-        return this.store['mysql:8'].get(name) || null;
-      default:
-        throw new TypeError('Unsupported type of database');
-    }
+    return this.store[adapterMapper[type]]?.get(name) || null;
   }
 
-  connection: DataSource;
+  adapter: Adapter;
   name: string;
   schemas: EntitySchemaOptions<unknown>[];
-  type: DatabaseType;
+  writableDataSource: DataSource;
 
   constructor(
-    type: DatabaseType | DatabaseTypeAlias,
+    type: AdapterType | AdapterTypeAlias,
     name: string,
     schemas: EntitySchemaOptions<unknown>[],
   ) {
-    const options = {
-      host: 'localhost',
-      username: 'root',
-      password: 'dest-toolkit',
-      entities: schemas.map((schema) => new EntitySchema(schema)),
-      synchronize: true,
-    };
-    switch (type) {
-      case 'mariadb':
-        this.connection = new DataSource({
-          ...options,
-          type: 'mariadb',
-          port: 3306,
-          database: name,
-        });
-        this.name = name;
-        this.schemas = schemas;
-        this.type = 'mariadb';
-        break;
-      case 'mysql':
-      case 'mysql:8':
-        this.connection = new DataSource({
-          ...options,
-          type: 'mysql',
-          port: 3307,
-          database: name,
-        });
-        this.name = name;
-        this.schemas = schemas;
-        this.type = 'mysql:8';
-        break;
-      default:
-        throw new TypeError('Unsupported type of database');
-    }
+    this.adapter = createAdapter(type);
+    this.name = name;
+    this.schemas = schemas;
+    const entities = schemas.map((schema) => new EntitySchema(schema));
+    this.writableDataSource = new DataSource({
+      ...this.adapter.getWritableDataSourceOptions(name),
+      entities,
+    });
   }
 
   async create(): Promise<Database> {
     await this.createIfNotExists();
-    await this.connection.initialize();
-    Database.store[this.type].set(this.name, this);
+    await this.writableDataSource.initialize();
+    Database.store[this.adapter.type].set(this.name, this);
     return this;
   }
 
   async destroy(): Promise<void> {
-    Database.store[this.type].delete(this.name);
-    await this.connection.destroy();
+    Database.store[this.adapter.type].delete(this.name);
+    await this.writableDataSource.destroy();
     await this.destroyIfExists();
     return;
   }
 
   private async createIfNotExists(): Promise<void> {
     if (!this.name) return;
-    switch (this.type) {
-      case 'mariadb':
-      case 'mysql:8': {
-        const root = new Database(this.type, '', []);
-        await root.create();
-        await root.connection.query(
-          `CREATE DATABASE IF NOT EXISTS \`${this.name}\``,
-        );
-        await root.destroy();
-        break;
-      }
-    }
+    const query = this.adapter.getCreateQuery(this.name);
+    if (!query) return;
+    const root = new Database(this.adapter.type, '', []);
+    await root.create();
+    await root.writableDataSource.query(query);
+    await root.destroy();
   }
 
   private async destroyIfExists(): Promise<void> {
     if (!this.name) return;
-    switch (this.type) {
-      case 'mariadb':
-      case 'mysql:8': {
-        const root = new Database(this.type, '', []);
-        await root.create();
-        await root.connection.query(`DROP DATABASE IF EXISTS \`${this.name}\``);
-        await root.destroy();
-        break;
-      }
-    }
+    const query = this.adapter.getDestroyQuery(this.name);
+    if (!query) return;
+    const root = new Database(this.adapter.type, '', []);
+    await root.create();
+    await root.writableDataSource.query(query);
+    await root.destroy();
   }
 }
 
-export { Database as default, type DatabaseType, type DatabaseTypeAlias };
+export { Database as default };
