@@ -5,7 +5,7 @@ import {
   type Adapter,
   type AdapterType,
   type AdapterTypeAlias,
-} from './adapter';
+} from '../adapter';
 
 class Database {
   static store: Record<AdapterType, Map<string, Database>> = {
@@ -47,32 +47,30 @@ class Database {
     return this;
   }
 
-  async destroy(): Promise<void> {
+  async destroy(): Promise<Database> {
     Database.store[this.adapter.type].delete(this.name);
     await this.writableDataSource.destroy();
     await this.destroyIfExists();
-    return;
+    return this;
   }
 
   private async createIfNotExists(): Promise<void> {
     if (!this.name) return;
+    const root = Database.store[this.adapter.type].get('');
+    if (!root) return;
     const query = this.adapter.getCreateQuery(this.name);
     if (!query) return;
-    const root = new Database(this.adapter.type, '', []);
-    await root.create();
     await root.writableDataSource.query(query);
-    await root.destroy();
   }
 
   private async destroyIfExists(): Promise<void> {
     if (!this.name) return;
+    const root = Database.store[this.adapter.type].get('');
+    if (!root) return;
     const query = this.adapter.getDestroyQuery(this.name);
     if (!query) return;
-    const root = new Database(this.adapter.type, '', []);
-    await root.create();
-    await root.writableDataSource.query(query);
-    await root.destroy();
+    await root?.writableDataSource.query(query);
   }
 }
 
-export { Database as default };
+export { Database };

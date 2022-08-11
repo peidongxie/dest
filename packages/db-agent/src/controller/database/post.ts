@@ -1,7 +1,7 @@
 import { type Handler } from '@dest-toolkit/http-server';
 import { type EntitySchemaOptions } from 'typeorm';
-import { type AdapterType, type AdapterTypeAlias } from '../domain/adapter';
-import Database from '../domain/database';
+import { type AdapterType, type AdapterTypeAlias } from '../../domain';
+import { createDatabase } from '../../service';
 
 const handler: Handler = async (req) => {
   const { url, body } = req;
@@ -16,8 +16,8 @@ const handler: Handler = async (req) => {
       },
     };
   }
-  const database = Database.find(type, name);
-  if (database) {
+  const database = await createDatabase(type, name, schemas);
+  if (!database) {
     return {
       code: 409,
       body: {
@@ -25,8 +25,6 @@ const handler: Handler = async (req) => {
       },
     };
   }
-  const newDatabase = new Database(type, name, schemas);
-  await newDatabase.create();
   return {
     code: 201,
     body: {
