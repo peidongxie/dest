@@ -1,6 +1,6 @@
 import { type Handler } from '@dest-toolkit/http-server';
-import { type AdapterType, type AdapterTypeAlias } from '../domain/adapter';
-import Database from '../domain/database';
+import { type AdapterType, type AdapterTypeAlias } from '../../domain';
+import { deleteDatabase } from '../../service';
 
 const handler: Handler = async (req) => {
   const { url } = req;
@@ -14,7 +14,7 @@ const handler: Handler = async (req) => {
       },
     };
   }
-  const database = Database.find(type, name);
+  const database = await deleteDatabase(type, name);
   if (!database) {
     return {
       code: 404,
@@ -23,7 +23,6 @@ const handler: Handler = async (req) => {
       },
     };
   }
-  await database.destroy();
   return {
     code: 200,
     body: {

@@ -1,6 +1,6 @@
 import { type Handler } from '@dest-toolkit/http-server';
-import { type AdapterType, type AdapterTypeAlias } from '../domain/adapter';
-import Database from '../domain/database';
+import { type AdapterType, type AdapterTypeAlias } from '../../domain';
+import { retrieveDatabase } from '../../service';
 
 const handler: Handler = async (req) => {
   const { url } = req;
@@ -14,7 +14,7 @@ const handler: Handler = async (req) => {
       },
     };
   }
-  const database = Database.find(type, name);
+  const database = retrieveDatabase(type, name);
   if (!database) {
     return {
       code: 404,
@@ -27,7 +27,6 @@ const handler: Handler = async (req) => {
     code: 200,
     body: {
       success: true,
-      schemas: database.schemas,
     },
   };
 };
