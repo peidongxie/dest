@@ -34,7 +34,8 @@
     "dev": "cat scripts/dev.ts | esbuild --format=iife --loader=ts | node",
     "start": "node dist/index.js",
     "fix": "eslint src --ext .ts --fix",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "up:dev": "docker compose -f docker/compose.dev.yaml -p dest up -d"
   },
   "dependencies": {
     "@dest-toolkit/http-server": "workspace:^0.1.6",
