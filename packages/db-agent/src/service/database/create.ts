@@ -4,14 +4,14 @@ import {
   type AdapterType,
   type AdapterTypeAlias,
 } from '../../domain';
-import retrieveDatabase from './retrieve';
+import readDatabase from './read';
 
 const service = async (
   type: AdapterType | AdapterTypeAlias,
   name: string,
   schemas: EntitySchemaOptions<unknown>[],
 ): Promise<Database | null> => {
-  const database = retrieveDatabase(type, name);
+  const database = readDatabase(type, name);
   return database ? null : new Database(type, name, schemas).create();
 };
 

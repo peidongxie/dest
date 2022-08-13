@@ -1,4 +1,4 @@
-import { DataSource, EntitySchema, type EntitySchemaOptions } from 'typeorm';
+import { type EntitySchemaOptions } from 'typeorm';
 import {
   adapterMapper,
   createAdapter,
@@ -13,63 +13,54 @@ class Database {
     'mysql:8': new Map(),
   };
 
-  static find(
-    type: AdapterType | AdapterTypeAlias,
-    name: string,
-  ): Database | null {
-    return this.store[adapterMapper[type]]?.get(name) || null;
-  }
-
   adapter: Adapter;
   name: string;
   schemas: EntitySchemaOptions<unknown>[];
-  writableDataSource: DataSource;
+  type: AdapterType;
 
   constructor(
     type: AdapterType | AdapterTypeAlias,
-    name: string,
-    schemas: EntitySchemaOptions<unknown>[],
+    name?: string,
+    schemas?: EntitySchemaOptions<unknown>[],
   ) {
-    this.adapter = createAdapter(type);
-    this.name = name;
-    this.schemas = schemas;
-    const entities = schemas.map((schema) => new EntitySchema(schema));
-    this.writableDataSource = new DataSource({
-      ...this.adapter.getWritableDataSourceOptions(name),
-      entities,
-    });
+    this.type = adapterMapper[type];
+    this.name = name || '';
+    this.schemas = schemas || [];
+    this.adapter = createAdapter(this.type, this.name, this.schemas);
   }
 
   async create(): Promise<Database> {
-    await this.createIfNotExists();
-    await this.writableDataSource.initialize();
-    Database.store[this.adapter.type].set(this.name, this);
+    await this.adapter.preCreate?.();
+    if (this.name) {
+      await this.adapter.getReadableDataSource().initialize();
+      await this.adapter.getWritableDataSource().initialize();
+    } else {
+      await this.adapter.getRootDataSource().initialize();
+    }
+    Database.store[this.type].set(this.name, this);
+    await this.adapter.postCreate?.();
     return this;
   }
 
   async destroy(): Promise<Database> {
-    Database.store[this.adapter.type].delete(this.name);
-    await this.writableDataSource.destroy();
-    await this.destroyIfExists();
+    await this.adapter.preDestroy?.();
+    Database.store[this.type].delete(this.name);
+    if (this.name) {
+      await this.adapter.getReadableDataSource().destroy();
+      await this.adapter.getWritableDataSource().destroy();
+    } else {
+      await this.adapter.getRootDataSource().destroy();
+    }
+    await this.adapter.postDestroy?.();
     return this;
   }
 
-  private async createIfNotExists(): Promise<void> {
-    if (!this.name) return;
-    const root = Database.store[this.adapter.type].get('');
-    if (!root) return;
-    const query = this.adapter.getCreateQuery(this.name);
-    if (!query) return;
-    await root.writableDataSource.query(query);
+  read<T>(query: string): Promise<T> {
+    return this.adapter.getReadableDataSource().query(query);
   }
 
-  private async destroyIfExists(): Promise<void> {
-    if (!this.name) return;
-    const root = Database.store[this.adapter.type].get('');
-    if (!root) return;
-    const query = this.adapter.getDestroyQuery(this.name);
-    if (!query) return;
-    await root?.writableDataSource.query(query);
+  write<T>(query: string): Promise<T> {
+    return this.adapter.getWritableDataSource().query(query);
   }
 }
 
