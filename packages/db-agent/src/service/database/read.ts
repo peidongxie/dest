@@ -1,15 +1,7 @@
-import {
-  Database,
-  adapterMapper,
-  type AdapterType,
-  type AdapterTypeAlias,
-} from '../../domain';
+import { Database, type AdapterType } from '../../domain';
 
-const service = (
-  type: AdapterType | AdapterTypeAlias,
-  name: string,
-): Database | null => {
-  return Database.store[adapterMapper[type]]?.get(name) || null;
+const service = (type: AdapterType, name: string): Database | null => {
+  return Database.store[type]?.get(name) || null;
 };
 
 export default service;

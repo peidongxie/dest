@@ -4,16 +4,25 @@ import {
   type AdapterType,
   type AdapterTypeAlias,
 } from '../../domain';
-import { deleteDatabase } from '../../service';
+import { createQuery } from '../../service';
 
 const handler: Handler = async (req) => {
-  const { url } = req;
+  const { url, body } = req;
   const type =
     adapterMapper[
       url.searchParams.get('type') as AdapterType | AdapterTypeAlias
     ];
   const name = url.searchParams.get('name') || '';
-  if (!type || !name) {
+  const privilege = url.pathname.match(
+    /^\/?query\/(read|root|write)(\/|$)/,
+  )?.[1] as 'read' | 'root' | 'write';
+  const query = await body.text();
+  if (
+    !type ||
+    !query ||
+    (!name && privilege !== 'root') ||
+    (name && privilege !== 'read' && privilege !== 'write')
+  ) {
     return {
       code: 400,
       body: {
@@ -21,8 +30,8 @@ const handler: Handler = async (req) => {
       },
     };
   }
-  const database = await deleteDatabase(type, name);
-  if (!database) {
+  const result = await createQuery(type, name, privilege, query);
+  if (!result) {
     return {
       code: 404,
       body: {
@@ -31,9 +40,11 @@ const handler: Handler = async (req) => {
     };
   }
   return {
-    code: 200,
+    code: 201,
     body: {
       success: true,
+      time: Number(result.time),
+      result: result.result,
     },
   };
 };
