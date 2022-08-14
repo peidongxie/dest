@@ -1,6 +1,6 @@
 import { type Handler } from '@dest-toolkit/http-server';
 import { type AdapterType, type AdapterTypeAlias } from '../../domain';
-import { retrieveDatabase } from '../../service';
+import { readDatabase } from '../../service';
 
 const handler: Handler = async (req) => {
   const { url } = req;
@@ -14,7 +14,7 @@ const handler: Handler = async (req) => {
       },
     };
   }
-  const database = retrieveDatabase(type, name);
+  const database = readDatabase(type, name);
   if (!database) {
     return {
       code: 404,

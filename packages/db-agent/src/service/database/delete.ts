@@ -3,13 +3,13 @@ import {
   type AdapterType,
   type AdapterTypeAlias,
 } from '../../domain';
-import retrieveDatabase from './retrieve';
+import readDatabase from './read';
 
 const service = async (
   type: AdapterType | AdapterTypeAlias,
   name: string,
 ): Promise<Database | null> => {
-  const database = retrieveDatabase(type, name);
+  const database = readDatabase(type, name);
   return database ? database.destroy() : null;
 };
 
