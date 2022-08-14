@@ -1,6 +1,32 @@
 import { DataSource, EntitySchema } from 'typeorm';
 import { type Adapter } from './type';
 
+const protectedDatabases = [
+  'information_schema',
+  'mysql',
+  'performance_schema',
+  'sys',
+];
+
+const readPrivileges = ['SELECT', 'SHOW DATABASES', 'SHOW VIEW'];
+
+const writePrivileges = [
+  'ALTER',
+  'CREATE',
+  'CREATE TEMPORARY TABLES',
+  'CREATE VIEW',
+  'DELETE',
+  'DROP',
+  'INDEX',
+  'INSERT',
+  'LOCK TABLES',
+  'REFERENCES',
+  'SELECT',
+  'SHOW DATABASES',
+  'SHOW VIEW',
+  'UPDATE',
+];
+
 class Mariadb implements Adapter {
   static root: DataSource;
 
@@ -16,17 +42,15 @@ class Mariadb implements Adapter {
         host: 'localhost',
         port: 3306,
         database: name,
-        username: 'root',
+        username: 'read',
         password: 'dest-toolkit',
-        entities: entities,
-        synchronize: true,
       });
       this.writable = new DataSource({
         type: 'mariadb',
         host: 'localhost',
         port: 3306,
         database: name,
-        username: 'root',
+        username: 'write',
         password: 'dest-toolkit',
         entities: entities,
         synchronize: true,
@@ -40,7 +64,6 @@ class Mariadb implements Adapter {
           port: 3306,
           username: 'root',
           password: 'dest-toolkit',
-          synchronize: true,
         });
       this.readable = Mariadb.root;
       this.writable = Mariadb.root;
@@ -80,17 +103,27 @@ class Mariadb implements Adapter {
       );
       const names = result
         .filter((row) => {
-          return ![
-            'information_schema',
-            'mysql',
-            'performance_schema',
-            'sys',
-          ].includes(row.Database);
+          return !protectedDatabases.includes(row.Database);
         })
         .map((row) => row.Database);
       for (const name of names) {
         await Mariadb.root.query(`DROP DATABASE IF EXISTS \`${name}\``);
       }
+      await Mariadb.root.query(`DROP USER IF EXISTS 'read'@'%'`);
+      await Mariadb.root.query(`DROP USER IF EXISTS 'write'@'%'`);
+      await Mariadb.root.query(
+        `CREATE USER IF NOT EXISTS 'read'@'%' IDENTIFIED BY 'dest-toolkit'`,
+      );
+      await Mariadb.root.query(
+        `CREATE USER IF NOT EXISTS 'write'@'%' IDENTIFIED BY 'dest-toolkit'`,
+      );
+      await Mariadb.root.query(
+        `GRANT ${readPrivileges.join(', ')} ON *.* TO 'read'@'%'`,
+      );
+      await Mariadb.root.query(
+        `GRANT ${writePrivileges.join(', ')} ON *.* TO 'write'@'%'`,
+      );
+      await Mariadb.root.query(`FLUSH PRIVILEGES`);
     }
   }
 }
