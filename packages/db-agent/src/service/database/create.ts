@@ -1,13 +1,9 @@
 import { type EntitySchemaOptions } from 'typeorm';
-import {
-  Database,
-  type AdapterType,
-  type AdapterTypeAlias,
-} from '../../domain';
+import { Database, type AdapterType } from '../../domain';
 import readDatabase from './read';
 
 const service = async (
-  type: AdapterType | AdapterTypeAlias,
+  type: AdapterType,
   name: string,
   schemas: EntitySchemaOptions<unknown>[],
 ): Promise<Database | null> => {

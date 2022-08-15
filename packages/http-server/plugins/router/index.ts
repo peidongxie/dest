@@ -34,7 +34,7 @@ class Router<T extends HttpType = 'HTTP'> implements Plugin<T> {
   public getHandler(): Handler<T> {
     return (req) => {
       const { method, url } = req;
-      const pathname = url.pathname;
+      const pathname = `/${url.pathname}/`.replace(/^\/+$/g, '/');
       const route = this.routingTable.find((route) => {
         if (!route.method.includes(method)) return false;
         if (!route.pathname.test(pathname)) return false;
@@ -88,11 +88,8 @@ class Router<T extends HttpType = 'HTTP'> implements Plugin<T> {
   }
 
   private getValidPathname(pathname: string): RegExp {
-    const content = this.prefix + pathname;
-    const start = content.startsWith('/') ? '^' : '^/';
-    const mid = content.replace(/\[.*?\]/g, '[^/]*');
-    const end = content.endsWith('/') ? '?' : '/?';
-    return RegExp(start + mid + end);
+    const fullPathname = `/${this.prefix}${pathname}/`.replace(/^\/+$/g, '/');
+    return RegExp('^' + fullPathname.replace(/\[.*?\]/g, '[^/]*'));
   }
 }
 

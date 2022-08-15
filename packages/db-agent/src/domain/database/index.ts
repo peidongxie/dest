@@ -1,11 +1,5 @@
 import { type EntitySchemaOptions } from 'typeorm';
-import {
-  adapterMapper,
-  createAdapter,
-  type Adapter,
-  type AdapterType,
-  type AdapterTypeAlias,
-} from '../adapter';
+import { createAdapter, type Adapter, type AdapterType } from '../adapter';
 
 class Database {
   static store: Record<AdapterType, Map<string, Database>> = {
@@ -19,11 +13,11 @@ class Database {
   type: AdapterType;
 
   constructor(
-    type: AdapterType | AdapterTypeAlias,
+    type: AdapterType,
     name?: string,
     schemas?: EntitySchemaOptions<unknown>[],
   ) {
-    this.type = adapterMapper[type];
+    this.type = type;
     this.name = name || '';
     this.schemas = schemas || [];
     this.adapter = createAdapter(this.type, this.name, this.schemas);
@@ -57,6 +51,10 @@ class Database {
 
   read<T>(query: string): Promise<T> {
     return this.adapter.getReadableDataSource().query(query);
+  }
+
+  root<T>(query: string): Promise<T> {
+    return this.adapter.getRootDataSource().query(query);
   }
 
   write<T>(query: string): Promise<T> {

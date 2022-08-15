@@ -1,12 +1,8 @@
-import {
-  Database,
-  type AdapterType,
-  type AdapterTypeAlias,
-} from '../../domain';
+import { Database, type AdapterType } from '../../domain';
 import readDatabase from './read';
 
 const service = async (
-  type: AdapterType | AdapterTypeAlias,
+  type: AdapterType,
   name: string,
 ): Promise<Database | null> => {
   const database = readDatabase(type, name);

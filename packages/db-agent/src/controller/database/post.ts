@@ -1,12 +1,19 @@
 import { type Handler } from '@dest-toolkit/http-server';
 import { type EntitySchemaOptions } from 'typeorm';
-import { type AdapterType, type AdapterTypeAlias } from '../../domain';
+import {
+  adapterMapper,
+  type AdapterType,
+  type AdapterTypeAlias,
+} from '../../domain';
 import { createDatabase } from '../../service';
 
 const handler: Handler = async (req) => {
   const { url, body } = req;
-  const type = url.searchParams.get('type') as AdapterType | AdapterTypeAlias;
-  const name = url.searchParams.get('name') as string;
+  const type =
+    adapterMapper[
+      url.searchParams.get('type') as AdapterType | AdapterTypeAlias
+    ];
+  const name = url.searchParams.get('name') || '';
   const schemas = await body.json<EntitySchemaOptions<unknown>[]>();
   if (!type || !name || !Array.isArray(schemas)) {
     return {
