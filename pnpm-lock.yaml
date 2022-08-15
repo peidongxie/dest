@@ -28,7 +28,7 @@ importers:
 
   packages/db-agent:
     specifiers:
-      '@dest-toolkit/http-server': workspace:^0.1.6
+      '@dest-toolkit/http-server': workspace:^0.1.7
       '@types/node': ^18.7.4
       '@types/type-is': ^1.6.3
       '@typescript-eslint/eslint-plugin': ^5.33.0
