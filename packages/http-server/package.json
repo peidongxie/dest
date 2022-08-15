@@ -35,10 +35,9 @@
   "module": "index.js",
   "types": "index.d.ts",
   "files": [
+    "**/*.d.ts",
     "**/*.js",
-    "**/*.ts",
-    "*.md",
-    "!/scripts/"
+    "**/*.md"
   ],
   "scripts": {
     "build": "pnpm run build:clean && pnpm run build:js && pnpm run build:type",
