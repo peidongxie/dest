@@ -12,8 +12,8 @@ const handler: Handler = async (req) => {
     adapterMapper[
       url.searchParams.get('type') as AdapterType | AdapterTypeAlias
     ];
-  const name = url.searchParams.get('name') || '';
-  if (!type || !name) {
+  const name = url.searchParams.get('name');
+  if (!type || typeof type !== 'string' || !name || typeof name !== 'string') {
     return {
       code: 400,
       body: {

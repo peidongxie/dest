@@ -9,7 +9,6 @@ class Database {
 
   adapter: Adapter;
   name: string;
-  schemas: EntitySchemaOptions<unknown>[];
   type: AdapterType;
 
   constructor(
@@ -19,8 +18,7 @@ class Database {
   ) {
     this.type = type;
     this.name = name || '';
-    this.schemas = schemas || [];
-    this.adapter = createAdapter(this.type, this.name, this.schemas);
+    this.adapter = createAdapter(this.type, this.name, schemas || []);
   }
 
   async create(): Promise<Database> {
@@ -46,6 +44,26 @@ class Database {
       await this.adapter.getRootDataSource().destroy();
     }
     await this.adapter.postDestroy?.();
+    return this;
+  }
+
+  async remove(target: string, entities: unknown[]): Promise<Database> {
+    await this.adapter.preRemove?.();
+    await this.adapter
+      .getWritableDataSource()
+      .getRepository(target)
+      .remove(entities);
+    await this.adapter.postRemove?.();
+    return this;
+  }
+
+  async save(target: string, entities: unknown[]): Promise<Database> {
+    await this.adapter.preSave?.();
+    await this.adapter
+      .getWritableDataSource()
+      .getRepository(target)
+      .save(entities);
+    await this.adapter.postSave?.();
     return this;
   }
 

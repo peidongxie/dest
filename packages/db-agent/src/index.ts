@@ -4,6 +4,7 @@ import {
   getDatabase,
   postDatabase,
   postQuery,
+  putDatabase,
 } from './controller';
 import { createDatabase } from './service';
 
@@ -17,6 +18,7 @@ const startServer = async () => {
   router.setRoute('DELETE', '/database', deleteDatabase);
   router.setRoute('GET', '/database', getDatabase);
   router.setRoute('POST', '/database', postDatabase);
+  router.setRoute('PUT', '/database', putDatabase);
   router.setRoute('POST', '/query', postQuery);
   const server = new Server('http');
   server.use(cors.getHandler());
