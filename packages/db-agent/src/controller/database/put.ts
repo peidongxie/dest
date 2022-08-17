@@ -18,9 +18,7 @@ const handler: Handler = async (req) => {
   >();
   if (
     !type ||
-    typeof type !== 'string' ||
     !name ||
-    typeof name !== 'string' ||
     !Array.isArray(data) ||
     data.some((item) => {
       if (item.type !== 'remove' && item.type !== 'save') return true;

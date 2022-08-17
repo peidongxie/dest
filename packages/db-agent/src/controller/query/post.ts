@@ -13,15 +13,20 @@ const handler: Handler = async (req) => {
       url.searchParams.get('type') as AdapterType | AdapterTypeAlias
     ];
   const name = url.searchParams.get('name') || '';
-  const privilege = url.pathname.match(
-    /^\/?query\/(read|root|write)(\/|$)/,
-  )?.[1] as 'read' | 'root' | 'write';
+  const privilege = `/${url.pathname}/`
+    .replace(/^\/+$/g, '/')
+    .match(/^\/query\/(read|root|write)\//)?.[1] as
+    | 'read'
+    | 'root'
+    | 'write'
+    | undefined;
   const query = await body.text();
   if (
     !type ||
-    !query ||
     (!name && privilege !== 'root') ||
-    (name && privilege !== 'read' && privilege !== 'write')
+    (name && privilege !== 'read' && privilege !== 'write') ||
+    !privilege ||
+    !query
   ) {
     return {
       code: 400,
