@@ -8,7 +8,8 @@ const service = async (
   schemas: EntitySchemaOptions<unknown>[],
 ): Promise<Database | null> => {
   const database = readDatabase(type, name);
-  return database ? null : new Database(type, name, schemas).create();
+  if (database) return null;
+  return new Database(type, name, schemas).create();
 };
 
 export default service;

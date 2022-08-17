@@ -1,11 +1,10 @@
 import { type Handler } from '@dest-toolkit/http-server';
-import { type EntitySchemaOptions } from 'typeorm';
 import {
   adapterMapper,
   type AdapterType,
   type AdapterTypeAlias,
 } from '../../domain';
-import { createDatabase } from '../../service';
+import { updateDatabase } from '../../service';
 
 const handler: Handler = async (req) => {
   const { url, body } = req;
@@ -13,14 +12,23 @@ const handler: Handler = async (req) => {
     adapterMapper[
       url.searchParams.get('type') as AdapterType | AdapterTypeAlias
     ];
-  const name = url.searchParams.get('name') || '';
-  const schemas = await body.json<EntitySchemaOptions<unknown>[]>();
+  const name = url.searchParams.get('name');
+  const data = await body.json<
+    { type: 'remove' | 'save'; name: string; rows: unknown[] }[]
+  >();
   if (
     !type ||
     typeof type !== 'string' ||
     !name ||
     typeof name !== 'string' ||
-    !Array.isArray(schemas)
+    !Array.isArray(data) ||
+    data.some((item) => {
+      if (item.type !== 'remove' && item.type !== 'save') return true;
+      if (!item.name) return true;
+      if (typeof item.name !== 'string') return true;
+      if (!Array.isArray(item.rows)) return true;
+      return false;
+    })
   ) {
     return {
       code: 400,
@@ -29,10 +37,10 @@ const handler: Handler = async (req) => {
       },
     };
   }
-  const database = await createDatabase(type, name, schemas);
+  const database = await updateDatabase(type, name, data);
   if (!database) {
     return {
-      code: 409,
+      code: 404,
       body: {
         success: false,
       },
