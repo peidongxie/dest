@@ -15,13 +15,7 @@ const handler: Handler = async (req) => {
     ];
   const name = url.searchParams.get('name') || '';
   const schemas = await body.json<EntitySchemaOptions<unknown>[]>();
-  if (
-    !type ||
-    typeof type !== 'string' ||
-    !name ||
-    typeof name !== 'string' ||
-    !Array.isArray(schemas)
-  ) {
+  if (!type || !name || !Array.isArray(schemas)) {
     return {
       code: 400,
       body: {

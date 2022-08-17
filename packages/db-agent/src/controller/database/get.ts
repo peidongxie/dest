@@ -13,7 +13,7 @@ const handler: Handler = async (req) => {
       url.searchParams.get('type') as AdapterType | AdapterTypeAlias
     ];
   const name = url.searchParams.get('name');
-  if (!type || typeof type !== 'string' || !name || typeof name !== 'string') {
+  if (!type || !name) {
     return {
       code: 400,
       body: {
