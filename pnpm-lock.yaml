@@ -30,6 +30,7 @@ importers:
     specifiers:
       '@dest-toolkit/http-server': workspace:^0.1.7
       '@types/node': ^18.7.6
+      '@types/sqlite3': ^3.1.8
       '@types/type-is': ^1.6.3
       '@typescript-eslint/eslint-plugin': ^5.33.1
       '@typescript-eslint/parser': ^5.33.1
@@ -50,6 +51,7 @@ importers:
       typeorm: 0.3.7_jcuf35325jkazdiy65vwcem4mq
     devDependencies:
       '@types/node': 18.7.6
+      '@types/sqlite3': 3.1.8
       '@types/type-is': 1.6.3
       '@typescript-eslint/eslint-plugin': 5.33.1_vsoshirnpb7xw6mr7xomgfas2i
       '@typescript-eslint/parser': 5.33.1_4rv7y5c6xz3vfxwhbrcxxi73bq
@@ -249,6 +251,12 @@ packages:
 
   /@types/node/18.7.6:
     resolution: {integrity: sha512-EdxgKRXgYsNITy5mjjXjVE/CS8YENSdhiagGrLqjG0pvA2owgJ6i4l7wy/PFZGC0B1/H20lWKN7ONVDNYDZm7A==}
+    dev: true
+
+  /@types/sqlite3/3.1.8:
+    resolution: {integrity: sha512-sQMt/qnyUWnqiTcJXm5ZfNPIBeJ/DVvJDwxw+0tAxPJvadzfiP1QhryO1JOR6t1yfb8NpzQb/Rud06mob5laIA==}
+    dependencies:
+      '@types/node': 18.7.6
     dev: true
 
   /@types/type-is/1.6.3:
@@ -677,8 +685,8 @@ packages:
       which: 2.0.2
     dev: true
 
-  /date-fns/2.29.1:
-    resolution: {integrity: sha512-dlLD5rKaKxpFdnjrs+5azHDFOPEu4ANy/LTh04A1DTzMM7qoajmKCBc8pkKRFT41CNzw+4gQh79X5C+Jq27HAw==}
+  /date-fns/2.29.2:
+    resolution: {integrity: sha512-0VNbwmWJDS/G3ySwFSJA3ayhbURMTJLtwM2DTxf9CWondCnh6DTNlO9JgRSq6ibf4eD0lfMJNBxUdEAHHix+bA==}
     engines: {node: '>=0.11'}
     dev: false
 
@@ -2485,7 +2493,7 @@ packages:
       buffer: 6.0.3
       chalk: 4.1.2
       cli-highlight: 2.1.11
-      date-fns: 2.29.1
+      date-fns: 2.29.2
       debug: 4.3.4
       dotenv: 16.0.1
       glob: 7.2.3
