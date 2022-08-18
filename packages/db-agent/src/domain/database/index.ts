@@ -24,10 +24,10 @@ class Database {
   async create(): Promise<Database> {
     await this.adapter.preCreate?.();
     if (this.name) {
-      await this.adapter.getReadableDataSource().initialize();
-      await this.adapter.getWritableDataSource().initialize();
+      await this.adapter.getReadableDataSource?.().initialize();
+      await this.adapter.getWritableDataSource?.().initialize();
     } else {
-      await this.adapter.getRootDataSource().initialize();
+      await this.adapter.getRootDataSource?.().initialize();
     }
     Database.store[this.type].set(this.name, this);
     await this.adapter.postCreate?.();
@@ -38,10 +38,10 @@ class Database {
     await this.adapter.preDestroy?.();
     Database.store[this.type].delete(this.name);
     if (this.name) {
-      await this.adapter.getReadableDataSource().destroy();
-      await this.adapter.getWritableDataSource().destroy();
+      await this.adapter.getReadableDataSource?.().destroy();
+      await this.adapter.getWritableDataSource?.().destroy();
     } else {
-      await this.adapter.getRootDataSource().destroy();
+      await this.adapter.getRootDataSource?.().destroy();
     }
     await this.adapter.postDestroy?.();
     return this;
@@ -50,7 +50,7 @@ class Database {
   async remove(target: string, entities: unknown[]): Promise<Database> {
     await this.adapter.preRemove?.();
     await this.adapter
-      .getWritableDataSource()
+      .getWritableDataSource?.()
       .getRepository(target)
       .remove(entities);
     await this.adapter.postRemove?.();
@@ -60,23 +60,23 @@ class Database {
   async save(target: string, entities: unknown[]): Promise<Database> {
     await this.adapter.preSave?.();
     await this.adapter
-      .getWritableDataSource()
+      .getWritableDataSource?.()
       .getRepository(target)
       .save(entities);
     await this.adapter.postSave?.();
     return this;
   }
 
-  read<T>(query: string): Promise<T> {
-    return this.adapter.getReadableDataSource().query(query);
+  read<T>(query: string): Promise<T> | null {
+    return this.adapter.getReadableDataSource?.().query(query) || null;
   }
 
-  root<T>(query: string): Promise<T> {
-    return this.adapter.getRootDataSource().query(query);
+  root<T>(query: string): Promise<T> | null {
+    return this.adapter.getRootDataSource?.().query(query) || null;
   }
 
-  write<T>(query: string): Promise<T> {
-    return this.adapter.getWritableDataSource().query(query);
+  write<T>(query: string): Promise<T> | null {
+    return this.adapter.getWritableDataSource?.().query(query) || null;
   }
 }
 

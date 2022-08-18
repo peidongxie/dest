@@ -4,9 +4,9 @@ type AdapterType = 'mariadb' | 'mysql:8';
 type AdapterTypeAlias = 'mysql';
 
 interface Adapter {
-  getReadableDataSource: () => DataSource;
-  getRootDataSource: () => DataSource;
-  getWritableDataSource: () => DataSource;
+  getReadableDataSource?: () => DataSource;
+  getRootDataSource?: () => DataSource;
+  getWritableDataSource?: () => DataSource;
   postCreate?: () => Promise<void>;
   postDestroy?: () => Promise<void>;
   postRemove?: () => Promise<void>;

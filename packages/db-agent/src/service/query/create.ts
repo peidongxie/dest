@@ -10,7 +10,9 @@ const service = async <T>(
   const database = readDatabase(type, name);
   if (!database) return null;
   const start = process.hrtime.bigint();
-  const result = await database[privilege]<T>(query);
+  const promise = database[privilege]<T>(query);
+  if (!promise) return null;
+  const result = await promise;
   const end = process.hrtime.bigint();
   return {
     time: end - start,
