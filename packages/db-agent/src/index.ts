@@ -9,7 +9,8 @@ import {
 import { createDatabase } from './service';
 
 const createInitialDatabase = async () => {
-  await createDatabase('mariadb', '', []);
+  // await createDatabase('mariadb', '', []);
+  await createDatabase('sqlite', '', []);
 };
 
 const startServer = async () => {

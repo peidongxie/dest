@@ -14,7 +14,7 @@ const handler: Handler = async (req) => {
     ];
   const name = url.searchParams.get('name') || '';
   const privilege = `/${url.pathname}/`
-    .replace(/^\/+$/g, '/')
+    .replace(/\/+/g, '/')
     .match(/^\/query\/(read|root|write)\//)?.[1] as
     | 'read'
     | 'root'

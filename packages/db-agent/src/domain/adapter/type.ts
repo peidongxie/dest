@@ -1,12 +1,12 @@
 import { type DataSource } from 'typeorm';
 
-type AdapterType = 'mariadb' | 'mysql:8';
+type AdapterType = 'mariadb' | 'mysql:8' | 'sqlite';
 type AdapterTypeAlias = 'mysql';
 
 interface Adapter {
-  getReadableDataSource?: () => DataSource;
-  getRootDataSource?: () => DataSource;
-  getWritableDataSource?: () => DataSource;
+  getReadableDataSource: () => DataSource | null;
+  getRootDataSource: () => DataSource | null;
+  getWritableDataSource: () => DataSource | null;
   postCreate?: () => Promise<void>;
   postDestroy?: () => Promise<void>;
   postRemove?: () => Promise<void>;
