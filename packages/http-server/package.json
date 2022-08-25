@@ -56,10 +56,10 @@
   "devDependencies": {
     "@types/busboy": "^1.5.0",
     "@types/fs-extra": "^9.0.13",
-    "@types/node": "^18.7.6",
+    "@types/node": "^18.7.13",
     "@types/whatwg-mimetype": "^2.1.1",
-    "@typescript-eslint/eslint-plugin": "^5.33.1",
-    "@typescript-eslint/parser": "^5.33.1",
+    "@typescript-eslint/eslint-plugin": "^5.35.1",
+    "@typescript-eslint/parser": "^5.35.1",
     "esbuild": "^0.14.54",
     "eslint": "^8.22.0",
     "eslint-config-prettier": "^8.5.0",
