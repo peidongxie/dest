@@ -1,7 +1,11 @@
 {
   "include": [],
   "exclude": [],
-  "references": [{ "path": "packages/http-server" }],
+  "references": [
+    { "path": "packages/db-agent" },
+    { "path": "packages/grpc-server" },
+    { "path": "packages/http-server" }
+  ],
   "compilerOptions": {
     // Type Checking
     "alwaysStrict": true,
