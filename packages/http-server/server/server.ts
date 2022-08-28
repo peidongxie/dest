@@ -164,13 +164,20 @@ class Server<T extends HttpType = 'HTTP'> {
     );
   }
 
-  public listen(port?: number, hostname?: string): ServerOriginalValue<T> {
+  public listen(
+    port?: number,
+    hostname?: string,
+  ): Promise<ServerOriginalValue<T>> {
     this.originalValue.on('request', this.callback());
-    this.originalValue.listen(
-      port || (this.type === 'http' ? 80 : 443),
-      hostname || 'localhost',
+    return new Promise((resolve) =>
+      this.originalValue.listen(
+        port || (this.type === 'http' ? 80 : 443),
+        hostname || 'localhost',
+        () => {
+          resolve(this.originalValue);
+        },
+      ),
     );
-    return this.originalValue;
   }
 
   public use(plugin: Handler<T> | Plugin<T>): void {
