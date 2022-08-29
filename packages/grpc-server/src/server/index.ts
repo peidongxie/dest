@@ -1,10 +1,20 @@
-import { Server as GrpcServer, ServerCredentials } from '@grpc/grpc-js';
+import {
+  Server as GrpcServer,
+  ServerCredentials,
+  type MethodDefinition,
+  type UntypedHandleCall,
+} from '@grpc/grpc-js';
 
 class Server {
+  private handlers: Map<
+    string,
+    [MethodDefinition<unknown, unknown>, UntypedHandleCall]
+  >;
   private originalValue: GrpcServer;
 
   public constructor() {
     this.originalValue = new GrpcServer();
+    this.handlers = new Map();
   }
 
   public async close(): Promise<GrpcServer> {
@@ -34,6 +44,13 @@ class Server {
         },
       ),
     );
+  }
+
+  public use(
+    definition: MethodDefinition<unknown, unknown>,
+    implementation: UntypedHandleCall,
+  ): void {
+    this.handlers.set(definition.path, [definition, implementation]);
   }
 }
 
