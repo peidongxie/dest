@@ -8,29 +8,56 @@ import {
   type handleUnaryCall,
 } from '@grpc/grpc-js';
 
-type Definition<RequestType, ResponseType> = MethodDefinition<
-  RequestType,
-  ResponseType
->;
+type RpcType =
+  | 'Unary'
+  | 'ServerStreaming'
+  | 'ClientStreaming'
+  | 'BidiStreaming';
 
-type Implementation<RequestType, ResponseType> =
-  | handleUnaryCall<RequestType, ResponseType>
-  | handleClientStreamingCall<RequestType, ResponseType>
-  | handleServerStreamingCall<RequestType, ResponseType>
-  | handleBidiStreamingCall<RequestType, ResponseType>;
+type Definition<Request, Response> = MethodDefinition<Request, Response>;
 
-type Handler<RequestType, ResponseType> = [
-  Definition<RequestType, ResponseType>,
-  Implementation<RequestType, ResponseType>,
-];
+type Implementation<
+  Type extends RpcType,
+  Request,
+  Response,
+> = Type extends 'Unary'
+  ? handleUnaryCall<Request, Response>
+  : Type extends 'ServerStreaming'
+  ? handleServerStreamingCall<Request, Response>
+  : Type extends 'ClientStreaming'
+  ? handleClientStreamingCall<Request, Response>
+  : Type extends 'BidiStreaming'
+  ? handleBidiStreamingCall<Request, Response>
+  : never;
+
+interface Handler<Type extends RpcType, Request, Response> {
+  type: Type;
+  definition: Definition<Request, Response>;
+  implementation: Implementation<Type, Request, Response>;
+}
 
 class Server {
-  private handlers: Map<string, Handler<unknown, unknown>>;
+  private handlers: Map<string, Handler<RpcType, unknown, unknown>>;
   private originalValue: GrpcServer;
 
   public constructor() {
     this.originalValue = new GrpcServer();
     this.handlers = new Map();
+  }
+
+  public callback(): [
+    Record<string, Definition<unknown, unknown>>,
+    Record<string, Implementation<RpcType, unknown, unknown>>,
+  ] {
+    const entries = Array.from(this.handlers.entries());
+    return [
+      Object.fromEntries(
+        entries.map((entry) => [entry[0], entry[1].definition]),
+      ),
+      Object.fromEntries(
+        entries.map((entry) => [entry[0], entry[1].implementation]),
+      ),
+    ];
   }
 
   public async close(): Promise<GrpcServer> {
@@ -46,6 +73,7 @@ class Server {
   }
 
   public listen(port?: number, hostname?: string): Promise<GrpcServer> {
+    this.originalValue.addService(...this.callback());
     return new Promise((resolve, reject) =>
       this.originalValue.bindAsync(
         `${hostname || 'localhost'}:${port || 0}`,
@@ -62,12 +90,13 @@ class Server {
     );
   }
 
-  public use<RequestType, ResponseType>(
-    definition: MethodDefinition<RequestType, ResponseType>,
-    implementation: Implementation<RequestType, ResponseType>,
+  public use<Type extends RpcType, Request, Response>(
+    handler: Handler<Type, Request, Response>,
   ): void {
-    const handler = [definition, implementation] as Handler<unknown, unknown>;
-    this.handlers.set(definition.path, handler);
+    this.handlers.set(
+      handler.definition.path,
+      handler as Handler<RpcType, unknown, unknown>,
+    );
   }
 }
 
