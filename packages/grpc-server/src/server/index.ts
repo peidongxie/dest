@@ -30,10 +30,26 @@ type Implementation<
   ? handleBidiStreamingCall<Request, Response>
   : never;
 
+type HandlerDefinition<Request, Response> = MethodDefinition<Request, Response>;
+
+type HandlerImplementation<
+  Type extends RpcType,
+  Request,
+  Response,
+> = Type extends 'Unary'
+  ? (req: Request) => Response | Promise<Response>
+  : Type extends 'ServerStreaming'
+  ? handleServerStreamingCall<Request, Response>
+  : Type extends 'ClientStreaming'
+  ? handleClientStreamingCall<Request, Response>
+  : Type extends 'BidiStreaming'
+  ? handleBidiStreamingCall<Request, Response>
+  : never;
+
 interface Handler<Type extends RpcType, Request, Response> {
   type: Type;
-  definition: Definition<Request, Response>;
-  implementation: Implementation<Type, Request, Response>;
+  definition: HandlerDefinition<Request, Response>;
+  implementation: HandlerImplementation<Type, Request, Response>;
 }
 
 class Server {
@@ -52,10 +68,33 @@ class Server {
     const entries = Array.from(this.handlers.entries());
     return [
       Object.fromEntries(
-        entries.map((entry) => [entry[0], entry[1].definition]),
+        entries.map(([path, handler]) => [path, handler.definition]),
       ),
       Object.fromEntries(
-        entries.map((entry) => [entry[0], entry[1].implementation]),
+        entries.map(([path, handler]) => {
+          if (handler.type === 'Unary') {
+            return [
+              path,
+              <Request, Response>(
+                call: Parameters<Implementation<'Unary', Request, Response>>[0],
+                callback: Parameters<
+                  Implementation<'Unary', Request, Response>
+                >[1],
+              ): ReturnType<Implementation<'Unary', Request, Response>> => {
+                const implementation =
+                  handler.implementation as HandlerImplementation<
+                    'Unary',
+                    Request,
+                    Response
+                  >;
+                Promise.resolve(implementation(call.request))
+                  .then((value) => callback(null, value))
+                  .catch((reason) => callback(reason));
+              },
+            ];
+          }
+          return [path, handler.implementation];
+        }),
       ),
     ];
   }
