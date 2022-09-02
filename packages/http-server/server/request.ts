@@ -52,7 +52,6 @@ class Request<T extends HttpType = 'HTTP'> {
           );
         }
         bodyUsed = true;
-        bodyUsed = true;
         try {
           const arrayBuffer = await this.getBodyArrayBuffer();
           return arrayBuffer;
