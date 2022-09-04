@@ -3,7 +3,12 @@ import {
   type handleBidiStreamingCall,
   type handleClientStreamingCall,
   type handleServerStreamingCall,
+  type sendUnaryData,
 } from '@grpc/grpc-js';
+import {
+  ObjectReadable,
+  ObjectWritable,
+} from '@grpc/grpc-js/src/object-stream';
 import { type Definition, type Implementation, type RpcType } from './server';
 
 type HandlerDefinition<Type extends RpcType, Request, Response> = Omit<
@@ -76,20 +81,45 @@ class Handler<Type extends RpcType, Request, Response> {
   }
 
   wrapImplementation(): Implementation<Type, Request, Response> {
+    const getValue = <T>(source: { request: T }): T => {
+      return source.request;
+    };
+    const setValue = <T>(target: sendUnaryData<T>) => [
+      (value: Parameters<sendUnaryData<T>>[1]): void => {
+        target(null, value);
+      },
+      (reason: Parameters<sendUnaryData<T>>[0]): void => {
+        target(reason);
+      },
+    ];
+    const getIterable = async function* <T>(
+      source: ObjectReadable<T>,
+    ): AsyncIterable<T> {
+      for await (const request of source) {
+        yield request;
+      }
+    };
+    const setIterable = <T>(target: ObjectWritable<T>) => [
+      async (value: AsyncIterable<T>): Promise<void> => {
+        for await (const response of value) {
+          target.write(response);
+        }
+        return;
+      },
+      async (): Promise<void> => {
+        return;
+      },
+    ];
     if (this.type === 'Unary') {
       const implementation = this.implementation as HandlerImplementation<
         'Unary',
         Request,
         Response
       >;
-      const wrappedImplementation = (async (call, callback) => {
-        try {
-          const value = await implementation(call.request);
-          callback(null, value);
-        } catch (error) {
-          callback(error as Parameters<typeof callback>[0]);
-          throw error;
-        }
+      const wrappedImplementation = ((call, callback) => {
+        Promise.resolve(getValue(call))
+          .then((req) => implementation(req))
+          .then(...setValue(callback));
       }) as Implementation<'Unary', Request, Response>;
       return wrappedImplementation as Implementation<Type, Request, Response>;
     }
