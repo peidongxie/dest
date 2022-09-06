@@ -7,7 +7,7 @@ import {
   type handleServerStreamingCall,
   type handleUnaryCall,
 } from '@grpc/grpc-js';
-import Handler from './handler';
+import { type Definition, type Handler, type Plugin } from './handler';
 
 type RpcType =
   | 'Unary'
@@ -15,48 +15,73 @@ type RpcType =
   | 'ClientStreaming'
   | 'BidiStreaming';
 
-type Definition<Type extends RpcType, Request, Response> = Type extends
+type ServerService<T extends RpcType, ReqMsg, ResMsg> = T extends
   | 'Unary'
   | 'ServerStreaming'
   | 'ClientStreaming'
   | 'BidiStreaming'
-  ? MethodDefinition<Request, Response>
-  : MethodDefinition<Request, Response>;
+  ? MethodDefinition<ReqMsg, ResMsg>
+  : MethodDefinition<ReqMsg, ResMsg>;
 
-type Implementation<
-  Type extends RpcType,
-  Request,
-  Response,
-> = Type extends 'Unary'
-  ? handleUnaryCall<Request, Response>
-  : Type extends 'ServerStreaming'
-  ? handleServerStreamingCall<Request, Response>
-  : Type extends 'ClientStreaming'
-  ? handleClientStreamingCall<Request, Response>
-  : Type extends 'BidiStreaming'
-  ? handleBidiStreamingCall<Request, Response>
+type ServerRequest<T extends RpcType, ReqMsg> = T extends 'Unary'
+  ? Parameters<handleUnaryCall<ReqMsg, unknown>>
+  : T extends 'ServerStreaming'
+  ? Parameters<handleServerStreamingCall<ReqMsg, unknown>>
+  : T extends 'ClientStreaming'
+  ? Parameters<handleClientStreamingCall<ReqMsg, unknown>>
+  : T extends 'BidiStreaming'
+  ? Parameters<handleBidiStreamingCall<ReqMsg, unknown>>
   : never;
 
+type ServerResponse<T extends RpcType, ResMsg> = T extends 'Unary'
+  ? Parameters<handleUnaryCall<unknown, ResMsg>>
+  : T extends 'ServerStreaming'
+  ? Parameters<handleServerStreamingCall<unknown, ResMsg>>
+  : T extends 'ClientStreaming'
+  ? Parameters<handleClientStreamingCall<unknown, ResMsg>>
+  : T extends 'BidiStreaming'
+  ? Parameters<handleBidiStreamingCall<unknown, ResMsg>>
+  : never;
+
+type ServerImplementation<T extends RpcType, ReqMsg, ResMsg> = T extends 'Unary'
+  ? handleUnaryCall<ReqMsg, ResMsg>
+  : T extends 'ServerStreaming'
+  ? handleServerStreamingCall<ReqMsg, ResMsg>
+  : T extends 'ClientStreaming'
+  ? handleClientStreamingCall<ReqMsg, ResMsg>
+  : T extends 'BidiStreaming'
+  ? handleBidiStreamingCall<ReqMsg, ResMsg>
+  : never;
+
+type ServerListener = [
+  Record<string, ServerService<RpcType, unknown, unknown>>,
+  Record<string, ServerImplementation<RpcType, unknown, unknown>>,
+];
+
 class Server {
+  private definitions: Map<string, Definition<RpcType, unknown, unknown>>;
   private handlers: Map<string, Handler<RpcType, unknown, unknown>>;
   private originalValue: GrpcServer;
 
   public constructor() {
     this.originalValue = new GrpcServer();
+    this.definitions = new Map();
     this.handlers = new Map();
   }
 
-  public callback(): [
-    Record<string, Definition<RpcType, unknown, unknown>>,
-    Record<string, Implementation<RpcType, unknown, unknown>>,
-  ] {
-    const entries = Array.from(this.handlers.entries());
+  public callback(): ServerListener {
     return [
       Object.fromEntries(
-        entries.map(([path, handler]) => [path, handler.wrapDefinition()]),
+        Array.from(this.definitions.entries()).map(([path, definition]) => [
+          path,
+          definition,
+        ]),
       ),
       Object.fromEntries(
-        entries.map(([path, handler]) => [path, handler.wrapImplementation()]),
+        Array.from(this.handlers.entries()).map(([path, handler]) => [
+          path,
+          handler,
+        ]),
       ),
     ];
   }
@@ -91,27 +116,25 @@ class Server {
     );
   }
 
-  public use<Type extends RpcType, Request, Response>(
-    plugin: Pick<
-      Handler<Type, Request, Response>,
-      'type' | 'definition' | 'implementation'
-    >,
+  public use<T extends RpcType, ReqMsg, ResMsg>(
+    plugin: Plugin<T, ReqMsg, ResMsg>,
   ): void {
-    const handler = new Handler(
-      plugin.type,
-      plugin.definition,
-      plugin.implementation,
+    this.definitions.set(
+      plugin.definition.path,
+      plugin.definition as Definition<T, unknown, unknown>,
     );
     this.handlers.set(
-      handler.getPath(),
-      handler as Handler<Type, unknown, unknown>,
+      plugin.definition.path,
+      plugin.handler as Handler<T, unknown, unknown>,
     );
   }
 }
 
 export {
   Server as default,
-  type Definition,
-  type Implementation,
   type RpcType,
+  type ServerRequest,
+  type ServerResponse,
+  type ServerService as ServerDefinition,
+  type ServerImplementation,
 };
