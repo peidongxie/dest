@@ -7,7 +7,7 @@ import {
   type handleServerStreamingCall,
   type handleUnaryCall,
 } from '@grpc/grpc-js';
-import { type Plugin } from './handler';
+import { HandlerRequest, HandlerResponse, type Plugin } from './handler';
 import Request from './request';
 import Response from './response';
 
@@ -91,10 +91,16 @@ class Server {
                 'BidiStreaming',
                 ResMsg
               >[0];
-              stream.on('end', stream.end());
+              stream.on('end', () => stream.end());
             }
             const handlerRequest = request.getRequest();
-            const handlerResponse = await handler(handlerRequest);
+            const handlerResponse = await (() => {
+              try {
+                return handler(handlerRequest);
+              } catch (e) {
+                return e as HandlerResponse<T, ResMsg>;
+              }
+            })();
             await response.setResponse(handlerResponse);
             if (type === 'ServerStreaming') {
               const stream = args[0] as ServerResponse<

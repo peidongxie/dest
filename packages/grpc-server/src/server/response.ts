@@ -18,10 +18,10 @@ class Response<T extends RpcType, ResMsg> {
           ResMsg
         >;
         const handlerResponse = res as HandlerResponse<'Unary', ResMsg>;
-        if (handlerResponse instanceof Error) {
-          serverResponse[1](handlerResponse);
-        } else {
+        if (!(handlerResponse instanceof Error)) {
           serverResponse[1](null, handlerResponse);
+        } else {
+          serverResponse[1](handlerResponse);
         }
         break;
       }
@@ -34,8 +34,10 @@ class Response<T extends RpcType, ResMsg> {
           'ServerStreaming',
           ResMsg
         >;
-        for await (const resMsg of handlerResponse) {
-          serverResponse[0].write(resMsg);
+        if (!(handlerResponse instanceof Error)) {
+          for await (const resMsg of handlerResponse) {
+            serverResponse[0].write(resMsg);
+          }
         }
         break;
       }
@@ -48,10 +50,10 @@ class Response<T extends RpcType, ResMsg> {
           'ClientStreaming',
           ResMsg
         >;
-        if (handlerResponse instanceof Error) {
-          serverResponse[1](handlerResponse);
-        } else {
+        if (!(handlerResponse instanceof Error)) {
           serverResponse[1](null, handlerResponse);
+        } else {
+          serverResponse[1](handlerResponse);
         }
         break;
       }
@@ -61,8 +63,10 @@ class Response<T extends RpcType, ResMsg> {
           ResMsg
         >;
         const handlerResponse = res as HandlerResponse<'BidiStreaming', ResMsg>;
-        for await (const resMsg of handlerResponse) {
-          serverResponse[0].write(resMsg);
+        if (!(handlerResponse instanceof Error)) {
+          for await (const resMsg of handlerResponse) {
+            serverResponse[0].write(resMsg);
+          }
         }
         break;
       }
