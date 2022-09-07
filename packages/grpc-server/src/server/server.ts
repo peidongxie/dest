@@ -7,7 +7,9 @@ import {
   type handleServerStreamingCall,
   type handleUnaryCall,
 } from '@grpc/grpc-js';
-import { type Definition, type Handler, type Plugin } from './handler';
+import { HandlerRequest, HandlerResponse, type Plugin } from './handler';
+import Request from './request';
+import Response from './response';
 
 type RpcType =
   | 'Unary'
@@ -59,28 +61,55 @@ type ServerListener = [
 ];
 
 class Server {
-  private definitions: Map<string, Definition<RpcType, unknown, unknown>>;
-  private handlers: Map<string, Handler<RpcType, unknown, unknown>>;
+  private plugins: Map<string, Plugin<RpcType, unknown, unknown>>;
   private originalValue: GrpcServer;
 
   public constructor() {
     this.originalValue = new GrpcServer();
-    this.definitions = new Map();
-    this.handlers = new Map();
+    this.plugins = new Map();
   }
 
   public callback(): ServerListener {
     return [
       Object.fromEntries(
-        Array.from(this.definitions.entries()).map(([path, definition]) => [
+        Array.from(this.plugins.entries()).map(([path, plugin]) => [
           path,
-          definition,
+          plugin.definition,
         ]),
       ),
       Object.fromEntries(
-        Array.from(this.handlers.entries()).map(([path, handler]) => [
+        Array.from(this.plugins.entries()).map(([path, plugin]) => [
           path,
-          handler,
+          async <T extends RpcType, ReqMsg, ResMsg>(
+            ...args: ServerRequest<T, ReqMsg> & ServerResponse<T, ResMsg>
+          ) => {
+            const { type, handler } = plugin as Plugin<T, ReqMsg, ResMsg>;
+            const request = new Request<T, ReqMsg>(type, args);
+            const response = new Response<T, ResMsg>(type, args);
+            if (type === 'BidiStreaming') {
+              const stream = args[0] as ServerResponse<
+                'BidiStreaming',
+                ResMsg
+              >[0];
+              stream.on('end', () => stream.end());
+            }
+            const handlerRequest = request.getRequest();
+            const handlerResponse = await (() => {
+              try {
+                return handler(handlerRequest);
+              } catch (e) {
+                return e as HandlerResponse<T, ResMsg>;
+              }
+            })();
+            await response.setResponse(handlerResponse);
+            if (type === 'ServerStreaming') {
+              const stream = args[0] as ServerResponse<
+                'ServerStreaming',
+                ResMsg
+              >[0];
+              stream.end();
+            }
+          },
         ]),
       ),
     ];
@@ -119,13 +148,9 @@ class Server {
   public use<T extends RpcType, ReqMsg, ResMsg>(
     plugin: Plugin<T, ReqMsg, ResMsg>,
   ): void {
-    this.definitions.set(
+    this.plugins.set(
       plugin.definition.path,
-      plugin.definition as Definition<T, unknown, unknown>,
-    );
-    this.handlers.set(
-      plugin.definition.path,
-      plugin.handler as Handler<T, unknown, unknown>,
+      plugin as Plugin<T, unknown, unknown>,
     );
   }
 }

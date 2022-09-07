@@ -36,13 +36,13 @@ type HandlerRequest<T extends RpcType, ReqMsg> = T extends 'Unary'
   : never;
 
 type HandlerResponse<T extends RpcType, ResMsg> = T extends 'Unary'
-  ? ResMsg
+  ? ResMsg | Error
   : T extends 'ServerStreaming'
-  ? Iterable<ResMsg> | AsyncIterable<ResMsg>
+  ? Iterable<ResMsg> | AsyncIterable<ResMsg> | Error
   : T extends 'ClientStreaming'
-  ? ResMsg
+  ? ResMsg | Error
   : T extends 'BidiStreaming'
-  ? Iterable<ResMsg> | AsyncIterable<ResMsg>
+  ? Iterable<ResMsg> | AsyncIterable<ResMsg> | Error
   : never;
 
 type Handler<T extends RpcType, ReqMsg, ResMsg> = (
