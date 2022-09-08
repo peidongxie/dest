@@ -1,13 +1,14 @@
 import {
   Server as GrpcServer,
   ServerCredentials,
+  type ChannelOptions,
   type MethodDefinition,
   type handleBidiStreamingCall,
   type handleClientStreamingCall,
   type handleServerStreamingCall,
   type handleUnaryCall,
 } from '@grpc/grpc-js';
-import { HandlerRequest, HandlerResponse, type Plugin } from './handler';
+import { type HandlerResponse, type Plugin } from './handler';
 import Request from './request';
 import Response from './response';
 
@@ -64,8 +65,8 @@ class Server {
   private plugins: Map<string, Plugin<RpcType, unknown, unknown>>;
   private originalValue: GrpcServer;
 
-  public constructor() {
-    this.originalValue = new GrpcServer();
+  public constructor(options?: ChannelOptions) {
+    this.originalValue = new GrpcServer(options);
     this.plugins = new Map();
   }
 

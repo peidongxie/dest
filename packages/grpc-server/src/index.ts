@@ -1,3 +1,25 @@
-import Server from './server';
+import Server, {
+  type Definition,
+  type Handler,
+  type HandlerRequest,
+  type HandlerResponse,
+  type Plugin,
+  type RpcType,
+} from './server';
 
-export { Server };
+const createServer = (
+  ...args: ConstructorParameters<typeof Server>
+): Server => {
+  return new Server(...args);
+};
+
+export {
+  Server,
+  createServer,
+  type Definition,
+  type Handler,
+  type HandlerRequest,
+  type HandlerResponse,
+  type Plugin,
+  type RpcType,
+};
