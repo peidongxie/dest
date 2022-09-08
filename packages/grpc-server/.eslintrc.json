@@ -1,0 +1,6 @@
+{
+  "ignorePatterns": ["*.d.ts", "*.js"],
+  "env": {
+    "node": true
+  }
+}
