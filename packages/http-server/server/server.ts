@@ -88,7 +88,7 @@ type ServerResponseHeaders<T extends HttpType = 'HTTP'> =
   ServerResponseHeadersMap[T];
 
 type ServerCreator<T extends HttpType = 'HTTP'> = (
-  options?: ServerOptions<T>,
+  options: ServerOptions<T>,
 ) => ServerOriginalValue<T>;
 
 type ServerListener<T extends HttpType = 'HTTP'> = (
@@ -100,7 +100,7 @@ const map = {
   http: httpCreateServer,
   https: httpsCreateServer,
   http2: createSecureServer,
-};
+} as const;
 
 class Server<T extends HttpType = 'HTTP'> {
   private handlers: Handler<T>[];
@@ -110,7 +110,7 @@ class Server<T extends HttpType = 'HTTP'> {
   public constructor(type: ServerType<T>, options?: ServerOptions<T>) {
     this.type = type;
     const creator = map[type] as ServerCreator<T>;
-    this.originalValue = creator(options);
+    this.originalValue = creator(options || {});
     this.handlers = [];
   }
 

@@ -20,7 +20,12 @@ const buildOptions: BuildOptions = {
   bundle: true,
   define: {},
   entryPoints: ['src/index.ts'],
-  external: ['@dest-toolkit/http-server', 'sqlite3', 'typeorm'],
+  external: [
+    '@dest-toolkit/http-server',
+    '@dest-toolkit/grpc-server',
+    'sqlite3',
+    'typeorm',
+  ],
   format: 'esm',
   inject: [],
   loader: {},

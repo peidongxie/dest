@@ -45,13 +45,13 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "@grpc/grpc-js": "^1.6.12"
+    "@grpc/grpc-js": "^1.7.0"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
-    "@types/node": "^18.7.14",
-    "@typescript-eslint/eslint-plugin": "^5.36.1",
-    "@typescript-eslint/parser": "^5.36.1",
+    "@types/node": "^18.7.16",
+    "@typescript-eslint/eslint-plugin": "^5.36.2",
+    "@typescript-eslint/parser": "^5.36.2",
     "esbuild": "^0.14.54",
     "eslint": "^8.23.0",
     "eslint-config-prettier": "^8.5.0",
@@ -59,7 +59,7 @@
     "fs-extra": "^10.1.0",
     "prettier": "^2.7.1",
     "sort-package-json": "^1.57.0",
-    "typescript": "^4.8.2"
+    "typescript": "^4.8.3"
   },
   "packageManager": "pnpm@7.2.1"
 }
