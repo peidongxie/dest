@@ -1,32 +1,19 @@
 import {
   createServer as httpCreateServer,
-  type IncomingHttpHeaders as HttpIncomingHttpHeaders,
-  type IncomingMessage as HttpIncomingMessage,
-  type OutgoingHttpHeaders as HttpOutgoingHttpHeaders,
-  type ServerResponse as HttpServerResponse,
   type ServerOptions as HttpServerOptions,
 } from 'http';
 import {
   createSecureServer,
-  type Http2ServerRequest,
-  type Http2ServerResponse,
-  type IncomingHttpHeaders as Http2IncomingHttpHeaders,
   type SecureServerOptions as Http2SecureServerOptions,
 } from 'http2';
 import {
   createServer as httpsCreateServer,
   type ServerOptions as HttpsServerOptions,
 } from 'https';
-import {
-  type Handler,
-  type HandlerRequest,
-  type HandlerResponse,
-  type Plugin,
-} from './handler';
-import Request from './request';
-import Response from './response';
-
-type HttpType = 'HTTP' | 'HTTPS' | 'HTTP2';
+import Request, { type PluginRequest, type ServerRequest } from './request';
+import Response, { type PluginResponse, type ServerResponse } from './response';
+import { type Plugin, type PluginHandler } from './plugin';
+import { type HttpType } from './type';
 
 interface ServerTypeMap {
   HTTP: 'http';
@@ -34,7 +21,7 @@ interface ServerTypeMap {
   HTTP2: 'http2';
 }
 
-type ServerType<T extends HttpType = 'HTTP'> = ServerTypeMap[T];
+type ServerType<T extends HttpType> = ServerTypeMap[T];
 
 interface ServerOptionsMap {
   HTTP: HttpServerOptions;
@@ -42,7 +29,7 @@ interface ServerOptionsMap {
   HTTP2: Http2SecureServerOptions;
 }
 
-type ServerOptions<T extends HttpType = 'HTTP'> = ServerOptionsMap[T];
+type ServerOptions<T extends HttpType> = ServerOptionsMap[T];
 
 interface ServerOriginalValueMap {
   HTTP: ReturnType<typeof httpCreateServer>;
@@ -50,102 +37,73 @@ interface ServerOriginalValueMap {
   HTTP2: ReturnType<typeof createSecureServer>;
 }
 
-type ServerOriginalValue<T extends HttpType = 'HTTP'> =
-  ServerOriginalValueMap[T];
+type ServerOriginalValue<T extends HttpType> = ServerOriginalValueMap[T];
 
-interface ServerRequestMap {
-  HTTP: HttpIncomingMessage;
-  HTTPS: HttpIncomingMessage;
-  HTTP2: Http2ServerRequest;
-}
-
-type ServerRequest<T extends HttpType = 'HTTP'> = ServerRequestMap[T];
-
-interface ServerRequestHeadersMap {
-  HTTP: HttpIncomingHttpHeaders;
-  HTTPS: HttpIncomingHttpHeaders;
-  HTTP2: Http2IncomingHttpHeaders;
-}
-
-type ServerRequestHeaders<T extends HttpType = 'HTTP'> =
-  ServerRequestHeadersMap[T];
-
-interface ServerResponseMap {
-  HTTP: HttpServerResponse;
-  HTTPS: HttpServerResponse;
-  HTTP2: Http2ServerResponse;
-}
-
-type ServerResponse<T extends HttpType = 'HTTP'> = ServerResponseMap[T];
-
-interface ServerResponseHeadersMap {
-  HTTP: HttpOutgoingHttpHeaders;
-  HTTPS: HttpOutgoingHttpHeaders;
-  HTTP2: HttpOutgoingHttpHeaders;
-}
-
-type ServerResponseHeaders<T extends HttpType = 'HTTP'> =
-  ServerResponseHeadersMap[T];
-
-type ServerCreator<T extends HttpType = 'HTTP'> = (
+type ServerCreator<T extends HttpType> = (
   options: ServerOptions<T>,
 ) => ServerOriginalValue<T>;
 
-type ServerListener<T extends HttpType = 'HTTP'> = (
+type ServerHandler<T extends HttpType> = (
   req: ServerRequest<T>,
   res: ServerResponse<T>,
 ) => void;
 
-const map = {
+const creatorMap = {
   http: httpCreateServer,
   https: httpsCreateServer,
   http2: createSecureServer,
 } as const;
 
-class Server<T extends HttpType = 'HTTP'> {
-  private handlers: Handler<T>[];
+const portMap = {
+  http: 80,
+  https: 443,
+  http2: 443,
+};
+
+class Server<T extends HttpType> {
+  private handlers: PluginHandler<T>[];
   private originalValue: ServerOriginalValue<T>;
   private type: ServerType<T>;
 
   public constructor(type: ServerType<T>, options?: ServerOptions<T>) {
     this.type = type;
-    const creator = map[type] as ServerCreator<T>;
+    const creator = creatorMap[type] as ServerCreator<T>;
     this.originalValue = creator(options || {});
     this.handlers = [];
   }
 
-  public callback(): ServerListener<T> {
+  public callback(): ServerHandler<T> {
     return async (req, res) => {
       const request = new Request<T>(req);
       const response = new Response<T>(res);
-      const handlerRequest: HandlerRequest<T> = request.getRequest();
-      const handlerResponse: HandlerResponse<T> = {};
+      const pluginRequest: PluginRequest<T> = request.getRequest();
+      const pluginResponse: PluginResponse<T> = {};
       try {
         for (const handler of this.handlers) {
           const { code, message, headers, body } =
-            (await handler(handlerRequest)) || {};
+            (await handler(pluginRequest)) || {};
           if (code !== undefined) {
-            handlerResponse.code = code;
+            pluginResponse.code = code;
           }
           if (message !== undefined) {
-            handlerResponse.message = message;
+            pluginResponse.message = message;
           }
           if (headers !== undefined) {
-            handlerResponse.headers = {
-              ...handlerResponse.headers,
+            pluginResponse.headers = {
+              ...pluginResponse.headers,
               ...headers,
             };
           }
           if (body !== undefined) {
-            handlerResponse.body = body;
+            pluginResponse.body = body;
             break;
           }
         }
-        response.setResponse(handlerResponse);
+        response.setResponse(pluginResponse);
       } catch (e) {
         response.setResponse({
           code: 500,
-          ...handlerResponse,
+          ...pluginResponse,
           body: e instanceof Error ? e : String(e),
         });
       }
@@ -171,7 +129,7 @@ class Server<T extends HttpType = 'HTTP'> {
     this.originalValue.on('request', this.callback());
     return new Promise((resolve) =>
       this.originalValue.listen(
-        port || (this.type === 'http' ? 80 : 443),
+        port || portMap[this.type],
         hostname || 'localhost',
         () => {
           resolve(this.originalValue);
@@ -180,7 +138,7 @@ class Server<T extends HttpType = 'HTTP'> {
     );
   }
 
-  public use(plugin: Handler<T> | Plugin<T>): void {
+  public use(plugin: PluginHandler<T> | Plugin<T>): void {
     const handler =
       typeof plugin === 'function' ? plugin : plugin?.getHandler();
     handler && this.handlers.push(handler);
@@ -189,11 +147,7 @@ class Server<T extends HttpType = 'HTTP'> {
 
 export {
   Server as default,
-  type HttpType,
+  type ServerHandler,
   type ServerOptions,
-  type ServerRequest,
-  type ServerRequestHeaders,
-  type ServerResponse,
-  type ServerResponseHeaders,
   type ServerType,
 };

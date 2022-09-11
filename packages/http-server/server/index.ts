@@ -1,7 +1,5 @@
-export {
-  type Handler,
-  type HandlerRequest,
-  type HandlerResponse,
-  type Plugin,
-} from './handler';
-export { default, type HttpType } from './server';
+export { type Plugin, type PluginHandler } from './plugin';
+export { type PluginRequest } from './request';
+export { type PluginResponse } from './response';
+export { default } from './server';
+export { type HttpType } from './type';
