@@ -1,60 +1,84 @@
-import { type HandlerRequest } from './handler';
-import { type RpcType, type ServerRequest } from './server';
+import {
+  type handleBidiStreamingCall,
+  type handleClientStreamingCall,
+  type handleServerStreamingCall,
+  type handleUnaryCall,
+} from '@grpc/grpc-js';
+import { type PluginType } from './plugin';
+import { type RpcType } from './type';
+
+interface ServerRequestMap<ReqMsg> {
+  UNARY: Parameters<handleUnaryCall<ReqMsg, unknown>>;
+  SERVER: Parameters<handleServerStreamingCall<ReqMsg, unknown>>;
+  CLIENT: Parameters<handleClientStreamingCall<ReqMsg, unknown>>;
+  BIDI: Parameters<handleBidiStreamingCall<ReqMsg, unknown>>;
+}
+
+type ServerRequest<T extends RpcType, ReqMsg> = ServerRequestMap<ReqMsg>[T];
+
+interface PluginRequestMap<ReqMsg> {
+  UNARY: ReqMsg;
+  SERVER: ReqMsg;
+  CLIENT: Iterable<ReqMsg> | AsyncIterable<ReqMsg>;
+  BIDI: Iterable<ReqMsg> | AsyncIterable<ReqMsg>;
+}
+
+type PluginRequest<T extends RpcType, ReqMsg> = PluginRequestMap<ReqMsg>[T];
 
 class Request<T extends RpcType, ReqMsg> {
   private originalValue: ServerRequest<T, ReqMsg>;
-  private type: T;
+  private type: PluginType<T>;
 
-  constructor(type: T, req: ServerRequest<T, ReqMsg>) {
+  constructor(type: PluginType<T>, req: ServerRequest<T, ReqMsg>) {
     this.originalValue = req;
     this.type = type;
   }
 
-  getRequest(): HandlerRequest<T, ReqMsg> {
+  getRequest(): PluginRequest<T, ReqMsg> {
     switch (this.type) {
-      case 'Unary': {
+      case 'unary': {
         const serverRequest = this.originalValue as ServerRequest<
-          'Unary',
+          'UNARY',
           ReqMsg
         >;
-        const handlerRequest: HandlerRequest<'Unary', ReqMsg> =
+        const handlerRequest: PluginRequest<'UNARY', ReqMsg> =
           serverRequest[0].request;
-        return handlerRequest as HandlerRequest<T, ReqMsg>;
+        return handlerRequest as PluginRequest<T, ReqMsg>;
       }
-      case 'ServerStreaming': {
+      case 'server-streaming': {
         const serverRequest = this.originalValue as ServerRequest<
-          'ServerStreaming',
+          'SERVER',
           ReqMsg
         >;
-        const handlerRequest: HandlerRequest<'ServerStreaming', ReqMsg> =
+        const handlerRequest: PluginRequest<'SERVER', ReqMsg> =
           serverRequest[0].request;
-        return handlerRequest as HandlerRequest<T, ReqMsg>;
+        return handlerRequest as PluginRequest<T, ReqMsg>;
       }
-      case 'ClientStreaming': {
+      case 'client-streaming': {
         const serverRequest = this.originalValue as ServerRequest<
-          'ClientStreaming',
+          'CLIENT',
           ReqMsg
         >;
-        const handlerRequest: HandlerRequest<'ClientStreaming', ReqMsg> =
+        const handlerRequest: PluginRequest<'CLIENT', ReqMsg> =
           (async function* () {
             for await (const reqMsg of serverRequest[0]) {
               yield reqMsg;
             }
           })();
-        return handlerRequest as HandlerRequest<T, ReqMsg>;
+        return handlerRequest as PluginRequest<T, ReqMsg>;
       }
-      case 'BidiStreaming': {
+      case 'bidi-streaming': {
         const serverRequest = this.originalValue as ServerRequest<
-          'BidiStreaming',
+          'BIDI',
           ReqMsg
         >;
-        const handlerRequest: HandlerRequest<'BidiStreaming', ReqMsg> =
+        const handlerRequest: PluginRequest<'BIDI', ReqMsg> =
           (async function* () {
             for await (const reqMsg of serverRequest[0]) {
               yield reqMsg;
             }
           })();
-        return handlerRequest as HandlerRequest<T, ReqMsg>;
+        return handlerRequest as PluginRequest<T, ReqMsg>;
       }
       default:
         throw new TypeError('Bad RPC type');
@@ -62,4 +86,4 @@ class Request<T extends RpcType, ReqMsg> {
   }
 }
 
-export { Request as default };
+export { Request as default, type PluginRequest, type ServerRequest };
