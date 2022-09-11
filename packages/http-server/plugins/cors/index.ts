@@ -1,4 +1,4 @@
-import { type Handler, type HttpType, type Plugin } from '../../server';
+import { type HttpType, type Plugin, type PluginHandler } from '../../server';
 
 interface AllowOptions {
   headers?: string;
@@ -23,7 +23,7 @@ const defaultOptions = {
   maxAge: 600,
 };
 
-class Cors<T extends HttpType = 'HTTP'> implements Plugin<T> {
+class Cors<T extends HttpType> implements Plugin<T> {
   private allowOptions: Required<AllowOptions>;
   private enable: boolean;
   private maxAge: number;
@@ -43,7 +43,7 @@ class Cors<T extends HttpType = 'HTTP'> implements Plugin<T> {
     }
   }
 
-  public getHandler(): Handler<T> {
+  public getHandler(): PluginHandler<T> {
     return (req) => {
       const { method, headers } = req;
       const origin = headers.origin;

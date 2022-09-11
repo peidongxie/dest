@@ -1,9 +1,8 @@
 import Server, {
-  type Definition,
-  type Handler,
-  type HandlerRequest,
-  type HandlerResponse,
   type Plugin,
+  type PluginHandler,
+  type PluginRequest,
+  type PluginResponse,
   type RpcType,
 } from './server';
 
@@ -16,10 +15,9 @@ const createServer = (
 export {
   Server,
   createServer,
-  type Definition,
-  type Handler,
-  type HandlerRequest,
-  type HandlerResponse,
   type Plugin,
+  type PluginHandler,
+  type PluginRequest,
+  type PluginResponse,
   type RpcType,
 };

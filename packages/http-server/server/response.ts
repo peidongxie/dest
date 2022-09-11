@@ -1,13 +1,36 @@
 import { Buffer } from 'buffer';
-import { Stream } from 'stream';
-import { type HandlerResponse } from './handler';
 import {
-  type HttpType,
-  type ServerResponse,
-  type ServerResponseHeaders,
-} from './server';
+  type OutgoingHttpHeaders as HttpOutgoingHttpHeaders,
+  type ServerResponse as HttpServerResponse,
+} from 'http';
+import { type Http2ServerResponse } from 'http2';
+import { Stream } from 'stream';
+import { type HttpType } from './type';
 
-class Response<T extends HttpType = 'HTTP'> {
+interface ServerResponseHeadersMap {
+  HTTP: HttpOutgoingHttpHeaders;
+  HTTPS: HttpOutgoingHttpHeaders;
+  HTTP2: HttpOutgoingHttpHeaders;
+}
+
+type ServerResponseHeaders<T extends HttpType> = ServerResponseHeadersMap[T];
+
+interface ServerResponseMap {
+  HTTP: HttpServerResponse;
+  HTTPS: HttpServerResponse;
+  HTTP2: Http2ServerResponse;
+}
+
+type ServerResponse<T extends HttpType> = ServerResponseMap[T];
+
+interface PluginResponse<T extends HttpType> {
+  code?: Parameters<Response<T>['setCode']>[0];
+  message?: Parameters<Response<T>['setMessage']>[0];
+  headers?: Parameters<Response<T>['setHeaders']>[0];
+  body?: Parameters<Response<T>['setBody']>[0];
+}
+
+class Response<T extends HttpType> {
   private originalValue: ServerResponse<T>;
 
   public constructor(res: ServerResponse<T>) {
@@ -48,7 +71,7 @@ class Response<T extends HttpType = 'HTTP'> {
     this.originalValue.statusMessage = message;
   }
 
-  public setResponse(res: HandlerResponse<T>): void {
+  public setResponse(res: PluginResponse<T>): void {
     const { body, code, headers, message } = res;
     if (code !== undefined) this.setCode(code);
     if (message !== undefined) this.setMessage(message);
@@ -122,4 +145,4 @@ class Response<T extends HttpType = 'HTTP'> {
   }
 }
 
-export { Response as default };
+export { Response as default, type PluginResponse, type ServerResponse };

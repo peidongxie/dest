@@ -3,6 +3,14 @@ import busboy from 'busboy';
 import { randomUUID } from 'crypto';
 import { createWriteStream } from 'fs';
 import getStream from 'get-stream';
+import {
+  type IncomingHttpHeaders as HttpIncomingHttpHeaders,
+  type IncomingMessage as HttpIncomingMessage,
+} from 'http';
+import {
+  type IncomingHttpHeaders as Http2IncomingHttpHeaders,
+  type Http2ServerRequest,
+} from 'http2';
 import iconv from 'iconv-lite';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -10,12 +18,7 @@ import { type Readable } from 'stream';
 import { URL, pathToFileURL } from 'url';
 import MIMEType from 'whatwg-mimetype';
 import { createBrotliDecompress, createGunzip, createInflate } from 'zlib';
-import { type HandlerRequest } from './handler';
-import {
-  type HttpType,
-  type ServerRequest,
-  type ServerRequestHeaders,
-} from './server';
+import { type HttpType } from './type';
 
 type FormKey = string;
 
@@ -33,7 +36,30 @@ interface Body {
   text(): Promise<string>;
 }
 
-class Request<T extends HttpType = 'HTTP'> {
+interface ServerRequestHeadersMap {
+  HTTP: HttpIncomingHttpHeaders;
+  HTTPS: HttpIncomingHttpHeaders;
+  HTTP2: Http2IncomingHttpHeaders;
+}
+
+type ServerRequestHeaders<T extends HttpType> = ServerRequestHeadersMap[T];
+
+interface ServerRequestMap {
+  HTTP: HttpIncomingMessage;
+  HTTPS: HttpIncomingMessage;
+  HTTP2: Http2ServerRequest;
+}
+
+type ServerRequest<T extends HttpType> = ServerRequestMap[T];
+
+interface PluginRequest<T extends HttpType> {
+  method: ReturnType<Request<T>['getMethod']>;
+  url: ReturnType<Request<T>['getUrl']>;
+  headers: ReturnType<Request<T>['getHeaders']>;
+  body: ReturnType<Request<T>['getBody']>;
+}
+
+class Request<T extends HttpType> {
   private originalValue: ServerRequest<T>;
 
   public constructor(req: ServerRequest<T>) {
@@ -126,7 +152,7 @@ class Request<T extends HttpType = 'HTTP'> {
     return this.originalValue.method || '';
   }
 
-  public getRequest(): HandlerRequest<T> {
+  public getRequest(): PluginRequest<T> {
     return {
       method: this.getMethod(),
       url: this.getUrl(),
@@ -261,4 +287,4 @@ class Request<T extends HttpType = 'HTTP'> {
   }
 }
 
-export { Request as default };
+export { Request as default, type PluginRequest, type ServerRequest };
