@@ -10,7 +10,7 @@ import {
   createServer as httpsCreateServer,
   type ServerOptions as HttpsServerOptions,
 } from 'https';
-import Request, { type PluginRequest, type ServerRequest } from './request';
+import Request, { type ServerRequest } from './request';
 import Response, { type PluginResponse, type ServerResponse } from './response';
 import { type Plugin, type PluginHandler } from './plugin';
 import { type HttpType } from './type';
@@ -39,22 +39,28 @@ interface ServerOriginalValueMap {
 
 type ServerOriginalValue<T extends HttpType> = ServerOriginalValueMap[T];
 
-type ServerCreator<T extends HttpType> = (
-  options: ServerOptions<T>,
-) => ServerOriginalValue<T>;
-
 type ServerHandler<T extends HttpType> = (
   req: ServerRequest<T>,
   res: ServerResponse<T>,
 ) => void;
 
-const creatorMap = {
+type CreatorMap = {
+  [T in HttpType as ServerType<T>]: (
+    options: ServerOptions<T>,
+  ) => ServerOriginalValue<T>;
+};
+
+const creatorMap: CreatorMap = {
   http: httpCreateServer,
   https: httpsCreateServer,
   http2: createSecureServer,
-} as const;
+};
 
-const portMap = {
+type PortMap = {
+  [T in HttpType as ServerType<T>]: number;
+};
+
+const portMap: PortMap = {
   http: 80,
   https: 443,
   http2: 443,
@@ -67,7 +73,9 @@ class Server<T extends HttpType> {
 
   public constructor(type: ServerType<T>, options?: ServerOptions<T>) {
     this.type = type;
-    const creator = creatorMap[type] as ServerCreator<T>;
+    const creator = creatorMap[type] as (
+      options: ServerOptions<T>,
+    ) => ServerOriginalValue<T>;
     this.originalValue = creator(options || {});
     this.handlers = [];
   }
@@ -76,37 +84,40 @@ class Server<T extends HttpType> {
     return async (req, res) => {
       const request = new Request<T>(req);
       const response = new Response<T>(res);
-      const pluginRequest: PluginRequest<T> = request.getRequest();
-      const pluginResponse: PluginResponse<T> = {};
-      try {
-        for (const handler of this.handlers) {
-          const { code, message, headers, body } =
-            (await handler(pluginRequest)) || {};
-          if (code !== undefined) {
-            pluginResponse.code = code;
+      const pluginRequest = request.getRequest();
+      const pluginResponse = await (async () => {
+        const pluginResponse: PluginResponse<T> = {};
+        try {
+          for (const handler of this.handlers) {
+            const { code, message, headers, body } =
+              (await handler(pluginRequest)) || {};
+            if (code !== undefined) {
+              pluginResponse.code = code;
+            }
+            if (message !== undefined) {
+              pluginResponse.message = message;
+            }
+            if (headers !== undefined) {
+              pluginResponse.headers = {
+                ...pluginResponse.headers,
+                ...headers,
+              };
+            }
+            if (body !== undefined) {
+              pluginResponse.body = body;
+              break;
+            }
           }
-          if (message !== undefined) {
-            pluginResponse.message = message;
-          }
-          if (headers !== undefined) {
-            pluginResponse.headers = {
-              ...pluginResponse.headers,
-              ...headers,
-            };
-          }
-          if (body !== undefined) {
-            pluginResponse.body = body;
-            break;
-          }
+          return pluginResponse;
+        } catch (e) {
+          const pluginResponse: PluginResponse<T> = {
+            code: 500,
+            body: e instanceof Error ? e : String(e),
+          };
+          return pluginResponse;
         }
-        response.setResponse(pluginResponse);
-      } catch (e) {
-        response.setResponse({
-          code: 500,
-          ...pluginResponse,
-          body: e instanceof Error ? e : String(e),
-        });
-      }
+      })();
+      response.setResponse(pluginResponse);
     };
   }
 

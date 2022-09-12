@@ -25,9 +25,42 @@ interface PluginRequestMap<ReqMsg> {
 
 type PluginRequest<T extends RpcType, ReqMsg> = PluginRequestMap<ReqMsg>[T];
 
+type StrategyMap = {
+  [T in RpcType as PluginType<T>]: <ReqMsg>(
+    serverRequest: ServerRequest<T, ReqMsg>,
+  ) => PluginRequest<T, ReqMsg>;
+};
+
+const strategyMap: StrategyMap = {
+  unary: (serverRequest) => {
+    const pluginRequest = serverRequest[0].request;
+    return pluginRequest;
+  },
+  ['server-streaming']: (serverRequest) => {
+    const pluginRequest = serverRequest[0].request;
+    return pluginRequest;
+  },
+  ['client-streaming']: (serverRequest) => {
+    const pluginRequest = (async function* () {
+      for await (const reqMsg of serverRequest[0]) {
+        yield reqMsg;
+      }
+    })();
+    return pluginRequest;
+  },
+  ['bidi-streaming']: (serverRequest) => {
+    const pluginRequest = (async function* () {
+      for await (const reqMsg of serverRequest[0]) {
+        yield reqMsg;
+      }
+    })();
+    return pluginRequest;
+  },
+};
+
 class Request<T extends RpcType, ReqMsg> {
-  private originalValue: ServerRequest<T, ReqMsg>;
-  private type: PluginType<T>;
+  originalValue: ServerRequest<T, ReqMsg>;
+  type: PluginType<T>;
 
   constructor(type: PluginType<T>, req: ServerRequest<T, ReqMsg>) {
     this.originalValue = req;
@@ -35,54 +68,10 @@ class Request<T extends RpcType, ReqMsg> {
   }
 
   getRequest(): PluginRequest<T, ReqMsg> {
-    switch (this.type) {
-      case 'unary': {
-        const serverRequest = this.originalValue as ServerRequest<
-          'UNARY',
-          ReqMsg
-        >;
-        const handlerRequest: PluginRequest<'UNARY', ReqMsg> =
-          serverRequest[0].request;
-        return handlerRequest as PluginRequest<T, ReqMsg>;
-      }
-      case 'server-streaming': {
-        const serverRequest = this.originalValue as ServerRequest<
-          'SERVER',
-          ReqMsg
-        >;
-        const handlerRequest: PluginRequest<'SERVER', ReqMsg> =
-          serverRequest[0].request;
-        return handlerRequest as PluginRequest<T, ReqMsg>;
-      }
-      case 'client-streaming': {
-        const serverRequest = this.originalValue as ServerRequest<
-          'CLIENT',
-          ReqMsg
-        >;
-        const handlerRequest: PluginRequest<'CLIENT', ReqMsg> =
-          (async function* () {
-            for await (const reqMsg of serverRequest[0]) {
-              yield reqMsg;
-            }
-          })();
-        return handlerRequest as PluginRequest<T, ReqMsg>;
-      }
-      case 'bidi-streaming': {
-        const serverRequest = this.originalValue as ServerRequest<
-          'BIDI',
-          ReqMsg
-        >;
-        const handlerRequest: PluginRequest<'BIDI', ReqMsg> =
-          (async function* () {
-            for await (const reqMsg of serverRequest[0]) {
-              yield reqMsg;
-            }
-          })();
-        return handlerRequest as PluginRequest<T, ReqMsg>;
-      }
-      default:
-        throw new TypeError('Bad RPC type');
-    }
+    const strategy = strategyMap[this.type] as <ReqMsg>(
+      serverRequest: ServerRequest<T, ReqMsg>,
+    ) => PluginRequest<T, ReqMsg>;
+    return strategy(this.originalValue);
   }
 }
 

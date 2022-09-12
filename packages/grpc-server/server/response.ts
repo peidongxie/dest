@@ -25,6 +25,44 @@ interface PluginResponseMap<ResMsg> {
 
 type PluginResponse<T extends RpcType, ResMsg> = PluginResponseMap<ResMsg>[T];
 
+type StrategyMap = {
+  [T in RpcType as PluginType<T>]: <ResMsg>(
+    serverRequest: ServerResponse<T, ResMsg>,
+    pluginResponse: PluginResponse<T, ResMsg>,
+  ) => Promise<void>;
+};
+
+const strategyMap: StrategyMap = {
+  unary: async (serverResponse, pluginResponse) => {
+    if (!(pluginResponse instanceof Error)) {
+      serverResponse[1](null, pluginResponse);
+    } else {
+      serverResponse[1](pluginResponse);
+    }
+  },
+  ['server-streaming']: async (serverResponse, pluginResponse) => {
+    if (!(pluginResponse instanceof Error)) {
+      for await (const resMsg of pluginResponse) {
+        serverResponse[0].write(resMsg);
+      }
+    }
+  },
+  ['client-streaming']: async (serverResponse, pluginResponse) => {
+    if (!(pluginResponse instanceof Error)) {
+      serverResponse[1](null, pluginResponse);
+    } else {
+      serverResponse[1](pluginResponse);
+    }
+  },
+  ['bidi-streaming']: async (serverResponse, pluginResponse) => {
+    if (!(pluginResponse instanceof Error)) {
+      for await (const resMsg of pluginResponse) {
+        serverResponse[0].write(resMsg);
+      }
+    }
+  },
+};
+
 class Response<T extends RpcType, ResMsg> {
   private originalValue: ServerResponse<T, ResMsg>;
   private type: PluginType<T>;
@@ -35,62 +73,11 @@ class Response<T extends RpcType, ResMsg> {
   }
 
   async setResponse(res: PluginResponse<T, ResMsg>): Promise<void> {
-    switch (this.type) {
-      case 'unary': {
-        const serverResponse = this.originalValue as ServerResponse<
-          'UNARY',
-          ResMsg
-        >;
-        const handlerResponse = res as PluginResponse<'UNARY', ResMsg>;
-        if (!(handlerResponse instanceof Error)) {
-          serverResponse[1](null, handlerResponse);
-        } else {
-          serverResponse[1](handlerResponse);
-        }
-        break;
-      }
-      case 'server-streaming': {
-        const serverResponse = this.originalValue as ServerResponse<
-          'SERVER',
-          ResMsg
-        >;
-        const handlerResponse = res as PluginResponse<'SERVER', ResMsg>;
-        if (!(handlerResponse instanceof Error)) {
-          for await (const resMsg of handlerResponse) {
-            serverResponse[0].write(resMsg);
-          }
-        }
-        break;
-      }
-      case 'client-streaming': {
-        const serverResponse = this.originalValue as ServerResponse<
-          'CLIENT',
-          ResMsg
-        >;
-        const handlerResponse = res as PluginResponse<'CLIENT', ResMsg>;
-        if (!(handlerResponse instanceof Error)) {
-          serverResponse[1](null, handlerResponse);
-        } else {
-          serverResponse[1](handlerResponse);
-        }
-        break;
-      }
-      case 'bidi-streaming': {
-        const serverResponse = this.originalValue as ServerResponse<
-          'BIDI',
-          ResMsg
-        >;
-        const handlerResponse = res as PluginResponse<'BIDI', ResMsg>;
-        if (!(handlerResponse instanceof Error)) {
-          for await (const resMsg of handlerResponse) {
-            serverResponse[0].write(resMsg);
-          }
-        }
-        break;
-      }
-      default:
-        throw new TypeError('Bad RPC type');
-    }
+    const strategy = strategyMap[this.type] as <ResMsg>(
+      serverRequest: ServerResponse<T, ResMsg>,
+      pluginResponse: PluginResponse<T, ResMsg>,
+    ) => Promise<void>;
+    await strategy(this.originalValue, res);
   }
 }
 
