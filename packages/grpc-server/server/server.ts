@@ -14,7 +14,7 @@ import {
   type PluginHandler,
   type PluginType,
 } from './plugin';
-import Request, { type ServerRequest } from './request';
+import Request, { type PluginRequest, type ServerRequest } from './request';
 import Response, { type PluginResponse, type ServerResponse } from './response';
 import { type RpcType } from './type';
 
@@ -62,19 +62,20 @@ class Server {
           async <T extends RpcType, ReqMsg, ResMsg>(
             ...args: ServerRequest<T, ReqMsg> & ServerResponse<T, ResMsg>
           ) => {
-            const type = this.types.get(path) as PluginType<T>;
-            const request = new Request<T, ReqMsg>(type, args);
-            const response = new Response<T, ResMsg>(type, args);
-            if (type === 'bidi-streaming') {
+            const pluginType = this.types.get(path) as PluginType<T>;
+            const pluginHandler = handler as (
+              req: PluginRequest<T, ReqMsg>,
+            ) => PluginResponse<T, ResMsg> | Promise<PluginResponse<T, ResMsg>>;
+            const request = new Request<T, ReqMsg>(pluginType, args);
+            const response = new Response<T, ResMsg>(pluginType, args);
+            if (pluginType === 'bidi-streaming') {
               const stream = args[0] as ServerResponse<'BIDI', ResMsg>[0];
               stream.on('end', () => stream.end());
             }
             const pluginRequest = request.getRequest();
             const pluginResponse = await (async () => {
               try {
-                const pluginResponse = (await handler(
-                  pluginRequest,
-                )) as PluginResponse<T, ResMsg>;
+                const pluginResponse = await pluginHandler(pluginRequest);
                 return pluginResponse;
               } catch (e) {
                 const pluginResponse: PluginResponse<T, ResMsg> =
@@ -83,7 +84,7 @@ class Server {
               }
             })();
             await response.setResponse(pluginResponse);
-            if (type === 'server-streaming') {
+            if (pluginType === 'server-streaming') {
               const stream = args[0] as ServerResponse<'SERVER', ResMsg>[0];
               stream.end();
             }

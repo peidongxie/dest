@@ -10,7 +10,7 @@ import {
   createServer as httpsCreateServer,
   type ServerOptions as HttpsServerOptions,
 } from 'https';
-import Request, { type ServerRequest } from './request';
+import Request, { type PluginRequest, type ServerRequest } from './request';
 import Response, { type PluginResponse, type ServerResponse } from './response';
 import { type Plugin, type PluginHandler } from './plugin';
 import { type HttpType } from './type';
@@ -89,8 +89,11 @@ class Server<T extends HttpType> {
         const pluginResponse: PluginResponse<T> = {};
         try {
           for (const handler of this.handlers) {
+            const pluginHandler = handler as (
+              req: PluginRequest<T>,
+            ) => void | PluginResponse<T> | Promise<void | PluginResponse<T>>;
             const { code, message, headers, body } =
-              (await handler(pluginRequest)) || {};
+              (await pluginHandler(pluginRequest)) || {};
             if (code !== undefined) {
               pluginResponse.code = code;
             }
