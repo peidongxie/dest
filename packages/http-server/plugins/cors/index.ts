@@ -23,7 +23,7 @@ const defaultOptions = {
   maxAge: 600,
 };
 
-class Cors<T extends HttpType> implements Plugin<T> {
+class Cors implements Plugin<'HTTP'>, Plugin<'HTTPS'>, Plugin<'HTTP2'> {
   private allowOptions: Required<AllowOptions>;
   private enable: boolean;
   private maxAge: number;
@@ -43,7 +43,9 @@ class Cors<T extends HttpType> implements Plugin<T> {
     }
   }
 
-  public getHandler(): PluginHandler<T> {
+  public getHandler(): PluginHandler<'HTTP'> &
+    PluginHandler<'HTTPS'> &
+    PluginHandler<'HTTP2'> {
     return (req) => {
       const { method, headers } = req;
       const origin = headers.origin;
