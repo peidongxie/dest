@@ -10,7 +10,7 @@ import {
   createServer as httpsCreateServer,
   type ServerOptions as HttpsServerOptions,
 } from 'https';
-import Request, { type PluginRequest, type ServerRequest } from './request';
+import Request, { type ServerRequest } from './request';
 import Response, { type PluginResponse, type ServerResponse } from './response';
 import { type Plugin, type PluginHandler } from './plugin';
 import { type HttpType } from './type';
@@ -73,10 +73,8 @@ class Server<T extends HttpType> {
 
   public constructor(type: ServerType<T>, options?: ServerOptions<T>) {
     this.type = type;
-    const creator = creatorMap[type] as (
-      options: ServerOptions<T>,
-    ) => ServerOriginalValue<T>;
-    this.originalValue = creator(options || {});
+    const creator = creatorMap[type];
+    this.originalValue = creator(options || {}) as ServerOriginalValue<T>;
     this.handlers = [];
   }
 
@@ -88,10 +86,7 @@ class Server<T extends HttpType> {
       const pluginResponse = await (async () => {
         const pluginResponse: PluginResponse<T> = {};
         try {
-          for (const handler of this.handlers) {
-            const pluginHandler = handler as (
-              req: PluginRequest<T>,
-            ) => void | PluginResponse<T> | Promise<void | PluginResponse<T>>;
+          for (const pluginHandler of this.handlers) {
             const { code, message, headers, body } =
               (await pluginHandler(pluginRequest)) || {};
             if (code !== undefined) {
