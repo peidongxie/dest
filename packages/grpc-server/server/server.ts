@@ -14,7 +14,7 @@ import {
   type PluginHandler,
   type PluginType,
 } from './plugin';
-import Request, { type PluginRequest, type ServerRequest } from './request';
+import Request, { type ServerRequest } from './request';
 import Response, { type PluginResponse, type ServerResponse } from './response';
 import { type RpcType } from './type';
 
@@ -33,10 +33,28 @@ type ServerHandler<T extends RpcType, ReqMsg, ResMsg> = ServerHandlerMap<
 >[T];
 
 class Server {
-  private definitions: Map<string, PluginDefinition<RpcType, unknown, unknown>>;
-  private handlers: Map<string, PluginHandler<RpcType, unknown, unknown>>;
+  private definitions: Map<
+    string,
+    | PluginDefinition<'UNARY', unknown, unknown>
+    | PluginDefinition<'SERVER', unknown, unknown>
+    | PluginDefinition<'CLIENT', unknown, unknown>
+    | PluginDefinition<'BIDI', unknown, unknown>
+  >;
+  private handlers: Map<
+    string,
+    | PluginHandler<'UNARY', unknown, unknown>
+    | PluginHandler<'SERVER', unknown, unknown>
+    | PluginHandler<'CLIENT', unknown, unknown>
+    | PluginHandler<'BIDI', unknown, unknown>
+  >;
   private originalValue: GrpcServer;
-  private types: Map<string, PluginType<RpcType>>;
+  private types: Map<
+    string,
+    | PluginType<'UNARY'>
+    | PluginType<'SERVER'>
+    | PluginType<'CLIENT'>
+    | PluginType<'BIDI'>
+  >;
 
   public constructor(options?: ChannelOptions) {
     this.originalValue = new GrpcServer(options);
@@ -47,7 +65,13 @@ class Server {
 
   public callback(): [
     Record<string, ServerDefinition<unknown, unknown>>,
-    Record<string, ServerHandler<RpcType, unknown, unknown>>,
+    Record<
+      string,
+      | ServerHandler<'UNARY', unknown, unknown>
+      | ServerHandler<'SERVER', unknown, unknown>
+      | ServerHandler<'CLIENT', unknown, unknown>
+      | ServerHandler<'BIDI', unknown, unknown>
+    >,
   ] {
     return [
       Object.fromEntries(
@@ -63,9 +87,11 @@ class Server {
             ...args: ServerRequest<T, ReqMsg> & ServerResponse<T, ResMsg>
           ) => {
             const pluginType = this.types.get(path) as PluginType<T>;
-            const pluginHandler = handler as (
-              req: PluginRequest<T, ReqMsg>,
-            ) => PluginResponse<T, ResMsg> | Promise<PluginResponse<T, ResMsg>>;
+            const pluginHandler = handler as unknown as PluginHandler<
+              T,
+              ReqMsg,
+              ResMsg
+            >;
             const request = new Request<T, ReqMsg>(pluginType, args);
             const response = new Response<T, ResMsg>(pluginType, args);
             if (pluginType === 'bidi-streaming') {
@@ -124,14 +150,28 @@ class Server {
     );
   }
 
-  public use<ReqMsg, ResMsg>(plugin: Plugin<RpcType, ReqMsg, ResMsg>): void {
+  public use<ReqMsg, ResMsg>(
+    plugin:
+      | Plugin<'UNARY', ReqMsg, ResMsg>
+      | Plugin<'SERVER', ReqMsg, ResMsg>
+      | Plugin<'CLIENT', ReqMsg, ResMsg>
+      | Plugin<'BIDI', ReqMsg, ResMsg>,
+  ): void {
     this.definitions.set(
       plugin.definition.path,
-      plugin.definition as PluginDefinition<RpcType, unknown, unknown>,
+      plugin.definition as
+        | PluginDefinition<'UNARY', unknown, unknown>
+        | PluginDefinition<'SERVER', unknown, unknown>
+        | PluginDefinition<'CLIENT', unknown, unknown>
+        | PluginDefinition<'BIDI', unknown, unknown>,
     );
     this.handlers.set(
       plugin.definition.path,
-      plugin.handler as PluginHandler<RpcType, unknown, unknown>,
+      plugin.handler as
+        | PluginHandler<'UNARY', unknown, unknown>
+        | PluginHandler<'SERVER', unknown, unknown>
+        | PluginHandler<'CLIENT', unknown, unknown>
+        | PluginHandler<'BIDI', unknown, unknown>,
     );
     this.types.set(plugin.definition.path, plugin.type);
   }

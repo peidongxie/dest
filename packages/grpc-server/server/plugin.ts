@@ -36,11 +36,9 @@ type PluginDefinition<T extends RpcType, ReqMsg, ResMsg> = PluginDefinitionMap<
   ResMsg
 >[T];
 
-type PluginHandler<T extends RpcType, ReqMsg, ResMsg> = T extends RpcType
-  ? (
-      req: PluginRequest<T, ReqMsg>,
-    ) => PluginResponse<T, ResMsg> | Promise<PluginResponse<T, ResMsg>>
-  : never;
+type PluginHandler<T extends RpcType, ReqMsg, ResMsg> = (
+  req: PluginRequest<T, ReqMsg>,
+) => PluginResponse<T, ResMsg> | Promise<PluginResponse<T, ResMsg>>;
 
 interface Plugin<T extends RpcType, ReqMsg, ResMsg> {
   type: PluginType<T>;
