@@ -9,8 +9,10 @@ import {
   type handleUnaryCall,
 } from '@grpc/grpc-js';
 import {
-  type Plugin,
-  type PluginDefinition,
+  type CommonDefinition,
+  type CommonHandler,
+  type CommonPlugin,
+  type CommonType,
   type PluginHandler,
   type PluginType,
 } from './plugin';
@@ -33,28 +35,10 @@ type ServerHandler<T extends RpcType, ReqMsg, ResMsg> = ServerHandlerMap<
 >[T];
 
 class Server {
-  private definitions: Map<
-    string,
-    | PluginDefinition<'UNARY', unknown, unknown>
-    | PluginDefinition<'SERVER', unknown, unknown>
-    | PluginDefinition<'CLIENT', unknown, unknown>
-    | PluginDefinition<'BIDI', unknown, unknown>
-  >;
-  private handlers: Map<
-    string,
-    | PluginHandler<'UNARY', unknown, unknown>
-    | PluginHandler<'SERVER', unknown, unknown>
-    | PluginHandler<'CLIENT', unknown, unknown>
-    | PluginHandler<'BIDI', unknown, unknown>
-  >;
+  private definitions: Map<string, CommonDefinition>;
+  private handlers: Map<string, CommonHandler>;
   private originalValue: GrpcServer;
-  private types: Map<
-    string,
-    | PluginType<'UNARY'>
-    | PluginType<'SERVER'>
-    | PluginType<'CLIENT'>
-    | PluginType<'BIDI'>
-  >;
+  private types: Map<string, CommonType>;
 
   public constructor(options?: ChannelOptions) {
     this.originalValue = new GrpcServer(options);
@@ -87,11 +71,11 @@ class Server {
             ...args: ServerRequest<T, ReqMsg> & ServerResponse<T, ResMsg>
           ) => {
             const pluginType = this.types.get(path) as PluginType<T>;
-            const pluginHandler = handler as unknown as PluginHandler<
+            const pluginHandler = handler as CommonHandler<
               T,
               ReqMsg,
               ResMsg
-            >;
+            > as PluginHandler<T, ReqMsg, ResMsg>;
             const request = new Request<T, ReqMsg>(pluginType, args);
             const response = new Response<T, ResMsg>(pluginType, args);
             if (pluginType === 'bidi-streaming') {
@@ -151,28 +135,13 @@ class Server {
   }
 
   public use<ReqMsg, ResMsg>(
-    plugin:
-      | Plugin<'UNARY', ReqMsg, ResMsg>
-      | Plugin<'SERVER', ReqMsg, ResMsg>
-      | Plugin<'CLIENT', ReqMsg, ResMsg>
-      | Plugin<'BIDI', ReqMsg, ResMsg>,
+    plugin: CommonPlugin<RpcType, ReqMsg, ResMsg>,
   ): void {
     this.definitions.set(
       plugin.definition.path,
-      plugin.definition as
-        | PluginDefinition<'UNARY', unknown, unknown>
-        | PluginDefinition<'SERVER', unknown, unknown>
-        | PluginDefinition<'CLIENT', unknown, unknown>
-        | PluginDefinition<'BIDI', unknown, unknown>,
+      plugin.definition as CommonDefinition,
     );
-    this.handlers.set(
-      plugin.definition.path,
-      plugin.handler as
-        | PluginHandler<'UNARY', unknown, unknown>
-        | PluginHandler<'SERVER', unknown, unknown>
-        | PluginHandler<'CLIENT', unknown, unknown>
-        | PluginHandler<'BIDI', unknown, unknown>,
-    );
+    this.handlers.set(plugin.definition.path, plugin.handler as CommonHandler);
     this.types.set(plugin.definition.path, plugin.type);
   }
 }

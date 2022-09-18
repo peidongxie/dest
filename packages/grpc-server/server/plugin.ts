@@ -12,6 +12,10 @@ interface PluginTypeMap {
 
 type PluginType<T extends RpcType> = PluginTypeMap[T];
 
+type CommonType<T extends RpcType = RpcType> = T extends RpcType
+  ? PluginType<T>
+  : never;
+
 interface PluginDefinitionMap<ReqMsg, ResMsg> {
   UNARY: MethodDefinition<ReqMsg, ResMsg> & {
     requestStream: false;
@@ -36,9 +40,21 @@ type PluginDefinition<T extends RpcType, ReqMsg, ResMsg> = PluginDefinitionMap<
   ResMsg
 >[T];
 
+type CommonDefinition<
+  T extends RpcType = RpcType,
+  ReqMsg = unknown,
+  ResMsg = unknown,
+> = T extends RpcType ? PluginDefinition<T, ReqMsg, ResMsg> : never;
+
 type PluginHandler<T extends RpcType, ReqMsg, ResMsg> = (
   req: PluginRequest<T, ReqMsg>,
 ) => PluginResponse<T, ResMsg> | Promise<PluginResponse<T, ResMsg>>;
+
+type CommonHandler<
+  T extends RpcType = RpcType,
+  ReqMsg = unknown,
+  ResMsg = unknown,
+> = T extends RpcType ? PluginHandler<T, ReqMsg, ResMsg> : never;
 
 interface Plugin<T extends RpcType, ReqMsg, ResMsg> {
   type: PluginType<T>;
@@ -46,7 +62,17 @@ interface Plugin<T extends RpcType, ReqMsg, ResMsg> {
   handler: PluginHandler<T, ReqMsg, ResMsg>;
 }
 
+type CommonPlugin<
+  T extends RpcType = RpcType,
+  ReqMsg = unknown,
+  ResMsg = unknown,
+> = T extends RpcType ? Plugin<T, ReqMsg, ResMsg> : never;
+
 export {
+  type CommonDefinition,
+  type CommonHandler,
+  type CommonPlugin,
+  type CommonType,
   type Plugin,
   type PluginDefinition,
   type PluginHandler,
