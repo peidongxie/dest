@@ -1,5 +1,7 @@
 import { Cors, Router } from './plugins';
 import Server, {
+  type CommonHandler,
+  type CommonPlugin,
   type HttpType,
   type Plugin,
   type PluginHandler,
@@ -18,6 +20,8 @@ export {
   Router,
   Server,
   createServer,
+  type CommonHandler,
+  type CommonPlugin,
   type HttpType,
   type Plugin,
   type PluginHandler,

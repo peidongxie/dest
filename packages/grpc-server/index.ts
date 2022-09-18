@@ -1,4 +1,6 @@
 import Server, {
+  type CommonHandler,
+  type CommonPlugin,
   type Plugin,
   type PluginHandler,
   type PluginRequest,
@@ -15,6 +17,8 @@ const createServer = (
 export {
   Server,
   createServer,
+  type CommonHandler,
+  type CommonPlugin,
   type Plugin,
   type PluginHandler,
   type PluginRequest,
