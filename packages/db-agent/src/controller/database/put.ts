@@ -1,4 +1,4 @@
-import { type PluginHandler } from '@dest-toolkit/http-server';
+import { type CommonHandler } from '@dest-toolkit/http-server';
 import {
   adapterMapper,
   type AdapterType,
@@ -6,7 +6,7 @@ import {
 } from '../../domain';
 import { updateDatabase } from '../../service';
 
-const handler: PluginHandler<'HTTP'> = async (req) => {
+const handler: CommonHandler = async (req) => {
   const { url, body } = req;
   const type =
     adapterMapper[
