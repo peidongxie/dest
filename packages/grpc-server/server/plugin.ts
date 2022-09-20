@@ -3,19 +3,6 @@ import { type PluginRequest } from './request';
 import { type PluginResponse } from './response';
 import { type RpcType } from './type';
 
-interface PluginTypeMap {
-  UNARY: 'unary';
-  SERVER: 'server-streaming';
-  CLIENT: 'client-streaming';
-  BIDI: 'bidi-streaming';
-}
-
-type PluginType<T extends RpcType> = PluginTypeMap[T];
-
-type CommonType<T extends RpcType = RpcType> = T extends RpcType
-  ? PluginType<T>
-  : never;
-
 interface PluginDefinitionMap<ReqMsg, ResMsg> {
   UNARY: MethodDefinition<ReqMsg, ResMsg> & {
     requestStream: false;
@@ -57,7 +44,6 @@ type CommonHandler<
 > = T extends RpcType ? PluginHandler<T, ReqMsg, ResMsg> : never;
 
 interface Plugin<T extends RpcType, ReqMsg, ResMsg> {
-  type: PluginType<T>;
   definition: PluginDefinition<T, ReqMsg, ResMsg>;
   handler: PluginHandler<T, ReqMsg, ResMsg>;
 }
@@ -72,9 +58,7 @@ export {
   type CommonDefinition,
   type CommonHandler,
   type CommonPlugin,
-  type CommonType,
   type Plugin,
   type PluginDefinition,
   type PluginHandler,
-  type PluginType,
 };

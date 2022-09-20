@@ -12,9 +12,8 @@ import {
   type CommonDefinition,
   type CommonHandler,
   type CommonPlugin,
-  type CommonType,
+  type PluginDefinition,
   type PluginHandler,
-  type PluginType,
 } from './plugin';
 import Request, { type ServerRequest } from './request';
 import Response, { type PluginResponse, type ServerResponse } from './response';
@@ -38,13 +37,11 @@ class Server {
   private definitions: Map<string, CommonDefinition>;
   private handlers: Map<string, CommonHandler>;
   private originalValue: GrpcServer;
-  private types: Map<string, CommonType>;
 
   public constructor(options?: ChannelOptions) {
     this.originalValue = new GrpcServer(options);
     this.definitions = new Map();
     this.handlers = new Map();
-    this.types = new Map();
   }
 
   public callback(): [
@@ -70,15 +67,17 @@ class Server {
           async <T extends RpcType, ReqMsg, ResMsg>(
             ...args: ServerRequest<T, ReqMsg> & ServerResponse<T, ResMsg>
           ) => {
-            const pluginType = this.types.get(path) as PluginType<T>;
+            const { requestStream, responseStream } = this.definitions.get(
+              path,
+            ) as PluginDefinition<T, ReqMsg, ResMsg>;
             const pluginHandler = handler as CommonHandler<
               T,
               ReqMsg,
               ResMsg
             > as PluginHandler<T, ReqMsg, ResMsg>;
-            const request = new Request<T, ReqMsg>(pluginType, args);
-            const response = new Response<T, ResMsg>(pluginType, args);
-            if (pluginType === 'bidi-streaming') {
+            const request = new Request<T, ReqMsg>(requestStream, args);
+            const response = new Response<T, ResMsg>(responseStream, args);
+            if (requestStream && responseStream) {
               const stream = args[0] as ServerResponse<'BIDI', ResMsg>[0];
               stream.on('end', () => stream.end());
             }
@@ -94,7 +93,7 @@ class Server {
               }
             })();
             await response.setResponse(pluginResponse);
-            if (pluginType === 'server-streaming') {
+            if (!requestStream && responseStream) {
               const stream = args[0] as ServerResponse<'SERVER', ResMsg>[0];
               stream.end();
             }
@@ -142,7 +141,6 @@ class Server {
       plugin.definition as CommonDefinition,
     );
     this.handlers.set(plugin.definition.path, plugin.handler as CommonHandler);
-    this.types.set(plugin.definition.path, plugin.type);
   }
 }
 

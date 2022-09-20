@@ -4,7 +4,7 @@ import {
   type handleServerStreamingCall,
   type handleUnaryCall,
 } from '@grpc/grpc-js';
-import { type PluginType } from './plugin';
+import { type PluginDefinition } from './plugin';
 import { type RpcType } from './type';
 
 interface ServerRequestMap<ReqMsg> {
@@ -25,53 +25,40 @@ interface PluginRequestMap<ReqMsg> {
 
 type PluginRequest<T extends RpcType, ReqMsg> = PluginRequestMap<ReqMsg>[T];
 
-type StrategyMap = {
-  [T in RpcType as PluginType<T>]: <ReqMsg>(
-    serverRequest: ServerRequest<T, ReqMsg>,
-  ) => PluginRequest<T, ReqMsg>;
-};
-
-const strategyMap: StrategyMap = {
-  unary: (serverRequest) => {
-    const pluginRequest = serverRequest[0].request;
-    return pluginRequest;
-  },
-  ['server-streaming']: (serverRequest) => {
-    const pluginRequest = serverRequest[0].request;
-    return pluginRequest;
-  },
-  ['client-streaming']: (serverRequest) => {
-    const pluginRequest = (async function* () {
-      for await (const reqMsg of serverRequest[0]) {
-        yield reqMsg;
-      }
-    })();
-    return pluginRequest;
-  },
-  ['bidi-streaming']: (serverRequest) => {
-    const pluginRequest = (async function* () {
-      for await (const reqMsg of serverRequest[0]) {
-        yield reqMsg;
-      }
-    })();
-    return pluginRequest;
-  },
-};
-
 class Request<T extends RpcType, ReqMsg> {
-  originalValue: ServerRequest<T, ReqMsg>;
-  type: PluginType<T>;
+  private originalValue: ServerRequest<T, ReqMsg>;
+  private stream: PluginDefinition<T, ReqMsg, unknown>['requestStream'];
 
-  constructor(type: PluginType<T>, req: ServerRequest<T, ReqMsg>) {
+  constructor(
+    stream: PluginDefinition<T, ReqMsg, unknown>['requestStream'],
+    req: ServerRequest<T, ReqMsg>,
+  ) {
     this.originalValue = req;
-    this.type = type;
+    this.stream = stream;
   }
 
-  getRequest(): PluginRequest<T, ReqMsg> {
-    const strategy = strategyMap[this.type] as <ReqMsg>(
-      serverRequest: ServerRequest<T, ReqMsg>,
-    ) => PluginRequest<T, ReqMsg>;
-    return strategy(this.originalValue);
+  public getRequest(): PluginRequest<T, ReqMsg> {
+    if (!this.stream) {
+      const serverRequest = this.originalValue as
+        | ServerRequest<'UNARY', ReqMsg>
+        | ServerRequest<'SERVER', ReqMsg>;
+      const pluginRequest:
+        | PluginRequest<'UNARY', ReqMsg>
+        | PluginRequest<'SERVER', ReqMsg> = serverRequest[0].request;
+      return pluginRequest as PluginRequest<T, ReqMsg>;
+    } else {
+      const serverRequest = this.originalValue as
+        | ServerRequest<'CLIENT', ReqMsg>
+        | ServerRequest<'BIDI', ReqMsg>;
+      const pluginRequest:
+        | PluginRequest<'CLIENT', ReqMsg>
+        | PluginRequest<'BIDI', ReqMsg> = (async function* () {
+        for await (const reqMsg of serverRequest[0]) {
+          yield reqMsg as ReqMsg;
+        }
+      })();
+      return pluginRequest as PluginRequest<T, ReqMsg>;
+    }
   }
 }
 
