@@ -26,45 +26,6 @@ importers:
       sort-package-json: 1.57.0
       typescript: 4.8.3
 
-  packages/db-agent:
-    specifiers:
-      '@dest-toolkit/grpc-server': workspace:^0.1.8
-      '@dest-toolkit/http-server': workspace:^0.1.8
-      '@types/node': ^18.7.18
-      '@types/sqlite3': ^3.1.8
-      '@types/type-is': ^1.6.3
-      '@typescript-eslint/eslint-plugin': ^5.37.0
-      '@typescript-eslint/parser': ^5.37.0
-      esbuild: ^0.14.54
-      eslint: ^8.23.1
-      eslint-config-prettier: ^8.5.0
-      eslint-plugin-prettier: ^4.2.1
-      mysql2: ^2.3.3
-      prettier: ^2.7.1
-      sort-package-json: ^1.57.0
-      sqlite3: ^5.1.0
-      typeorm: ^0.3.9
-      typescript: ^4.8.3
-    dependencies:
-      '@dest-toolkit/grpc-server': link:../grpc-server
-      '@dest-toolkit/http-server': link:../http-server
-      mysql2: 2.3.3
-      sqlite3: 5.1.0
-      typeorm: 0.3.9_mysql2@2.3.3+sqlite3@5.1.0
-    devDependencies:
-      '@types/node': 18.7.18
-      '@types/sqlite3': 3.1.8
-      '@types/type-is': 1.6.3
-      '@typescript-eslint/eslint-plugin': 5.37.0_22c5fnooleyfkzrkkgdmel5kmi
-      '@typescript-eslint/parser': 5.37.0_irgkl5vooow2ydyo6aokmferha
-      esbuild: 0.14.54
-      eslint: 8.23.1
-      eslint-config-prettier: 8.5.0_eslint@8.23.1
-      eslint-plugin-prettier: 4.2.1_cabrci5exjdaojcvd6xoxgeowu
-      prettier: 2.7.1
-      sort-package-json: 1.57.0
-      typescript: 4.8.3
-
   packages/grpc-server:
     specifiers:
       '@grpc/grpc-js': ^1.7.0
@@ -133,6 +94,45 @@ importers:
       eslint-config-prettier: 8.5.0_eslint@8.23.1
       eslint-plugin-prettier: 4.2.1_cabrci5exjdaojcvd6xoxgeowu
       fs-extra: 10.1.0
+      prettier: 2.7.1
+      sort-package-json: 1.57.0
+      typescript: 4.8.3
+
+  packages/worker-node:
+    specifiers:
+      '@dest-toolkit/grpc-server': workspace:^0.1.8
+      '@dest-toolkit/http-server': workspace:^0.1.8
+      '@types/node': ^18.7.18
+      '@types/sqlite3': ^3.1.8
+      '@types/type-is': ^1.6.3
+      '@typescript-eslint/eslint-plugin': ^5.37.0
+      '@typescript-eslint/parser': ^5.37.0
+      esbuild: ^0.14.54
+      eslint: ^8.23.1
+      eslint-config-prettier: ^8.5.0
+      eslint-plugin-prettier: ^4.2.1
+      mysql2: ^2.3.3
+      prettier: ^2.7.1
+      sort-package-json: ^1.57.0
+      sqlite3: ^5.1.0
+      typeorm: ^0.3.9
+      typescript: ^4.8.3
+    dependencies:
+      '@dest-toolkit/grpc-server': link:../grpc-server
+      '@dest-toolkit/http-server': link:../http-server
+      mysql2: 2.3.3
+      sqlite3: 5.1.0
+      typeorm: 0.3.9_mysql2@2.3.3+sqlite3@5.1.0
+    devDependencies:
+      '@types/node': 18.7.18
+      '@types/sqlite3': 3.1.8
+      '@types/type-is': 1.6.3
+      '@typescript-eslint/eslint-plugin': 5.37.0_22c5fnooleyfkzrkkgdmel5kmi
+      '@typescript-eslint/parser': 5.37.0_irgkl5vooow2ydyo6aokmferha
+      esbuild: 0.14.54
+      eslint: 8.23.1
+      eslint-config-prettier: 8.5.0_eslint@8.23.1
+      eslint-plugin-prettier: 4.2.1_cabrci5exjdaojcvd6xoxgeowu
       prettier: 2.7.1
       sort-package-json: 1.57.0
       typescript: 4.8.3
