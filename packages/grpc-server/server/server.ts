@@ -19,6 +19,10 @@ import Request, { type ServerRequest } from './request';
 import Response, { type PluginResponse, type ServerResponse } from './response';
 import { type RpcType } from './type';
 
+type ServerOptions = ChannelOptions;
+
+type ServerOriginalValue = GrpcServer;
+
 type ServerDefinition<ReqMsg, ResMsg> = MethodDefinition<ReqMsg, ResMsg>;
 
 interface ServerHandlerMap<ReqMsg, ResMsg> {
@@ -36,9 +40,9 @@ type ServerHandler<T extends RpcType, ReqMsg, ResMsg> = ServerHandlerMap<
 class Server {
   private definitions: Map<string, CommonDefinition>;
   private handlers: Map<string, CommonHandler>;
-  private originalValue: GrpcServer;
+  private originalValue: ServerOriginalValue;
 
-  public constructor(options?: ChannelOptions) {
+  public constructor(options?: ServerOptions) {
     this.originalValue = new GrpcServer(options);
     this.definitions = new Map();
     this.handlers = new Map();
@@ -144,4 +148,9 @@ class Server {
   }
 }
 
-export { Server as default, type ServerDefinition, type ServerHandler };
+export {
+  Server as default,
+  type ServerDefinition,
+  type ServerHandler,
+  type ServerOptions,
+};
