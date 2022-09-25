@@ -1,7 +1,7 @@
 {
-  "name": "dest-toolkit",
+  "name": "@dest-toolkit/http-client",
   "version": "0.1.9",
-  "private": true,
+  "private": false,
   "description": "A testing framework for database",
   "keywords": [
     "test",
@@ -14,7 +14,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/peidongxie/dest.git"
+    "url": "https://github.com/peidongxie/dest.git",
+    "directory": "packages/http-client"
   },
   "license": "MIT",
   "author": {
@@ -23,21 +24,36 @@
     "url": "https://github.com/peidongxie"
   },
   "type": "module",
-  "workspaces": [
-    "packages/*"
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client/index.js"
+  },
+  "main": "index.js",
+  "module": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "**/*.d.ts",
+    "**/*.js",
+    "**/*.md"
   ],
   "scripts": {
-    "prepare": "husky install",
-    "stats": "cloc $(git ls-files) && echo 'Commits:' $(git log --oneline | wc -l)"
+    "build": "pnpm run build:clean && pnpm run build:js && pnpm run build:type",
+    "build:clean": "cat scripts/build-clean.ts | esbuild --format=iife --loader=ts | node",
+    "build:js": "cat scripts/build-js.ts | esbuild --format=iife --loader=ts | node",
+    "build:type": "tsc -p tsconfig.build.json",
+    "fix": "eslint src --ext .ts --fix",
+    "lint": "eslint src --ext .ts"
   },
   "devDependencies": {
+    "@types/fs-extra": "^9.0.13",
+    "@types/node": "^18.7.20",
     "@typescript-eslint/eslint-plugin": "^5.38.0",
     "@typescript-eslint/parser": "^5.38.0",
+    "esbuild": "^0.14.54",
     "eslint": "^8.24.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
-    "husky": "^8.0.1",
-    "lint-staged": "^13.0.3",
+    "fs-extra": "^10.1.0",
     "prettier": "^2.7.1",
     "sort-package-json": "^1.57.0",
     "typescript": "^4.8.3"
