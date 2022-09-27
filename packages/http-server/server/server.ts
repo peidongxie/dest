@@ -67,7 +67,7 @@ const portMap: PortMap = {
 };
 
 class Server<T extends HttpType> {
-  private handlers: PluginHandler<T>[];
+  private handlers: PluginHandler[];
   private originalValue: ServerOriginalValue<T>;
   private type: ServerType<T>;
 
@@ -84,7 +84,7 @@ class Server<T extends HttpType> {
       const response = new Response<T>(res);
       const pluginRequest = request.getRequest();
       const pluginResponse = await (async () => {
-        const pluginResponse: PluginResponse<T> = {};
+        const pluginResponse: PluginResponse = {};
         try {
           for (const pluginHandler of this.handlers) {
             const { code, message, headers, body } =
@@ -108,7 +108,7 @@ class Server<T extends HttpType> {
           }
           return pluginResponse;
         } catch (e) {
-          const pluginResponse: PluginResponse<T> = {
+          const pluginResponse: PluginResponse = {
             code: 500,
             body: e instanceof Error ? e : String(e),
           };
@@ -147,7 +147,7 @@ class Server<T extends HttpType> {
     );
   }
 
-  public use(plugin: PluginHandler<T> | Plugin<T>): void {
+  public use(plugin: PluginHandler | Plugin): void {
     const handler =
       typeof plugin === 'function' ? plugin : plugin?.getHandler();
     handler && this.handlers.push(handler);

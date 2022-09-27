@@ -1,19 +1,8 @@
 import { Buffer } from 'buffer';
-import {
-  type OutgoingHttpHeaders as HttpOutgoingHttpHeaders,
-  type ServerResponse as HttpServerResponse,
-} from 'http';
+import { type ServerResponse as HttpServerResponse } from 'http';
 import { type Http2ServerResponse } from 'http2';
 import { Stream } from 'stream';
 import { type HttpType } from './type';
-
-interface ServerResponseHeadersMap {
-  HTTP: HttpOutgoingHttpHeaders;
-  HTTPS: HttpOutgoingHttpHeaders;
-  HTTP2: HttpOutgoingHttpHeaders;
-}
-
-type ServerResponseHeaders<T extends HttpType> = ServerResponseHeadersMap[T];
 
 interface ServerResponseMap {
   HTTP: HttpServerResponse;
@@ -23,11 +12,11 @@ interface ServerResponseMap {
 
 type ServerResponse<T extends HttpType> = ServerResponseMap[T];
 
-interface PluginResponse<T extends HttpType> {
-  code?: Parameters<Response<T>['setCode']>[0];
-  message?: Parameters<Response<T>['setMessage']>[0];
-  headers?: Parameters<Response<T>['setHeaders']>[0];
-  body?: Parameters<Response<T>['setBody']>[0];
+interface PluginResponse {
+  code?: Parameters<Response<HttpType>['setCode']>[0];
+  message?: Parameters<Response<HttpType>['setMessage']>[0];
+  headers?: Parameters<Response<HttpType>['setHeaders']>[0];
+  body?: Parameters<Response<HttpType>['setBody']>[0];
 }
 
 class Response<T extends HttpType> {
@@ -60,7 +49,7 @@ class Response<T extends HttpType> {
     this.originalValue.statusCode = code;
   }
 
-  public setHeaders(headers: ServerResponseHeaders<T>): void {
+  public setHeaders(headers: NodeJS.Dict<number | string | string[]>): void {
     for (const key in headers) {
       const value = headers[key];
       if (value !== undefined) this.setHeadersItem(key, value);
@@ -71,7 +60,7 @@ class Response<T extends HttpType> {
     this.originalValue.statusMessage = message;
   }
 
-  public setResponse(res: PluginResponse<T>): void {
+  public setResponse(res: PluginResponse): void {
     const { body, code, headers, message } = res;
     if (code !== undefined) this.setCode(code);
     if (message !== undefined) this.setMessage(message);
