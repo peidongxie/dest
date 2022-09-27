@@ -1,9 +1,9 @@
-import { type HttpType, type Plugin, type PluginHandler } from '../../server';
+import { type Plugin, type PluginHandler } from '../../server';
 
-interface Route<T extends HttpType> {
+interface Route {
   method: string[];
   pathname: RegExp;
-  handler: PluginHandler<T>;
+  handler: PluginHandler;
 }
 
 interface Options {
@@ -22,16 +22,16 @@ const validMethod = [
   'TRACE',
 ];
 
-class Router<T extends HttpType> implements Plugin<T> {
+class Router implements Plugin {
   private prefix: string;
-  private routingTable: Route<T>[];
+  private routingTable: Route[];
 
   public constructor(options?: Options) {
     this.prefix = (options?.prefix || '').trim();
     this.routingTable = [];
   }
 
-  public getHandler(): PluginHandler<T> {
+  public getHandler(): PluginHandler {
     return (req) => {
       const { method, url } = req;
       const pathname = `/${url.pathname}/`.replace(/\/+/g, '/');
@@ -57,7 +57,7 @@ class Router<T extends HttpType> implements Plugin<T> {
   public setRoute(
     method: string | string[],
     pathname: string,
-    handler: PluginHandler<T>,
+    handler: PluginHandler,
   ): void {
     const validMethod = this.getValidMethod(method);
     const validPathname = this.getValidPathname(pathname);

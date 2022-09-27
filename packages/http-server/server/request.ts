@@ -3,14 +3,8 @@ import busboy from 'busboy';
 import { randomUUID } from 'crypto';
 import { createWriteStream } from 'fs';
 import getStream from 'get-stream';
-import {
-  type IncomingHttpHeaders as HttpIncomingHttpHeaders,
-  type IncomingMessage as HttpIncomingMessage,
-} from 'http';
-import {
-  type IncomingHttpHeaders as Http2IncomingHttpHeaders,
-  type Http2ServerRequest,
-} from 'http2';
+import { type IncomingMessage as HttpIncomingMessage } from 'http';
+import { type Http2ServerRequest } from 'http2';
 import iconv from 'iconv-lite';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -36,14 +30,6 @@ interface Body {
   text(): Promise<string>;
 }
 
-interface ServerRequestHeadersMap {
-  HTTP: HttpIncomingHttpHeaders;
-  HTTPS: HttpIncomingHttpHeaders;
-  HTTP2: Http2IncomingHttpHeaders;
-}
-
-type ServerRequestHeaders<T extends HttpType> = ServerRequestHeadersMap[T];
-
 interface ServerRequestMap {
   HTTP: HttpIncomingMessage;
   HTTPS: HttpIncomingMessage;
@@ -52,11 +38,11 @@ interface ServerRequestMap {
 
 type ServerRequest<T extends HttpType> = ServerRequestMap[T];
 
-interface PluginRequest<T extends HttpType> {
-  method: ReturnType<Request<T>['getMethod']>;
-  url: ReturnType<Request<T>['getUrl']>;
-  headers: ReturnType<Request<T>['getHeaders']>;
-  body: ReturnType<Request<T>['getBody']>;
+interface PluginRequest {
+  method: ReturnType<Request<HttpType>['getMethod']>;
+  url: ReturnType<Request<HttpType>['getUrl']>;
+  headers: ReturnType<Request<HttpType>['getHeaders']>;
+  body: ReturnType<Request<HttpType>['getBody']>;
 }
 
 class Request<T extends HttpType> {
@@ -144,7 +130,7 @@ class Request<T extends HttpType> {
     };
   }
 
-  public getHeaders(): ServerRequestHeaders<T> {
+  public getHeaders(): NodeJS.Dict<string | string[]> {
     return this.originalValue.headers;
   }
 
@@ -152,7 +138,7 @@ class Request<T extends HttpType> {
     return this.originalValue.method || '';
   }
 
-  public getRequest(): PluginRequest<T> {
+  public getRequest(): PluginRequest {
     return {
       method: this.getMethod(),
       url: this.getUrl(),

@@ -1,4 +1,4 @@
-import { type CommonHandler, type CommonPlugin } from '../../server';
+import { type Plugin, type PluginHandler } from '../../server';
 
 interface AllowOptions {
   headers?: string;
@@ -23,7 +23,7 @@ const defaultOptions = {
   maxAge: 600,
 };
 
-class Cors implements CommonPlugin {
+class Cors implements Plugin {
   private allowOptions: Required<AllowOptions>;
   private enable: boolean;
   private maxAge: number;
@@ -43,7 +43,7 @@ class Cors implements CommonPlugin {
     }
   }
 
-  public getHandler(): CommonHandler {
+  public getHandler(): PluginHandler {
     return (req) => {
       const { method, headers } = req;
       const origin = headers.origin;
@@ -52,7 +52,7 @@ class Cors implements CommonPlugin {
         return {};
       }
       // forbidden
-      if (!this.allowOptions.origin(origin)) {
+      if (!this.allowOptions.origin(origin as string)) {
         return {
           code: 403,
           body: null,
