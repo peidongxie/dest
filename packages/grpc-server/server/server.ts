@@ -9,13 +9,11 @@ import {
   type handleUnaryCall,
 } from '@grpc/grpc-js';
 import {
-  type CommonDefinition,
-  type CommonHandler,
-  type CommonPlugin,
+  type Plugin,
   type PluginDefinition,
   type PluginHandler,
 } from './plugin';
-import Request, { type ServerRequest } from './request';
+import Request, { type PluginRequest, type ServerRequest } from './request';
 import Response, { type PluginResponse, type ServerResponse } from './response';
 import { type RpcType } from './type';
 
@@ -38,8 +36,8 @@ type ServerHandler<T extends RpcType, ReqMsg, ResMsg> = ServerHandlerMap<
 >[T];
 
 class Server {
-  private definitions: Map<string, CommonDefinition>;
-  private handlers: Map<string, CommonHandler>;
+  private definitions: Map<string, PluginDefinition<RpcType, unknown, unknown>>;
+  private handlers: Map<string, PluginHandler<RpcType, unknown, unknown>>;
   private originalValue: ServerOriginalValue;
 
   public constructor(options?: ServerOptions) {
@@ -74,11 +72,9 @@ class Server {
             const { requestStream, responseStream } = this.definitions.get(
               path,
             ) as PluginDefinition<T, ReqMsg, ResMsg>;
-            const pluginHandler = handler as CommonHandler<
-              T,
-              ReqMsg,
-              ResMsg
-            > as PluginHandler<T, ReqMsg, ResMsg>;
+            const pluginHandler = handler as (
+              req: PluginRequest<T, ReqMsg>,
+            ) => PluginResponse<T, ResMsg> | Promise<PluginResponse<T, ResMsg>>;
             const request = new Request<T, ReqMsg>(requestStream, args);
             const response = new Response<T, ResMsg>(responseStream, args);
             if (requestStream && responseStream) {
@@ -137,14 +133,15 @@ class Server {
     );
   }
 
-  public use<ReqMsg, ResMsg>(
-    plugin: CommonPlugin<RpcType, ReqMsg, ResMsg>,
-  ): void {
+  public use<ReqMsg, ResMsg>(plugin: Plugin<RpcType, ReqMsg, ResMsg>): void {
     this.definitions.set(
       plugin.definition.path,
-      plugin.definition as CommonDefinition,
+      plugin.definition as PluginDefinition<RpcType, unknown, unknown>,
     );
-    this.handlers.set(plugin.definition.path, plugin.handler as CommonHandler);
+    this.handlers.set(
+      plugin.definition.path,
+      plugin.handler as PluginHandler<RpcType, unknown, unknown>,
+    );
   }
 }
 
