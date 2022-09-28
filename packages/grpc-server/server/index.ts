@@ -1,7 +1,4 @@
 export {
-  type CommonDefinition,
-  type CommonHandler,
-  type CommonPlugin,
   type Plugin,
   type PluginDefinition,
   type PluginHandler,

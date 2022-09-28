@@ -15,7 +15,7 @@ const createInitialDatabase = async () => {
 
 const startServer = async () => {
   const cors = new Cors();
-  const router = new Router<'HTTP'>();
+  const router = new Router();
   router.setRoute('DELETE', '/database', deleteDatabase);
   router.setRoute('GET', '/database', getDatabase);
   router.setRoute('POST', '/database', postDatabase);

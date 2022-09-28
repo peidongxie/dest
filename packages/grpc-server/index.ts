@@ -1,7 +1,4 @@
 import Server, {
-  type CommonDefinition,
-  type CommonHandler,
-  type CommonPlugin,
   type Plugin,
   type PluginDefinition,
   type PluginHandler,
@@ -19,9 +16,6 @@ const createServer = (
 export {
   Server,
   createServer,
-  type CommonDefinition,
-  type CommonHandler,
-  type CommonPlugin,
   type Plugin,
   type PluginDefinition,
   type PluginHandler,
