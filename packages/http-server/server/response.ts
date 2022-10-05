@@ -1,7 +1,8 @@
 import { Buffer } from 'buffer';
 import { type ServerResponse as HttpServerResponse } from 'http';
 import { type Http2ServerResponse } from 'http2';
-import { Stream } from 'stream';
+import { Readable, Stream } from 'stream';
+import { ReadableStream } from 'stream/web';
 import { type HttpType } from './type';
 
 interface ServerResponseMap {
@@ -35,6 +36,7 @@ class Response<T extends HttpType> {
       | ArrayBuffer
       | SharedArrayBuffer
       | Stream
+      | ReadableStream
       | object,
   ): void {
     if (this.originalValue.writableEnded) return;
@@ -51,6 +53,8 @@ class Response<T extends HttpType> {
     } else if (value instanceof SharedArrayBuffer) {
       this.setBodyBuffer(value);
     } else if (value instanceof Stream) {
+      this.setBodyStream(value);
+    } else if (value instanceof ReadableStream) {
       this.setBodyStream(value);
     } else {
       this.setBodyJson(value);
@@ -124,12 +128,13 @@ class Response<T extends HttpType> {
     res.end();
   }
 
-  private setBodyStream(value: Stream): void {
+  private setBodyStream(value: Stream | ReadableStream): void {
     const res = this.originalValue;
+    const stream = value instanceof Stream ? value : Readable.fromWeb(value);
     if (!this.originalValue.hasHeader('Content-Type')) {
       this.setHeadersItem('Content-Type', 'application/octet-stream');
     }
-    value.pipe(res);
+    stream.pipe(res);
   }
 
   private setBodyText(value: string): void {
