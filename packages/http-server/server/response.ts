@@ -1,7 +1,8 @@
 import { Buffer } from 'buffer';
 import { type ServerResponse as HttpServerResponse } from 'http';
 import { type Http2ServerResponse } from 'http2';
-import { Stream } from 'stream';
+import { Readable, Stream } from 'stream';
+import { ReadableStream } from 'stream/web';
 import { type HttpType } from './type';
 
 interface ServerResponseMap {
@@ -27,7 +28,16 @@ class Response<T extends HttpType> {
   }
 
   public setBody(
-    value: null | Error | string | Uint8Array | Stream | object,
+    value:
+      | null
+      | Error
+      | string
+      | Uint8Array
+      | ArrayBuffer
+      | SharedArrayBuffer
+      | Stream
+      | ReadableStream
+      | object,
   ): void {
     if (this.originalValue.writableEnded) return;
     if (value === null) {
@@ -38,7 +48,13 @@ class Response<T extends HttpType> {
       this.setBodyText(value);
     } else if (value instanceof Uint8Array) {
       this.setBodyBuffer(value);
+    } else if (value instanceof ArrayBuffer) {
+      this.setBodyBuffer(value);
+    } else if (value instanceof SharedArrayBuffer) {
+      this.setBodyBuffer(value);
     } else if (value instanceof Stream) {
+      this.setBodyStream(value);
+    } else if (value instanceof ReadableStream) {
       this.setBodyStream(value);
     } else {
       this.setBodyJson(value);
@@ -69,13 +85,16 @@ class Response<T extends HttpType> {
     else this.setBody(null);
   }
 
-  private setBodyBuffer(value: Uint8Array): void {
+  private setBodyBuffer(
+    value: Uint8Array | ArrayBuffer | SharedArrayBuffer,
+  ): void {
     const res = this.originalValue;
+    const buffer = value instanceof Uint8Array ? value : Buffer.from(value);
     if (!this.originalValue.hasHeader('Content-Type')) {
       this.setHeadersItem('Content-Type', 'application/octet-stream');
     }
-    this.setHeadersItem('Content-Length', value.byteLength);
-    res.end(value);
+    this.setHeadersItem('Content-Length', buffer.byteLength);
+    res.end(buffer);
   }
 
   private setBodyError(value: Error): void {
@@ -109,12 +128,13 @@ class Response<T extends HttpType> {
     res.end();
   }
 
-  private setBodyStream(value: Stream): void {
+  private setBodyStream(value: Stream | ReadableStream): void {
     const res = this.originalValue;
+    const stream = value instanceof Stream ? value : Readable.fromWeb(value);
     if (!this.originalValue.hasHeader('Content-Type')) {
       this.setHeadersItem('Content-Type', 'application/octet-stream');
     }
-    value.pipe(res);
+    stream.pipe(res);
   }
 
   private setBodyText(value: string): void {

@@ -1,31 +1,27 @@
 import { Blob } from 'buffer';
 import busboy from 'busboy';
-import { randomUUID } from 'crypto';
-import { createWriteStream } from 'fs';
 import getStream from 'get-stream';
 import { type IncomingMessage as HttpIncomingMessage } from 'http';
 import { type Http2ServerRequest } from 'http2';
 import iconv from 'iconv-lite';
-import { tmpdir } from 'os';
-import { join } from 'path';
 import { type Readable } from 'stream';
-import { URL, pathToFileURL } from 'url';
+import { URL } from 'url';
 import MIMEType from 'whatwg-mimetype';
 import { createBrotliDecompress, createGunzip, createInflate } from 'zlib';
 import { type HttpType } from './type';
 
-type FormKey = string;
-
-type FormValue = string | URL;
-
-type FormEntry = [FormKey, FormValue] | Promise<[FormKey, FormValue]>;
+type FormEntry =
+  | [string, string]
+  | [string, Blob, string]
+  | Promise<[string, string]>
+  | Promise<[string, Blob, string]>;
 
 interface Body {
   readonly body: Readable;
   readonly bodyUsed: boolean;
   arrayBuffer(): Promise<ArrayBuffer>;
   blob(): Promise<Blob>;
-  formData(): Promise<Map<FormKey, FormValue>>;
+  formData(): Promise<FormData>;
   json<T>(): Promise<T>;
   text(): Promise<string>;
 }
@@ -171,7 +167,7 @@ class Request<T extends HttpType> {
     });
   }
 
-  private async getBodyFormData(): Promise<Map<string, string | URL>> {
+  private async getBodyFormData(): Promise<FormData> {
     const sourceStream = this.pipeStream();
     const formEntries = await new Promise<FormEntry[]>((resolve, reject) => {
       const formEntries: FormEntry[] = [];
@@ -181,17 +177,13 @@ class Request<T extends HttpType> {
       });
       formStream.on('file', (name, value, info) => {
         formEntries.push(
-          new Promise((resolve, reject) => {
-            const mimeType = info.mimeType.replace('/', '-');
-            const filename = info.filename.replace(/[^-.0-9A-Za-z]/g, '');
-            const input = `${Date.now()}_${randomUUID()}_${mimeType}_${filename}`;
-            const url = pathToFileURL(join(tmpdir(), input));
-            const fileStream = createWriteStream(url);
-            fileStream.on('close', () => resolve([name, url]));
-            fileStream.on('error', reject);
-            value.on('error', reject);
-            value.pipe(fileStream);
-          }),
+          (async () => {
+            const buffer = await getStream.buffer(value);
+            const blob = new Blob([buffer], {
+              type: info.mimeType,
+            });
+            return [name, blob, info.filename];
+          })(),
         );
       });
       formStream.on('close', () => {
@@ -201,7 +193,15 @@ class Request<T extends HttpType> {
       sourceStream.on('error', reject);
       sourceStream.pipe(formStream);
     });
-    return new Map(await Promise.all(formEntries));
+    const formData = new FormData();
+    for await (const [name, value, filename] of formEntries) {
+      if (typeof value === 'string') {
+        formData.set(name, value);
+      } else {
+        formData.set(name, value as globalThis.Blob, filename);
+      }
+    }
+    return formData;
   }
 
   private async getBodyJson<T>(): Promise<T> {
@@ -251,7 +251,7 @@ class Request<T extends HttpType> {
     const encoding = this.originalValue.headers['content-encoding'];
     const charset = this.getMime()?.parameters.get('charset');
     const sourceStream: Readable = this.originalValue;
-    const encodingStream: NodeJS.ReadWriteStream | null =
+    const encodingStream =
       encoding === 'br'
         ? createBrotliDecompress()
         : encoding === 'gzip'
@@ -259,15 +259,13 @@ class Request<T extends HttpType> {
         : encoding === 'deflate'
         ? createInflate()
         : null;
-    const charsetStream: NodeJS.ReadWriteStream | null = charset
-      ? iconv.decodeStream(charset)
-      : null;
+    const charsetStream = charset ? iconv.decodeStream(charset) : null;
     let stream: NodeJS.ReadableStream = sourceStream;
     if (encodingStream) {
-      stream = stream.pipe<NodeJS.ReadWriteStream>(encodingStream);
+      stream = stream.pipe(encodingStream);
     }
     if (charsetStream) {
-      stream = stream.pipe<NodeJS.ReadWriteStream>(charsetStream);
+      stream = stream.pipe(charsetStream);
     }
     return stream;
   }
