@@ -1,7 +1,7 @@
-import { Buffer } from 'buffer';
+import { Blob, Buffer } from 'buffer';
 import { type ServerResponse as HttpServerResponse } from 'http';
 import { type Http2ServerResponse } from 'http2';
-import { Readable, Stream } from 'stream';
+import { Readable } from 'stream';
 import { ReadableStream } from 'stream/web';
 import { type HttpType } from './type';
 
@@ -35,8 +35,9 @@ class Response<T extends HttpType> {
       | Uint8Array
       | ArrayBuffer
       | SharedArrayBuffer
-      | Stream
+      | Readable
       | ReadableStream
+      | Blob
       | object,
   ): void {
     if (this.originalValue.writableEnded) return;
@@ -52,9 +53,11 @@ class Response<T extends HttpType> {
       this.setBodyBuffer(value);
     } else if (value instanceof SharedArrayBuffer) {
       this.setBodyBuffer(value);
-    } else if (value instanceof Stream) {
+    } else if (value instanceof Readable) {
       this.setBodyStream(value);
     } else if (value instanceof ReadableStream) {
+      this.setBodyStream(value);
+    } else if (value instanceof Blob) {
       this.setBodyStream(value);
     } else {
       this.setBodyJson(value);
@@ -128,13 +131,18 @@ class Response<T extends HttpType> {
     res.end();
   }
 
-  private setBodyStream(value: Stream | ReadableStream): void {
+  private setBodyStream(value: Readable | ReadableStream | Blob): void {
     const res = this.originalValue;
-    const stream = value instanceof Stream ? value : Readable.fromWeb(value);
+    const readableStream =
+      value instanceof Blob ? (value.stream() as ReadableStream) : value;
+    const readable =
+      readableStream instanceof ReadableStream
+        ? Readable.fromWeb(readableStream)
+        : readableStream;
     if (!this.originalValue.hasHeader('Content-Type')) {
       this.setHeadersItem('Content-Type', 'application/octet-stream');
     }
-    stream.pipe(res);
+    readable.pipe(res);
   }
 
   private setBodyText(value: string): void {
