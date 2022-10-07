@@ -32,7 +32,17 @@ class Response<T extends HttpType> {
       | null
       | Error
       | string
+      | Int8Array
       | Uint8Array
+      | Uint8ClampedArray
+      | Int16Array
+      | Uint16Array
+      | Int32Array
+      | Uint32Array
+      | Float32Array
+      | Float64Array
+      | BigInt64Array
+      | BigUint64Array
       | ArrayBuffer
       | SharedArrayBuffer
       | Readable
@@ -47,7 +57,27 @@ class Response<T extends HttpType> {
       this.setBodyError(value);
     } else if (typeof value === 'string') {
       this.setBodyText(value);
+    } else if (value instanceof Int8Array) {
+      this.setBodyBuffer(value);
     } else if (value instanceof Uint8Array) {
+      this.setBodyBuffer(value);
+    } else if (value instanceof Uint8ClampedArray) {
+      this.setBodyBuffer(value);
+    } else if (value instanceof Int16Array) {
+      this.setBodyBuffer(value);
+    } else if (value instanceof Uint16Array) {
+      this.setBodyBuffer(value);
+    } else if (value instanceof Int32Array) {
+      this.setBodyBuffer(value);
+    } else if (value instanceof Uint32Array) {
+      this.setBodyBuffer(value);
+    } else if (value instanceof Float32Array) {
+      this.setBodyBuffer(value);
+    } else if (value instanceof Float64Array) {
+      this.setBodyBuffer(value);
+    } else if (value instanceof BigInt64Array) {
+      this.setBodyBuffer(value);
+    } else if (value instanceof BigUint64Array) {
       this.setBodyBuffer(value);
     } else if (value instanceof ArrayBuffer) {
       this.setBodyBuffer(value);
@@ -89,10 +119,28 @@ class Response<T extends HttpType> {
   }
 
   private setBodyBuffer(
-    value: Uint8Array | ArrayBuffer | SharedArrayBuffer,
+    value:
+      | Int8Array
+      | Uint8Array
+      | Uint8ClampedArray
+      | Int16Array
+      | Uint16Array
+      | Int32Array
+      | Uint32Array
+      | Float32Array
+      | Float64Array
+      | BigInt64Array
+      | BigUint64Array
+      | ArrayBuffer
+      | SharedArrayBuffer,
   ): void {
     const res = this.originalValue;
-    const buffer = value instanceof Uint8Array ? value : Buffer.from(value);
+    const buffer =
+      value instanceof Buffer
+        ? value
+        : value instanceof ArrayBuffer || value instanceof SharedArrayBuffer
+        ? Buffer.from(value)
+        : Buffer.from(value.buffer, value.byteOffset, value.byteLength);
     if (!this.originalValue.hasHeader('Content-Type')) {
       this.setHeadersItem('Content-Type', 'application/octet-stream');
     }
