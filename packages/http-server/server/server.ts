@@ -72,6 +72,9 @@ class Server<T extends HttpType> {
   private type: ServerType<T>;
 
   public constructor(type: ServerType<T>, options?: ServerOptions<T>) {
+    if (!['http', 'https', 'http2'].includes(type)) {
+      throw new TypeError('Invalid server type');
+    }
     this.type = type;
     const creator = creatorMap[type];
     this.originalValue = creator(options || {}) as ServerOriginalValue<T>;
