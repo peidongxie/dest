@@ -1,8 +1,10 @@
 import { Blob, Buffer } from 'buffer';
+import { randomUUID } from 'crypto';
 import { type ServerResponse as HttpServerResponse } from 'http';
 import { type Http2ServerResponse } from 'http2';
 import { Readable } from 'stream';
 import { ReadableStream } from 'stream/web';
+import { URLSearchParams } from 'url';
 import { type HttpType } from './type';
 
 interface ServerResponseMap {
@@ -157,6 +159,43 @@ class Response<T extends HttpType> {
     }
     this.setHeadersItem('Content-Length', Buffer.byteLength(str));
     res.end(str);
+  }
+
+  private async setBodyForm(value: FormData | URLSearchParams): Promise<void> {
+    const res = this.originalValue;
+    const boundary = 'boundary--' + randomUUID();
+    const buffers: Buffer[] = [];
+    for (const entries of value) {
+      const [name, value] = entries;
+      buffers.push(Buffer.from(`--${boundary}\r\n`));
+      if (typeof value === 'string') {
+        const disposition = [`form-data`, `name="${name}"`].join('; ');
+        buffers.push(Buffer.from(`Content-Disposition: ${disposition}\r\n`));
+        buffers.push(Buffer.from(`\r\n`));
+        buffers.push(Buffer.from(value));
+        buffers.push(Buffer.from(`\r\n`));
+      } else {
+        const disposition = [
+          `form-data`,
+          `name="${name}"`,
+          `filename="${value.name}"`,
+        ].join('; ');
+        buffers.push(Buffer.from(`Content-Disposition: ${disposition}\r\n`));
+        buffers.push(Buffer.from(`\r\n`));
+        buffers.push(Buffer.from(await value.arrayBuffer()));
+        buffers.push(Buffer.from(`\r\n`));
+      }
+    }
+    buffers.push(Buffer.from(`--${boundary}--\r\n`));
+    const buffer = Buffer.concat(buffers);
+    if (!this.originalValue.hasHeader('Content-Type')) {
+      this.setHeadersItem(
+        'Content-Type',
+        'multipart/form-data; boundary=' + boundary,
+      );
+    }
+    this.setHeadersItem('Content-Length', buffer.byteLength);
+    res.end(buffer);
   }
 
   private setBodyJson(value: object): void {
