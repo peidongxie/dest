@@ -55,8 +55,6 @@ class Response<T extends HttpType> {
     if (this.originalValue.writableEnded) return;
     if (value === null) {
       this.setBodyNothing();
-    } else if (value instanceof Error) {
-      this.setBodyError(value);
     } else if (typeof value === 'string') {
       this.setBodyText(value);
     } else if (value instanceof Int8Array) {
@@ -91,6 +89,12 @@ class Response<T extends HttpType> {
       this.setBodyStream(value);
     } else if (value instanceof Blob) {
       this.setBodyStream(value);
+    } else if (value instanceof FormData) {
+      this.setBodyForm(value);
+    } else if (value instanceof URLSearchParams) {
+      this.setBodyForm(value);
+    } else if (value instanceof Error) {
+      this.setBodyError(value);
     } else {
       this.setBodyJson(value);
     }
@@ -181,6 +185,7 @@ class Response<T extends HttpType> {
           `filename="${value.name}"`,
         ].join('; ');
         buffers.push(Buffer.from(`Content-Disposition: ${disposition}\r\n`));
+        buffers.push(Buffer.from(`Content-Type: application/octet-stream\r\n`));
         buffers.push(Buffer.from(`\r\n`));
         buffers.push(Buffer.from(await value.arrayBuffer()));
         buffers.push(Buffer.from(`\r\n`));
