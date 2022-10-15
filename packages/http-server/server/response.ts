@@ -5,6 +5,12 @@ import { type Http2ServerResponse } from 'http2';
 import { Readable } from 'stream';
 import { ReadableStream } from 'stream/web';
 import { URLSearchParams } from 'url';
+import {
+  isAnyArrayBuffer,
+  isArrayBufferView,
+  isNativeError,
+  isStringObject,
+} from 'util/types';
 import { type HttpType } from './type';
 
 interface ServerResponseMap {
@@ -32,21 +38,10 @@ class Response<T extends HttpType> {
   public setBody(
     value:
       | Buffer
-      | FormData
       | ArrayBuffer
       | SharedArrayBuffer
-      | Int8Array
-      | Uint8Array
-      | Uint8ClampedArray
-      | Int16Array
-      | Uint16Array
-      | Int32Array
-      | Uint32Array
-      | Float32Array
-      | Float64Array
-      | BigInt64Array
-      | BigUint64Array
-      | DataView
+      | ArrayBufferView
+      | FormData
       | null
       | Readable
       | ReadableStream
@@ -61,33 +56,9 @@ class Response<T extends HttpType> {
       this.setBodyBuffer(value);
     } else if (value instanceof FormData) {
       this.setBodyBuffer(value);
-    } else if (value instanceof ArrayBuffer) {
+    } else if (isAnyArrayBuffer(value)) {
       this.setBodyBuffer(value);
-    } else if (value instanceof SharedArrayBuffer) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof Int8Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof Uint8Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof Uint8ClampedArray) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof Int16Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof Uint16Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof Int32Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof Uint32Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof Float32Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof Float64Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof BigInt64Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof BigUint64Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof DataView) {
+    } else if (isArrayBufferView(value)) {
       this.setBodyBuffer(value);
     } else if (value === null) {
       this.setBodyNothing();
@@ -97,9 +68,9 @@ class Response<T extends HttpType> {
       this.setBodyStream(value);
     } else if (value instanceof Blob) {
       this.setBodyStream(value);
-    } else if (typeof value === 'string') {
+    } else if (isStringObject(value)) {
       this.setBodyText(value);
-    } else if (value instanceof Error) {
+    } else if (isNativeError(value)) {
       this.setBodyText(value);
     } else if (value instanceof URLSearchParams) {
       this.setBodyText(value);
@@ -135,31 +106,23 @@ class Response<T extends HttpType> {
   private async setBodyBuffer(
     value:
       | Buffer
-      | FormData
       | ArrayBuffer
       | SharedArrayBuffer
-      | Int8Array
-      | Uint8Array
-      | Uint8ClampedArray
-      | Int16Array
-      | Uint16Array
-      | Int32Array
-      | Uint32Array
-      | Float32Array
-      | Float64Array
-      | BigInt64Array
-      | BigUint64Array
-      | DataView,
+      | ArrayBufferView
+      | FormData,
   ): Promise<void> {
     const res = this.originalValue;
     const buffer =
       value instanceof Buffer
         ? value
-        : value instanceof FormData
-        ? await (async () => {
+        : isAnyArrayBuffer(value)
+        ? Buffer.from(value)
+        : isArrayBufferView(value)
+        ? Buffer.from(value.buffer, value.byteOffset, value.byteLength)
+        : await (async () => {
             const buffers: Buffer[] = [];
             const boundary = 'boundary--' + randomUUID();
-            for (const entries of value) {
+            for (const entries of value as FormData) {
               const [name, value] = entries;
               buffers.push(Buffer.from(`--${boundary}\r\n`));
               if (typeof value === 'string') {
@@ -189,22 +152,19 @@ class Response<T extends HttpType> {
             }
             buffers.push(Buffer.from(`--${boundary}--\r\n`));
             return Buffer.concat(buffers);
-          })()
-        : value instanceof ArrayBuffer || value instanceof SharedArrayBuffer
-        ? Buffer.from(value)
-        : Buffer.from(value.buffer, value.byteOffset, value.byteLength);
+          })();
     this.setHeadersItem('Content-Length', buffer.byteLength);
     if (!res.hasHeader('Content-Type')) {
       this.setHeadersItem(
         'Content-Type',
         value instanceof Buffer
           ? 'application/octet-stream'
-          : value instanceof FormData
-          ? 'multipart/form-data; boundary=' +
-            buffer.subarray(2, buffer.indexOf('\r\n'))
-          : value instanceof ArrayBuffer || value instanceof SharedArrayBuffer
+          : isAnyArrayBuffer(value)
           ? 'application/octet-stream'
-          : 'application/octet-stream',
+          : isArrayBufferView(value)
+          ? 'application/octet-stream'
+          : 'multipart/form-data; boundary=' +
+            buffer.subarray(2, buffer.indexOf('\r\n')),
       );
     }
     res.end(buffer);
@@ -236,21 +196,20 @@ class Response<T extends HttpType> {
     value: string | Error | URLSearchParams | object,
   ): Promise<void> {
     const res = this.originalValue;
-    const text =
-      typeof value === 'string'
-        ? value
-        : value instanceof Error
-        ? value.toString()
-        : value instanceof URLSearchParams
-        ? value.toString()
-        : JSON.stringify(value, (key, value) => {
-            return typeof value === 'bigint' ? value.toString() + 'n' : value;
-          });
+    const text = isStringObject(value)
+      ? (value as string)
+      : isNativeError(value)
+      ? value.toString()
+      : value instanceof URLSearchParams
+      ? value.toString()
+      : JSON.stringify(value, (key, value) => {
+          return typeof value === 'bigint' ? value.toString() + 'n' : value;
+        });
     if (res.statusCode === 200) {
       this.setCode(
-        typeof value === 'string'
+        isStringObject(value)
           ? 200
-          : value instanceof Error
+          : isNativeError(value)
           ? 500
           : value instanceof URLSearchParams
           ? 200
@@ -261,9 +220,9 @@ class Response<T extends HttpType> {
     if (!res.hasHeader('Content-Type')) {
       this.setHeadersItem(
         'Content-Type',
-        typeof value === 'string'
+        isStringObject(value)
           ? 'text/plain; charset=utf-8'
-          : value instanceof Error
+          : isNativeError(value)
           ? 'text/plain; charset=utf-8'
           : value instanceof URLSearchParams
           ? 'application/x-www-form-urlencoded; charset=utf-8'
