@@ -46,6 +46,7 @@ class Response<T extends HttpType> {
       | Float64Array
       | BigInt64Array
       | BigUint64Array
+      | DataView
       | null
       | Readable
       | ReadableStream
@@ -85,6 +86,8 @@ class Response<T extends HttpType> {
     } else if (value instanceof BigInt64Array) {
       this.setBodyBuffer(value);
     } else if (value instanceof BigUint64Array) {
+      this.setBodyBuffer(value);
+    } else if (value instanceof DataView) {
       this.setBodyBuffer(value);
     } else if (value === null) {
       this.setBodyNothing();
@@ -145,7 +148,8 @@ class Response<T extends HttpType> {
       | Float32Array
       | Float64Array
       | BigInt64Array
-      | BigUint64Array,
+      | BigUint64Array
+      | DataView,
   ): Promise<void> {
     const res = this.originalValue;
     const buffer =
