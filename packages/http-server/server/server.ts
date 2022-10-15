@@ -10,6 +10,7 @@ import {
   createServer as httpsCreateServer,
   type ServerOptions as HttpsServerOptions,
 } from 'https';
+import { isNativeError } from 'util/types';
 import Request, { type ServerRequest } from './request';
 import Response, { type PluginResponse, type ServerResponse } from './response';
 import { type Plugin, type PluginHandler } from './plugin';
@@ -113,7 +114,7 @@ class Server<T extends HttpType> {
         } catch (e) {
           const pluginResponse: PluginResponse = {
             code: 500,
-            body: e instanceof Error ? e : String(e),
+            body: isNativeError(e) ? e : String(e),
           };
           return pluginResponse;
         }

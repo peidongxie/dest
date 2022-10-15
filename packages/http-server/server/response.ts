@@ -5,6 +5,12 @@ import { type Http2ServerResponse } from 'http2';
 import { Readable } from 'stream';
 import { ReadableStream } from 'stream/web';
 import { URLSearchParams } from 'url';
+import {
+  isAnyArrayBuffer,
+  isArrayBufferView,
+  isNativeError,
+  isStringObject,
+} from 'util/types';
 import { type HttpType } from './type';
 
 interface ServerResponseMap {
@@ -31,72 +37,45 @@ class Response<T extends HttpType> {
 
   public setBody(
     value:
-      | null
-      | Error
-      | string
-      | Int8Array
-      | Uint8Array
-      | Uint8ClampedArray
-      | Int16Array
-      | Uint16Array
-      | Int32Array
-      | Uint32Array
-      | Float32Array
-      | Float64Array
-      | BigInt64Array
-      | BigUint64Array
+      | Buffer
       | ArrayBuffer
       | SharedArrayBuffer
+      | ArrayBufferView
+      | FormData
+      | null
       | Readable
       | ReadableStream
       | Blob
+      | string
+      | Error
+      | URLSearchParams
       | object,
   ): void {
     if (this.originalValue.writableEnded) return;
-    if (value === null) {
+    if (value instanceof Buffer) {
+      this.setBodyBuffer(value);
+    } else if (value instanceof FormData) {
+      this.setBodyBuffer(value);
+    } else if (isAnyArrayBuffer(value)) {
+      this.setBodyBuffer(value);
+    } else if (isArrayBufferView(value)) {
+      this.setBodyBuffer(value);
+    } else if (value === null) {
       this.setBodyNothing();
-    } else if (typeof value === 'string') {
-      this.setBodyText(value);
-    } else if (value instanceof Int8Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof Uint8Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof Uint8ClampedArray) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof Int16Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof Uint16Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof Int32Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof Uint32Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof Float32Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof Float64Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof BigInt64Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof BigUint64Array) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof ArrayBuffer) {
-      this.setBodyBuffer(value);
-    } else if (value instanceof SharedArrayBuffer) {
-      this.setBodyBuffer(value);
     } else if (value instanceof Readable) {
       this.setBodyStream(value);
     } else if (value instanceof ReadableStream) {
       this.setBodyStream(value);
     } else if (value instanceof Blob) {
       this.setBodyStream(value);
-    } else if (value instanceof FormData) {
-      this.setBodyForm(value);
+    } else if (isStringObject(value)) {
+      this.setBodyText(value);
+    } else if (isNativeError(value)) {
+      this.setBodyText(value);
     } else if (value instanceof URLSearchParams) {
-      this.setBodyForm(value);
-    } else if (value instanceof Error) {
-      this.setBodyError(value);
+      this.setBodyText(value);
     } else {
-      this.setBodyJson(value);
+      this.setBodyText(value);
     }
   }
 
@@ -124,126 +103,133 @@ class Response<T extends HttpType> {
     else this.setBody(null);
   }
 
-  private setBodyBuffer(
+  private async setBodyBuffer(
     value:
-      | Int8Array
-      | Uint8Array
-      | Uint8ClampedArray
-      | Int16Array
-      | Uint16Array
-      | Int32Array
-      | Uint32Array
-      | Float32Array
-      | Float64Array
-      | BigInt64Array
-      | BigUint64Array
+      | Buffer
       | ArrayBuffer
-      | SharedArrayBuffer,
-  ): void {
+      | SharedArrayBuffer
+      | ArrayBufferView
+      | FormData,
+  ): Promise<void> {
     const res = this.originalValue;
     const buffer =
       value instanceof Buffer
         ? value
-        : value instanceof ArrayBuffer || value instanceof SharedArrayBuffer
+        : isAnyArrayBuffer(value)
         ? Buffer.from(value)
-        : Buffer.from(value.buffer, value.byteOffset, value.byteLength);
-    if (!this.originalValue.hasHeader('Content-Type')) {
-      this.setHeadersItem('Content-Type', 'application/octet-stream');
-    }
+        : isArrayBufferView(value)
+        ? Buffer.from(value.buffer, value.byteOffset, value.byteLength)
+        : await (async () => {
+            const buffers: Buffer[] = [];
+            const boundary = 'boundary--' + randomUUID();
+            for (const entries of value as FormData) {
+              const [name, value] = entries;
+              buffers.push(Buffer.from(`--${boundary}\r\n`));
+              if (typeof value === 'string') {
+                const disposition = [`form-data`, `name="${name}"`].join('; ');
+                buffers.push(
+                  Buffer.from(`Content-Disposition: ${disposition}\r\n`),
+                );
+                buffers.push(Buffer.from(`\r\n`));
+                buffers.push(Buffer.from(value));
+                buffers.push(Buffer.from(`\r\n`));
+              } else {
+                const disposition = [
+                  `form-data`,
+                  `name="${name}"`,
+                  `filename="${value.name}"`,
+                ].join('; ');
+                buffers.push(
+                  Buffer.from(`Content-Disposition: ${disposition}\r\n`),
+                );
+                buffers.push(
+                  Buffer.from(`Content-Type: application/octet-stream\r\n`),
+                );
+                buffers.push(Buffer.from(`\r\n`));
+                buffers.push(Buffer.from(await value.arrayBuffer()));
+                buffers.push(Buffer.from(`\r\n`));
+              }
+            }
+            buffers.push(Buffer.from(`--${boundary}--\r\n`));
+            return Buffer.concat(buffers);
+          })();
     this.setHeadersItem('Content-Length', buffer.byteLength);
-    res.end(buffer);
-  }
-
-  private setBodyError(value: Error): void {
-    const res = this.originalValue;
-    const str = value.message || 'Internal Server Error';
-    if (this.originalValue.statusCode === 200) this.setCode(500);
-    if (!this.originalValue.hasHeader('Content-Type')) {
-      this.setHeadersItem('Content-Type', 'text/plain; charset=utf-8');
-    }
-    this.setHeadersItem('Content-Length', Buffer.byteLength(str));
-    res.end(str);
-  }
-
-  private async setBodyForm(value: FormData | URLSearchParams): Promise<void> {
-    const res = this.originalValue;
-    const boundary = 'boundary--' + randomUUID();
-    const buffers: Buffer[] = [];
-    for (const entries of value) {
-      const [name, value] = entries;
-      buffers.push(Buffer.from(`--${boundary}\r\n`));
-      if (typeof value === 'string') {
-        const disposition = [`form-data`, `name="${name}"`].join('; ');
-        buffers.push(Buffer.from(`Content-Disposition: ${disposition}\r\n`));
-        buffers.push(Buffer.from(`\r\n`));
-        buffers.push(Buffer.from(value));
-        buffers.push(Buffer.from(`\r\n`));
-      } else {
-        const disposition = [
-          `form-data`,
-          `name="${name}"`,
-          `filename="${value.name}"`,
-        ].join('; ');
-        buffers.push(Buffer.from(`Content-Disposition: ${disposition}\r\n`));
-        buffers.push(Buffer.from(`Content-Type: application/octet-stream\r\n`));
-        buffers.push(Buffer.from(`\r\n`));
-        buffers.push(Buffer.from(await value.arrayBuffer()));
-        buffers.push(Buffer.from(`\r\n`));
-      }
-    }
-    buffers.push(Buffer.from(`--${boundary}--\r\n`));
-    const buffer = Buffer.concat(buffers);
-    if (!this.originalValue.hasHeader('Content-Type')) {
+    if (!res.hasHeader('Content-Type')) {
       this.setHeadersItem(
         'Content-Type',
-        'multipart/form-data; boundary=' + boundary,
+        value instanceof Buffer
+          ? 'application/octet-stream'
+          : isAnyArrayBuffer(value)
+          ? 'application/octet-stream'
+          : isArrayBufferView(value)
+          ? 'application/octet-stream'
+          : 'multipart/form-data; boundary=' +
+            buffer.subarray(2, buffer.indexOf('\r\n')),
       );
     }
-    this.setHeadersItem('Content-Length', buffer.byteLength);
     res.end(buffer);
   }
 
-  private setBodyJson(value: object): void {
+  private async setBodyNothing(): Promise<void> {
     const res = this.originalValue;
-    const str = JSON.stringify(value, (key, value) => {
-      return typeof value === 'bigint' ? value.toString() + 'n' : value;
-    });
-    if (!this.originalValue.hasHeader('Content-Type')) {
-      this.setHeadersItem('Content-Type', 'application/json; charset=utf-8');
-    }
-    this.setHeadersItem('Content-Length', Buffer.byteLength(str));
-    res.end(str);
-  }
-
-  private setBodyNothing(): void {
-    const res = this.originalValue;
-    if (this.originalValue.statusCode === 200) {
-      this.setCode(204);
-    }
+    if (res.statusCode === 200) this.setCode(204);
     res.end();
   }
 
-  private setBodyStream(value: Readable | ReadableStream | Blob): void {
+  private async setBodyStream(
+    value: Readable | ReadableStream | Blob,
+  ): Promise<void> {
     const res = this.originalValue;
-    const readableStream =
-      value instanceof Blob ? (value.stream() as ReadableStream) : value;
-    const readable =
-      readableStream instanceof ReadableStream
-        ? Readable.fromWeb(readableStream)
-        : readableStream;
-    if (!this.originalValue.hasHeader('Content-Type')) {
+    const stream =
+      value instanceof Readable
+        ? value
+        : value instanceof ReadableStream
+        ? Readable.fromWeb(value)
+        : Readable.fromWeb(value.stream());
+    if (!res.hasHeader('Content-Type')) {
       this.setHeadersItem('Content-Type', 'application/octet-stream');
     }
-    readable.pipe(res);
+    stream.pipe(res);
   }
 
-  private setBodyText(value: string): void {
+  private async setBodyText(
+    value: string | Error | URLSearchParams | object,
+  ): Promise<void> {
     const res = this.originalValue;
-    if (!this.originalValue.hasHeader('Content-Type')) {
-      this.setHeadersItem('Content-Type', 'text/plain; charset=utf-8');
+    const text = isStringObject(value)
+      ? (value as string)
+      : isNativeError(value)
+      ? value.toString()
+      : value instanceof URLSearchParams
+      ? value.toString()
+      : JSON.stringify(value, (key, value) => {
+          return typeof value === 'bigint' ? value.toString() + 'n' : value;
+        });
+    if (res.statusCode === 200) {
+      this.setCode(
+        isStringObject(value)
+          ? 200
+          : isNativeError(value)
+          ? 500
+          : value instanceof URLSearchParams
+          ? 200
+          : 200,
+      );
     }
-    this.setHeadersItem('Content-Length', Buffer.byteLength(value));
-    res.end(value);
+    this.setHeadersItem('Content-Length', Buffer.byteLength(text));
+    if (!res.hasHeader('Content-Type')) {
+      this.setHeadersItem(
+        'Content-Type',
+        isStringObject(value)
+          ? 'text/plain; charset=utf-8'
+          : isNativeError(value)
+          ? 'text/plain; charset=utf-8'
+          : value instanceof URLSearchParams
+          ? 'application/x-www-form-urlencoded; charset=utf-8'
+          : 'application/json; charset=utf-8',
+      );
+    }
+    res.end(text);
   }
 
   private setHeadersItem(
