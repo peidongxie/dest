@@ -1,3 +1,7 @@
+import { Blob, Buffer } from 'buffer';
+import { Readable } from 'stream';
+import { ReadableStream } from 'stream/web';
+import { isAnyArrayBuffer, isArrayBufferView, isNativeError } from 'util/types';
 import { type PluginRequest } from './request';
 import { type PluginResponse } from './response';
 
@@ -21,15 +25,41 @@ class Client {
   async call(req: PluginRequest): Promise<PluginResponse> {
     const url = new URL(req.url || '', this.defaultURL);
     const method = req.method || this.defaultMethod;
-    const headers = new Headers(this.defaultHeaders);
     const extraHeaders = new Headers(req.headers);
+    const headers = new Headers(this.defaultHeaders);
     for (const header of extraHeaders) {
       headers.set(...header);
     }
+    const extraBody = req.body || null;
+    const body: BodyInit | null =
+      extraBody instanceof Buffer
+        ? extraBody
+        : isAnyArrayBuffer(extraBody)
+        ? Buffer.from(extraBody)
+        : isArrayBufferView(extraBody)
+        ? extraBody
+        : extraBody instanceof Blob
+        ? extraBody
+        : extraBody instanceof FormData
+        ? extraBody
+        : extraBody === null
+        ? extraBody
+        : extraBody instanceof Readable
+        ? Readable.toWeb(extraBody)
+        : extraBody instanceof ReadableStream
+        ? extraBody
+        : typeof extraBody === 'string'
+        ? extraBody
+        : isNativeError(extraBody)
+        ? extraBody.toString()
+        : extraBody instanceof URLSearchParams
+        ? extraBody
+        : JSON.stringify(extraBody);
+    console.log(body, typeof body);
     const res = await globalThis.fetch(url, {
-      method: method,
-      headers: headers,
-      body: req.body || null,
+      method,
+      headers,
+      body,
     });
     return {
       code: res.status,
