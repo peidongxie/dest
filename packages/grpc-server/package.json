@@ -1,6 +1,6 @@
 {
   "name": "@dest-toolkit/grpc-server",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "private": false,
   "description": "A testing framework for database",
   "keywords": [
@@ -45,13 +45,13 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "@grpc/grpc-js": "^1.7.1"
+    "@grpc/grpc-js": "^1.7.2"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
-    "@types/node": "^18.8.4",
-    "@typescript-eslint/eslint-plugin": "^5.40.0",
-    "@typescript-eslint/parser": "^5.40.0",
+    "@types/node": "^18.11.0",
+    "@typescript-eslint/eslint-plugin": "^5.40.1",
+    "@typescript-eslint/parser": "^5.40.1",
     "esbuild": "^0.14.54",
     "eslint": "^8.25.0",
     "eslint-config-prettier": "^8.5.0",

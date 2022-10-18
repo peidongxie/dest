@@ -1,6 +1,6 @@
 {
   "name": "@dest-toolkit/http-server",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "private": false,
   "description": "A testing framework for database",
   "keywords": [
@@ -56,10 +56,10 @@
   "devDependencies": {
     "@types/busboy": "^1.5.0",
     "@types/fs-extra": "^9.0.13",
-    "@types/node": "^18.8.4",
+    "@types/node": "^18.11.0",
     "@types/whatwg-mimetype": "^2.1.1",
-    "@typescript-eslint/eslint-plugin": "^5.40.0",
-    "@typescript-eslint/parser": "^5.40.0",
+    "@typescript-eslint/eslint-plugin": "^5.40.1",
+    "@typescript-eslint/parser": "^5.40.1",
     "esbuild": "^0.14.54",
     "eslint": "^8.25.0",
     "eslint-config-prettier": "^8.5.0",
