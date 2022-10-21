@@ -1,9 +1,9 @@
-import { type PluginRequest } from './request';
-import { type PluginResponse } from './response';
+import { type RequestWrapped } from './request';
+import { type ResponseWrapped } from './response';
 
 type PluginHandler = (
-  req: PluginRequest,
-) => void | PluginResponse | Promise<void | PluginResponse>;
+  req: RequestWrapped,
+) => void | ResponseWrapped | Promise<void | ResponseWrapped>;
 
 interface Plugin {
   getHandler(): PluginHandler;

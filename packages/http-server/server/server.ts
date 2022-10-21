@@ -11,8 +11,8 @@ import {
   type ServerOptions as HttpsServerOptions,
 } from 'https';
 import { isNativeError } from 'util/types';
-import Request, { type ServerRequest } from './request';
-import Response, { type PluginResponse, type ServerResponse } from './response';
+import Request, { type RequestRaw } from './request';
+import Response, { type ResponseRaw, type ResponseWrapped } from './response';
 import { type Plugin, type PluginHandler } from './plugin';
 import { type HttpType } from './type';
 
@@ -22,7 +22,10 @@ interface ServerTypeMap {
   HTTP2: 'http2';
 }
 
-type ServerType<T extends HttpType> = ServerTypeMap[T];
+type ServerType =
+  | ServerTypeMap['HTTP']
+  | ServerTypeMap['HTTPS']
+  | ServerTypeMap['HTTP2'];
 
 interface ServerOptionsMap {
   HTTP: HttpServerOptions;
@@ -30,65 +33,67 @@ interface ServerOptionsMap {
   HTTP2: Http2SecureServerOptions;
 }
 
-type ServerOptions<T extends HttpType> = ServerOptionsMap[T];
+type ServerOptions =
+  | ServerOptionsMap['HTTP']
+  | ServerOptionsMap['HTTPS']
+  | ServerOptionsMap['HTTP2'];
 
-interface ServerOriginalValueMap {
+interface ServerRawMap {
   HTTP: ReturnType<typeof httpCreateServer>;
   HTTPS: ReturnType<typeof httpsCreateServer>;
   HTTP2: ReturnType<typeof createSecureServer>;
 }
 
-type ServerOriginalValue<T extends HttpType> = ServerOriginalValueMap[T];
+type ServerRaw =
+  | ServerRawMap['HTTP']
+  | ServerRawMap['HTTPS']
+  | ServerRawMap['HTTP2'];
 
-type ServerHandler<T extends HttpType> = (
-  req: ServerRequest<T>,
-  res: ServerResponse<T>,
-) => void;
+interface ServerHandlerMap {
+  HTTP: (req: RequestRaw<'HTTP'>, res: ResponseRaw<'HTTP'>) => void;
+  HTTPS: (req: RequestRaw<'HTTPS'>, res: ResponseRaw<'HTTPS'>) => void;
+  HTTP2: (req: RequestRaw<'HTTP2'>, res: ResponseRaw<'HTTP2'>) => void;
+}
 
-type CreatorMap = {
-  [T in HttpType as ServerType<T>]: (
-    options: ServerOptions<T>,
-  ) => ServerOriginalValue<T>;
-};
+type ServerHandler =
+  | ServerHandlerMap['HTTP']
+  | ServerHandlerMap['HTTPS']
+  | ServerHandlerMap['HTTP2'];
 
-const creatorMap: CreatorMap = {
+const creatorMap: Record<string, (options: ServerOptions) => ServerRaw> = {
   http: httpCreateServer,
   https: httpsCreateServer,
   http2: createSecureServer,
 };
 
-type PortMap = {
-  [T in HttpType as ServerType<T>]: number;
-};
-
-const portMap: PortMap = {
+const portMap: Record<string, number> = {
   http: 80,
   https: 443,
   http2: 443,
 };
 
-class Server<T extends HttpType> {
+class Server {
   private handlers: PluginHandler[];
-  private originalValue: ServerOriginalValue<T>;
-  private type: ServerType<T>;
+  private raw: ServerRaw;
+  private type: ServerType;
 
-  public constructor(type: ServerType<T>, options?: ServerOptions<T>) {
+  public constructor(type: ServerType, options?: ServerOptions) {
     if (!['http', 'https', 'http2'].includes(type)) {
       throw new TypeError('Invalid server type');
     }
     this.type = type;
     const creator = creatorMap[type];
-    this.originalValue = creator(options || {}) as ServerOriginalValue<T>;
+    this.raw = creator(options || {});
     this.handlers = [];
   }
 
-  public callback(): ServerHandler<T> {
-    return async (req, res) => {
-      const request = new Request<T>(req);
-      const response = new Response<T>(res);
+  public callback(): ServerHandler {
+    return async (req: RequestRaw<HttpType>, res: ResponseRaw<HttpType>) => {
+      const request = new Request(req);
+      const response = new Response(res);
       const pluginRequest = request.getRequest();
       const pluginResponse = await (async () => {
-        const pluginResponse: PluginResponse = {};
+        const pluginResponse: ResponseWrapped = {};
         try {
           for (const pluginHandler of this.handlers) {
             const { code, message, headers, body } =
@@ -112,7 +117,7 @@ class Server<T extends HttpType> {
           }
           return pluginResponse;
         } catch (e) {
-          const pluginResponse: PluginResponse = {
+          const pluginResponse: ResponseWrapped = {
             code: 500,
             body: isNativeError(e) ? e : String(e),
           };
@@ -123,29 +128,26 @@ class Server<T extends HttpType> {
     };
   }
 
-  public async close(): Promise<ServerOriginalValue<T>> {
+  public async close(): Promise<ServerRaw> {
     return new Promise((resolve, reject) =>
-      this.originalValue.close((e) => {
+      this.raw.close((e) => {
         if (e) {
           reject(e);
         } else {
-          resolve(this.originalValue);
+          resolve(this.raw);
         }
       }),
     );
   }
 
-  public listen(
-    port?: number,
-    hostname?: string,
-  ): Promise<ServerOriginalValue<T>> {
-    this.originalValue.on('request', this.callback());
+  public listen(port?: number, hostname?: string): Promise<ServerRaw> {
+    this.raw.on('request', this.callback());
     return new Promise((resolve) =>
-      this.originalValue.listen(
+      this.raw.listen(
         port || portMap[this.type],
         hostname || 'localhost',
         () => {
-          resolve(this.originalValue);
+          resolve(this.raw);
         },
       ),
     );

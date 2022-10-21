@@ -26,15 +26,15 @@ interface Body {
   text(): Promise<string>;
 }
 
-interface ServerRequestMap {
+interface RequestRawMap {
   HTTP: HttpIncomingMessage;
   HTTPS: HttpIncomingMessage;
   HTTP2: Http2ServerRequest;
 }
 
-type ServerRequest<T extends HttpType> = ServerRequestMap[T];
+type RequestRaw<T extends HttpType> = RequestRawMap[T];
 
-interface PluginRequest {
+interface RequestWrapped {
   method: ReturnType<Request<HttpType>['getMethod']>;
   url: ReturnType<Request<HttpType>['getUrl']>;
   headers: ReturnType<Request<HttpType>['getHeaders']>;
@@ -42,16 +42,16 @@ interface PluginRequest {
 }
 
 class Request<T extends HttpType> {
-  private originalValue: ServerRequest<T>;
+  private raw: RequestRaw<T>;
 
-  public constructor(req: ServerRequest<T>) {
-    this.originalValue = req;
+  public constructor(req: RequestRaw<T>) {
+    this.raw = req;
   }
 
   public getBody(): Body {
     let bodyUsed = false;
     return {
-      body: this.originalValue,
+      body: this.raw,
       bodyUsed: bodyUsed,
       arrayBuffer: async () => {
         if (bodyUsed) {
@@ -127,14 +127,14 @@ class Request<T extends HttpType> {
   }
 
   public getHeaders(): NodeJS.Dict<string | string[]> {
-    return this.originalValue.headers;
+    return this.raw.headers;
   }
 
   public getMethod(): string {
-    return this.originalValue.method || '';
+    return this.raw.method || '';
   }
 
-  public getRequest(): PluginRequest {
+  public getRequest(): RequestWrapped {
     return {
       method: this.getMethod(),
       url: this.getUrl(),
@@ -145,7 +145,7 @@ class Request<T extends HttpType> {
 
   public getUrl(): URL {
     return new URL(
-      this.originalValue.url || '',
+      this.raw.url || '',
       `${this.getUrlProtocol()}://${this.getUrlHost()}`,
     );
   }
@@ -171,7 +171,7 @@ class Request<T extends HttpType> {
     const sourceStream = this.pipeStream();
     const formEntries = await new Promise<FormEntry[]>((resolve, reject) => {
       const formEntries: FormEntry[] = [];
-      const formStream = busboy({ headers: this.originalValue.headers });
+      const formStream = busboy({ headers: this.raw.headers });
       formStream.on('field', (name, value) => {
         formEntries.push([name, value]);
       });
@@ -195,11 +195,7 @@ class Request<T extends HttpType> {
     });
     const formData = new FormData();
     for await (const [name, value, filename] of formEntries) {
-      if (typeof value === 'string') {
-        formData.set(name, value);
-      } else {
-        formData.set(name, value as globalThis.Blob, filename);
-      }
+      formData.set(name, value as string | globalThis.Blob, filename);
     }
     return formData;
   }
@@ -224,12 +220,12 @@ class Request<T extends HttpType> {
   }
 
   private getMime(): MIMEType | null {
-    const type = this.originalValue.headers['content-type'];
+    const type = this.raw.headers['content-type'];
     return type ? new MIMEType(type) : null;
   }
 
   private getUrlHost(): string {
-    const http2 = this.originalValue.httpVersionMajor >= 2;
+    const http2 = this.raw.httpVersionMajor >= 2;
     return (
       this.getHeadersItem('x-forwarded-host') ||
       (http2 ? this.getHeadersItem(':authority') : '') ||
@@ -239,7 +235,7 @@ class Request<T extends HttpType> {
   }
 
   private getUrlProtocol(): string {
-    const encrypted = Reflect.has(this.originalValue.socket, 'encrypted');
+    const encrypted = Reflect.has(this.raw.socket, 'encrypted');
     return (
       (encrypted ? 'https' : '') ||
       this.getHeadersItem('x-forwarded-proto') ||
@@ -248,9 +244,9 @@ class Request<T extends HttpType> {
   }
 
   private pipeStream(): NodeJS.ReadableStream {
-    const encoding = this.originalValue.headers['content-encoding'];
+    const encoding = this.raw.headers['content-encoding'];
     const charset = this.getMime()?.parameters.get('charset');
-    const sourceStream: Readable = this.originalValue;
+    const sourceStream: Readable = this.raw;
     const encodingStream =
       encoding === 'br'
         ? createBrotliDecompress()
@@ -271,4 +267,4 @@ class Request<T extends HttpType> {
   }
 }
 
-export { Request as default, type PluginRequest, type ServerRequest };
+export { Request as default, type RequestRaw, type RequestWrapped };
