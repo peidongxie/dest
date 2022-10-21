@@ -8,15 +8,15 @@ import { URLSearchParams } from 'url';
 import { isAnyArrayBuffer, isArrayBufferView, isNativeError } from 'util/types';
 import { type HttpType } from './type';
 
-interface ServerResponseMap {
+interface ResponseRawMap {
   HTTP: HttpServerResponse;
   HTTPS: HttpServerResponse;
   HTTP2: Http2ServerResponse;
 }
 
-type ServerResponse<T extends HttpType> = ServerResponseMap[T];
+type ResponseRaw<T extends HttpType> = ResponseRawMap[T];
 
-interface PluginResponse {
+interface ResponseWrapped {
   code?: Parameters<Response<HttpType>['setCode']>[0];
   message?: Parameters<Response<HttpType>['setMessage']>[0];
   headers?: Parameters<Response<HttpType>['setHeaders']>[0];
@@ -24,9 +24,9 @@ interface PluginResponse {
 }
 
 class Response<T extends HttpType> {
-  private originalValue: ServerResponse<T>;
+  private originalValue: ResponseRaw<T>;
 
-  public constructor(res: ServerResponse<T>) {
+  public constructor(res: ResponseRaw<T>) {
     this.originalValue = res;
   }
 
@@ -88,7 +88,7 @@ class Response<T extends HttpType> {
     this.originalValue.statusMessage = message;
   }
 
-  public setResponse(res: PluginResponse): void {
+  public setResponse(res: ResponseWrapped): void {
     const { body, code, headers, message } = res;
     if (code !== undefined) this.setCode(code);
     if (message !== undefined) this.setMessage(message);
@@ -227,4 +227,4 @@ class Response<T extends HttpType> {
   }
 }
 
-export { Response as default, type PluginResponse, type ServerResponse };
+export { Response as default, type ResponseRaw, type ResponseWrapped };
