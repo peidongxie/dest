@@ -4,66 +4,76 @@ import {
   type handleServerStreamingCall,
   type handleUnaryCall,
 } from '@grpc/grpc-js';
-import { type PluginDefinition } from './plugin';
 import { type RpcType } from './type';
 
-interface ServerResponseMap<ResMsg> {
+interface ResponseStreamMap {
+  UNARY: false;
+  SERVER: true;
+  CLIENT: false;
+  BIDI: true;
+}
+
+type ResponseStream<T extends RpcType> = ResponseStreamMap[T];
+
+interface ResponseRawMap<ResMsg> {
   UNARY: Parameters<handleUnaryCall<unknown, ResMsg>>;
   SERVER: Parameters<handleServerStreamingCall<unknown, ResMsg>>;
   CLIENT: Parameters<handleClientStreamingCall<unknown, ResMsg>>;
   BIDI: Parameters<handleBidiStreamingCall<unknown, ResMsg>>;
 }
 
-type ServerResponse<T extends RpcType, ResMsg> = ServerResponseMap<ResMsg>[T];
+type ResponseRaw<T extends RpcType, ResMsg> = ResponseRawMap<ResMsg>[T];
 
-interface PluginResponseMap<ResMsg> {
+interface ResponseWrappedMap<ResMsg> {
   UNARY: Error | ResMsg;
   SERVER: Error | Iterable<ResMsg> | AsyncIterable<ResMsg>;
   CLIENT: Error | ResMsg;
   BIDI: Error | Iterable<ResMsg> | AsyncIterable<ResMsg>;
 }
 
-type PluginResponse<T extends RpcType, ResMsg> = PluginResponseMap<ResMsg>[T];
+type ResponseWrapped<T extends RpcType, ResMsg> = ResponseWrappedMap<ResMsg>[T];
 
 class Response<T extends RpcType, ResMsg> {
-  private originalValue: ServerResponse<T, ResMsg>;
-  private stream: PluginDefinition<T, unknown, ResMsg>['responseStream'];
+  private raw: ResponseRaw<T, ResMsg>;
+  private stream: ResponseStream<T>;
 
-  constructor(
-    stream: PluginDefinition<T, unknown, ResMsg>['responseStream'],
-    res: ServerResponse<T, ResMsg>,
-  ) {
-    this.originalValue = res;
+  constructor(stream: ResponseStream<T>, res: ResponseRaw<T, ResMsg>) {
+    this.raw = res;
     this.stream = stream;
   }
 
-  public async setResponse(res: PluginResponse<T, ResMsg>): Promise<void> {
+  public async setResponse(res: ResponseWrapped<T, ResMsg>): Promise<void> {
     if (!this.stream) {
-      const serverResponse = this.originalValue as
-        | ServerResponse<'UNARY', ResMsg>
-        | ServerResponse<'CLIENT', ResMsg>;
-      const pluginResponse = res as
-        | PluginResponse<'UNARY', ResMsg>
-        | PluginResponse<'CLIENT', ResMsg>;
-      if (!(pluginResponse instanceof Error)) {
-        serverResponse[1](null, pluginResponse);
+      const raw = this.raw as
+        | ResponseRaw<'UNARY', ResMsg>
+        | ResponseRaw<'CLIENT', ResMsg>;
+      const wrapped = res as
+        | ResponseWrapped<'UNARY', ResMsg>
+        | ResponseWrapped<'CLIENT', ResMsg>;
+      if (!(wrapped instanceof Error)) {
+        raw[1](null, wrapped);
       } else {
-        serverResponse[1](pluginResponse);
+        raw[1](wrapped);
       }
     } else {
-      const serverResponse = this.originalValue as
-        | ServerResponse<'SERVER', ResMsg>
-        | ServerResponse<'BIDI', ResMsg>;
-      const pluginResponse = res as
-        | PluginResponse<'SERVER', ResMsg>
-        | PluginResponse<'BIDI', ResMsg>;
-      if (!(pluginResponse instanceof Error)) {
-        for await (const resMsg of pluginResponse) {
-          serverResponse[0].write(resMsg);
+      const raw = this.raw as
+        | ResponseRaw<'SERVER', ResMsg>
+        | ResponseRaw<'BIDI', ResMsg>;
+      const wrapped = res as
+        | ResponseWrapped<'SERVER', ResMsg>
+        | ResponseWrapped<'BIDI', ResMsg>;
+      if (!(wrapped instanceof Error)) {
+        for await (const resMsg of wrapped) {
+          raw[0].write(resMsg);
         }
       }
     }
   }
 }
 
-export { Response as default, type PluginResponse, type ServerResponse };
+export {
+  Response as default,
+  type ResponseRaw,
+  type ResponseStream,
+  type ResponseWrapped,
+};
