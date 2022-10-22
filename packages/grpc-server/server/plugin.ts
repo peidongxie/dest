@@ -1,36 +1,20 @@
 import { type MethodDefinition } from '@grpc/grpc-js';
-import { type PluginRequest } from './request';
-import { type PluginResponse } from './response';
+import { type RequestStream, type RequestWrapped } from './request';
+import { type ResponseStream, type ResponseWrapped } from './response';
 import { type RpcType } from './type';
 
-interface PluginDefinitionMap<ReqMsg, ResMsg> {
-  UNARY: MethodDefinition<ReqMsg, ResMsg> & {
-    requestStream: false;
-    responseStream: false;
-  };
-  SERVER: MethodDefinition<ReqMsg, ResMsg> & {
-    requestStream: false;
-    responseStream: true;
-  };
-  CLIENT: MethodDefinition<ReqMsg, ResMsg> & {
-    requestStream: true;
-    responseStream: false;
-  };
-  BIDI: MethodDefinition<ReqMsg, ResMsg> & {
-    requestStream: true;
-    responseStream: true;
-  };
-}
-
-type PluginDefinition<T extends RpcType, ReqMsg, ResMsg> = PluginDefinitionMap<
+type PluginDefinition<T extends RpcType, ReqMsg, ResMsg> = MethodDefinition<
   ReqMsg,
   ResMsg
->[T];
+> & {
+  requestStream: RequestStream<T>;
+  responseStream: ResponseStream<T>;
+};
 
 type PluginHandler<T extends RpcType, ReqMsg, ResMsg> = T extends RpcType
   ? (
-      req: PluginRequest<T, ReqMsg>,
-    ) => PluginResponse<T, ResMsg> | Promise<PluginResponse<T, ResMsg>>
+      req: RequestWrapped<T, ReqMsg>,
+    ) => ResponseWrapped<T, ResMsg> | Promise<ResponseWrapped<T, ResMsg>>
   : never;
 
 type Plugin<T extends RpcType, ReqMsg, ResMsg> = T extends RpcType

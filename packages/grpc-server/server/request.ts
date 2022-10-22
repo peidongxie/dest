@@ -4,62 +4,72 @@ import {
   type handleServerStreamingCall,
   type handleUnaryCall,
 } from '@grpc/grpc-js';
-import { type PluginDefinition } from './plugin';
 import { type RpcType } from './type';
 
-interface ServerRequestMap<ReqMsg> {
+interface RequestStreamMap {
+  UNARY: false;
+  SERVER: false;
+  CLIENT: true;
+  BIDI: true;
+}
+
+type RequestStream<T extends RpcType> = RequestStreamMap[T];
+
+interface RequestRawMap<ReqMsg> {
   UNARY: Parameters<handleUnaryCall<ReqMsg, unknown>>;
   SERVER: Parameters<handleServerStreamingCall<ReqMsg, unknown>>;
   CLIENT: Parameters<handleClientStreamingCall<ReqMsg, unknown>>;
   BIDI: Parameters<handleBidiStreamingCall<ReqMsg, unknown>>;
 }
 
-type ServerRequest<T extends RpcType, ReqMsg> = ServerRequestMap<ReqMsg>[T];
+type RequestRaw<T extends RpcType, ReqMsg> = RequestRawMap<ReqMsg>[T];
 
-interface PluginRequestMap<ReqMsg> {
+interface RequestWrappedMap<ReqMsg> {
   UNARY: ReqMsg;
   SERVER: ReqMsg;
   CLIENT: Iterable<ReqMsg> | AsyncIterable<ReqMsg>;
   BIDI: Iterable<ReqMsg> | AsyncIterable<ReqMsg>;
 }
 
-type PluginRequest<T extends RpcType, ReqMsg> = PluginRequestMap<ReqMsg>[T];
+type RequestWrapped<T extends RpcType, ReqMsg> = RequestWrappedMap<ReqMsg>[T];
 
 class Request<T extends RpcType, ReqMsg> {
-  private originalValue: ServerRequest<T, ReqMsg>;
-  private stream: PluginDefinition<T, ReqMsg, unknown>['requestStream'];
+  private raw: RequestRaw<T, ReqMsg>;
+  private stream: RequestStream<T>;
 
-  constructor(
-    stream: PluginDefinition<T, ReqMsg, unknown>['requestStream'],
-    req: ServerRequest<T, ReqMsg>,
-  ) {
-    this.originalValue = req;
+  constructor(stream: RequestStream<T>, req: RequestRaw<T, ReqMsg>) {
+    this.raw = req;
     this.stream = stream;
   }
 
-  public getRequest(): PluginRequest<T, ReqMsg> {
+  public getRequest(): RequestWrapped<T, ReqMsg> {
     if (!this.stream) {
-      const serverRequest = this.originalValue as
-        | ServerRequest<'UNARY', ReqMsg>
-        | ServerRequest<'SERVER', ReqMsg>;
-      const pluginRequest:
-        | PluginRequest<'UNARY', ReqMsg>
-        | PluginRequest<'SERVER', ReqMsg> = serverRequest[0].request;
-      return pluginRequest as PluginRequest<T, ReqMsg>;
+      const raw = this.raw as
+        | RequestRaw<'UNARY', ReqMsg>
+        | RequestRaw<'SERVER', ReqMsg>;
+      const wrapped:
+        | RequestWrapped<'UNARY', ReqMsg>
+        | RequestWrapped<'SERVER', ReqMsg> = raw[0].request;
+      return wrapped as RequestWrapped<T, ReqMsg>;
     } else {
-      const serverRequest = this.originalValue as
-        | ServerRequest<'CLIENT', ReqMsg>
-        | ServerRequest<'BIDI', ReqMsg>;
-      const pluginRequest:
-        | PluginRequest<'CLIENT', ReqMsg>
-        | PluginRequest<'BIDI', ReqMsg> = (async function* () {
-        for await (const reqMsg of serverRequest[0]) {
+      const raw = this.raw as
+        | RequestRaw<'CLIENT', ReqMsg>
+        | RequestRaw<'BIDI', ReqMsg>;
+      const wrapped:
+        | RequestWrapped<'CLIENT', ReqMsg>
+        | RequestWrapped<'BIDI', ReqMsg> = (async function* () {
+        for await (const reqMsg of raw[0]) {
           yield reqMsg as ReqMsg;
         }
       })();
-      return pluginRequest as PluginRequest<T, ReqMsg>;
+      return wrapped as RequestWrapped<T, ReqMsg>;
     }
   }
 }
 
-export { Request as default, type PluginRequest, type ServerRequest };
+export {
+  Request as default,
+  type RequestRaw,
+  type RequestStream,
+  type RequestWrapped,
+};

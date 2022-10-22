@@ -3,14 +3,14 @@ import Server, {
   type HttpType,
   type Plugin,
   type PluginHandler,
-  type PluginRequest,
-  type PluginResponse,
+  type RequestWrapped,
+  type ResponseWrapped,
 } from './server';
 
-const createServer = <T extends HttpType>(
-  ...args: ConstructorParameters<typeof Server<T>>
-): Server<T> => {
-  return new Server<T>(...args);
+const createServer = (
+  ...args: ConstructorParameters<typeof Server>
+): Server => {
+  return new Server(...args);
 };
 
 export {
@@ -21,6 +21,6 @@ export {
   type HttpType,
   type Plugin,
   type PluginHandler,
-  type PluginRequest,
-  type PluginResponse,
+  type RequestWrapped,
+  type ResponseWrapped,
 };
