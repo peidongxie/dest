@@ -27,8 +27,8 @@ type RequestRaw<T extends RpcType, ReqMsg> = RequestRawMap<ReqMsg>[T];
 interface RequestWrappedMap<ReqMsg> {
   UNARY: ReqMsg;
   SERVER: ReqMsg;
-  CLIENT: Iterable<ReqMsg> | AsyncIterable<ReqMsg>;
-  BIDI: Iterable<ReqMsg> | AsyncIterable<ReqMsg>;
+  CLIENT: AsyncIterable<ReqMsg>;
+  BIDI: AsyncIterable<ReqMsg>;
 }
 
 type RequestWrapped<T extends RpcType, ReqMsg> = RequestWrappedMap<ReqMsg>[T];
