@@ -91,31 +91,31 @@ class Server {
     return async (req: RequestRaw<HttpType>, res: ResponseRaw<HttpType>) => {
       const request = new Request(req);
       const response = new Response(res);
-      const pluginRequest = request.getRequest();
-      const pluginResponse = await (async () => {
-        const pluginResponse: ResponseWrapped = {};
+      const requestWrapped = request.getRequest();
+      const responseWrapped = await (async () => {
+        const responseWrapped: ResponseWrapped = {};
         try {
           for (const pluginHandler of this.handlers) {
             const { code, message, headers, body } =
-              (await pluginHandler(pluginRequest)) || {};
+              (await pluginHandler(requestWrapped)) || {};
             if (code !== undefined) {
-              pluginResponse.code = code;
+              responseWrapped.code = code;
             }
             if (message !== undefined) {
-              pluginResponse.message = message;
+              responseWrapped.message = message;
             }
             if (headers !== undefined) {
-              pluginResponse.headers = {
-                ...pluginResponse.headers,
+              responseWrapped.headers = {
+                ...responseWrapped.headers,
                 ...headers,
               };
             }
             if (body !== undefined) {
-              pluginResponse.body = body;
+              responseWrapped.body = body;
               break;
             }
           }
-          return pluginResponse;
+          return responseWrapped;
         } catch (e) {
           const pluginResponse: ResponseWrapped = {
             code: 500,
@@ -124,7 +124,7 @@ class Server {
           return pluginResponse;
         }
       })();
-      response.setResponse(pluginResponse);
+      await response.setResponse(responseWrapped);
     };
   }
 

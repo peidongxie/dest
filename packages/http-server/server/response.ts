@@ -30,7 +30,7 @@ class Response<T extends HttpType> {
     this.originalValue = res;
   }
 
-  public setBody(
+  public async setBody(
     value:
       | Buffer
       | ArrayBufferLike
@@ -44,32 +44,32 @@ class Response<T extends HttpType> {
       | Error
       | URLSearchParams
       | object,
-  ): void {
+  ): Promise<void> {
     if (this.originalValue.writableEnded) return;
     if (value instanceof Buffer) {
-      this.setBodyBuffer(value);
+      return this.setBodyBuffer(value);
     } else if (isAnyArrayBuffer(value)) {
-      this.setBodyBuffer(value);
+      return this.setBodyBuffer(value);
     } else if (isArrayBufferView(value)) {
-      this.setBodyBuffer(value);
+      return this.setBodyBuffer(value);
     } else if (value instanceof Blob) {
-      this.setBodyBuffer(value);
+      return this.setBodyBuffer(value);
     } else if (value instanceof FormData) {
-      this.setBodyBuffer(value);
+      return this.setBodyBuffer(value);
     } else if (value === null) {
-      this.setBodyNothing();
+      return this.setBodyNothing();
     } else if (value instanceof Readable) {
-      this.setBodyStream(value);
+      return this.setBodyStream(value);
     } else if (value instanceof ReadableStream) {
-      this.setBodyStream(value);
+      return this.setBodyStream(value);
     } else if (typeof value === 'string') {
-      this.setBodyText(value);
+      return this.setBodyText(value);
     } else if (isNativeError(value)) {
-      this.setBodyText(value);
+      return this.setBodyText(value);
     } else if (value instanceof URLSearchParams) {
-      this.setBodyText(value);
+      return this.setBodyText(value);
     } else {
-      this.setBodyText(value);
+      return this.setBodyText(value);
     }
   }
 
@@ -88,13 +88,13 @@ class Response<T extends HttpType> {
     this.originalValue.statusMessage = message;
   }
 
-  public setResponse(res: ResponseWrapped): void {
+  public setResponse(res: ResponseWrapped): Promise<void> {
     const { body, code, headers, message } = res;
     if (code !== undefined) this.setCode(code);
     if (message !== undefined) this.setMessage(message);
     if (headers !== undefined) this.setHeaders(headers);
-    if (body !== undefined) this.setBody(body);
-    else this.setBody(null);
+    if (body !== undefined) return this.setBody(body);
+    return this.setBody(null);
   }
 
   private async setBodyBuffer(
@@ -160,13 +160,13 @@ class Response<T extends HttpType> {
             buffer.subarray(2, buffer.indexOf('\r\n')),
       );
     }
-    res.end(buffer);
+    return new Promise((resolve) => res.end(buffer, resolve));
   }
 
   private async setBodyNothing(): Promise<void> {
     const res = this.originalValue;
     if (res.statusCode === 200) this.setCode(204);
-    res.end();
+    return new Promise((resolve) => res.end(resolve));
   }
 
   private async setBodyStream(value: Readable | ReadableStream): Promise<void> {
@@ -175,7 +175,11 @@ class Response<T extends HttpType> {
     if (!res.hasHeader('Content-Type')) {
       this.setHeadersItem('Content-Type', 'application/octet-stream');
     }
-    stream.pipe(res);
+    return new Promise((resolve, reject) => {
+      res.on('close', resolve);
+      res.on('error', reject);
+      stream.pipe(res);
+    });
   }
 
   private async setBodyText(
@@ -216,7 +220,7 @@ class Response<T extends HttpType> {
           : 'application/json; charset=utf-8',
       );
     }
-    res.end(text);
+    return new Promise((resolve) => res.end(text, resolve));
   }
 
   private setHeadersItem(
