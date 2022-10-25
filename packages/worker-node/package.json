@@ -1,6 +1,6 @@
 {
   "name": "@dest-toolkit/worker-node",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "private": true,
   "description": "A testing framework for database",
   "keywords": [
@@ -38,20 +38,20 @@
     "up:dev": "docker compose -f docker/compose.dev.yaml -p dest up -d"
   },
   "dependencies": {
-    "@dest-toolkit/grpc-server": "workspace:^0.1.10",
-    "@dest-toolkit/http-server": "workspace:^0.1.10",
+    "@dest-toolkit/grpc-server": "workspace:^0.1.11",
+    "@dest-toolkit/http-server": "workspace:^0.1.11",
     "mysql2": "^2.3.3",
     "sqlite3": "^5.1.2",
     "typeorm": "^0.3.10"
   },
   "devDependencies": {
-    "@types/node": "^18.11.0",
+    "@types/node": "^18.11.5",
     "@types/sqlite3": "^3.1.8",
     "@types/type-is": "^1.6.3",
-    "@typescript-eslint/eslint-plugin": "^5.40.1",
-    "@typescript-eslint/parser": "^5.40.1",
+    "@typescript-eslint/eslint-plugin": "^5.41.0",
+    "@typescript-eslint/parser": "^5.41.0",
     "esbuild": "^0.14.54",
-    "eslint": "^8.25.0",
+    "eslint": "^8.26.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
     "prettier": "^2.7.1",
