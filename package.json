@@ -1,6 +1,6 @@
 {
   "name": "dest-toolkit",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "private": true,
   "description": "A testing framework for database",
   "keywords": [
