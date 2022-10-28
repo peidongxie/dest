@@ -27,7 +27,9 @@
     "packages/*"
   ],
   "scripts": {
+    "build:lib": "pnpm --filter @dest-toolkit/grpc-* --filter @dest-toolkit/http-* build",
     "prepare": "husky install",
+    "publish:lib": "pnpm -r publish",
     "stats": "cloc $(git ls-files) && echo 'Commits:' $(git log --oneline | wc -l)"
   },
   "devDependencies": {
