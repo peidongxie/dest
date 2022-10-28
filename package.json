@@ -1,6 +1,6 @@
 {
   "name": "dest-toolkit",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "private": true,
   "description": "A testing framework for database",
   "keywords": [
@@ -27,7 +27,9 @@
     "packages/*"
   ],
   "scripts": {
+    "build:lib": "pnpm --filter @dest-toolkit/grpc-* --filter @dest-toolkit/http-* build",
     "prepare": "husky install",
+    "publish:lib": "pnpm -r publish",
     "stats": "cloc $(git ls-files) && echo 'Commits:' $(git log --oneline | wc -l)"
   },
   "devDependencies": {
