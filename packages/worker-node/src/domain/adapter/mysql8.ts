@@ -83,11 +83,12 @@ class Mysql8 implements Adapter {
       const result: { Name: string }[] = await this.readable.query(
         `SHOW TABLE STATUS`,
       );
+      const names = result.map((row) => row.Name);
       const entries = await Promise.all(
-        result.map(
-          async (row): Promise<[string, unknown[]]> => [
-            row.Name,
-            await this.readable.query(`SELECT * FROM ${row.Name}`),
+        names.map(
+          async (name): Promise<[string, unknown[]]> => [
+            name,
+            await this.readable.query(`SELECT * FROM ${name}`),
           ],
         ),
       );
@@ -137,12 +138,13 @@ class Mysql8 implements Adapter {
 
   async postDestroy() {
     if (!this.name) return;
-    await Mysql8.root.query(`DROP DATABASE IF EXISTS \`${this.name}\``);
+    await Mysql8.root.query(`DROP DATABASE \`${this.name}\``);
   }
 
   async preCreate() {
     if (!this.name) return;
-    await Mysql8.root.query(`CREATE DATABASE IF NOT EXISTS \`${this.name}\``);
+    await Mysql8.root.query(`DROP DATABASE IF EXISTS \`${this.name}\``);
+    await Mysql8.root.query(`CREATE DATABASE \`${this.name}\``);
   }
 }
 
