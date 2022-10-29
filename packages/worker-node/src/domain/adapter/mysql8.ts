@@ -42,7 +42,7 @@ class Mysql8 implements Adapter {
         host: 'localhost',
         port: 3307,
         database: name,
-        username: 'root',
+        username: 'read',
         password: 'dest-toolkit',
       });
       this.writable = new DataSource({
@@ -50,7 +50,7 @@ class Mysql8 implements Adapter {
         host: 'localhost',
         port: 3307,
         database: name,
-        username: 'root',
+        username: 'write',
         password: 'dest-toolkit',
         entities: entities,
         synchronize: true,
@@ -78,51 +78,73 @@ class Mysql8 implements Adapter {
     return Mysql8.root;
   }
 
+  async getSnapshot() {
+    if (this.name) {
+      const result: { Name: string }[] = await this.readable.query(
+        `SHOW TABLE STATUS`,
+      );
+      const names = result.map((row) => row.Name);
+      const entries = await Promise.all(
+        names.map(
+          async (name): Promise<[string, unknown[]]> => [
+            name,
+            await this.readable.query(`SELECT * FROM ${name}`),
+          ],
+        ),
+      );
+      return Object.fromEntries(entries);
+    } else {
+      const result: { Database: string }[] = await Mysql8.root.query(
+        `SHOW DATABASES`,
+      );
+      const entries = result.map((row) => [row.Database, []]);
+      return Object.fromEntries(entries);
+    }
+  }
+
   getWritableDataSource() {
     return this.writable;
   }
 
-  async postDestroy() {
-    if (this.name) {
-      await Mysql8.root.query(`DROP DATABASE IF EXISTS \`${this.name}\``);
+  async postCreate() {
+    if (this.name) return;
+    const result: { Database: string }[] = await Mysql8.root.query(
+      `SHOW DATABASES`,
+    );
+    const names = result
+      .filter((row) => {
+        return !protectedDatabases.includes(row.Database);
+      })
+      .map((row) => row.Database);
+    for (const name of names) {
+      await Mysql8.root.query(`DROP DATABASE IF EXISTS \`${name}\``);
     }
+    await Mysql8.root.query(`DROP USER IF EXISTS 'read'@'%'`);
+    await Mysql8.root.query(`DROP USER IF EXISTS 'write'@'%'`);
+    await Mysql8.root.query(
+      `CREATE USER IF NOT EXISTS 'read'@'%' IDENTIFIED BY 'dest-toolkit'`,
+    );
+    await Mysql8.root.query(
+      `CREATE USER IF NOT EXISTS 'write'@'%' IDENTIFIED BY 'dest-toolkit'`,
+    );
+    await Mysql8.root.query(
+      `GRANT ${readPrivileges.join(', ')} ON *.* TO 'read'@'%'`,
+    );
+    await Mysql8.root.query(
+      `GRANT ${writePrivileges.join(', ')} ON *.* TO 'write'@'%'`,
+    );
+    await Mysql8.root.query(`FLUSH PRIVILEGES`);
+  }
+
+  async postDestroy() {
+    if (!this.name) return;
+    await Mysql8.root.query(`DROP DATABASE \`${this.name}\``);
   }
 
   async preCreate() {
-    if (this.name) {
-      await Mysql8.root.query(`CREATE DATABASE IF NOT EXISTS \`${this.name}\``);
-    }
-  }
-
-  async postCreate() {
-    if (!this.name) {
-      const result: { Database: string }[] = await Mysql8.root.query(
-        `SHOW DATABASES`,
-      );
-      const names = result
-        .filter((row) => {
-          return !protectedDatabases.includes(row.Database);
-        })
-        .map((row) => row.Database);
-      for (const name of names) {
-        await Mysql8.root.query(`DROP DATABASE IF EXISTS \`${name}\``);
-      }
-      await Mysql8.root.query(`DROP USER IF EXISTS 'read'@'%'`);
-      await Mysql8.root.query(`DROP USER IF EXISTS 'write'@'%'`);
-      await Mysql8.root.query(
-        `CREATE USER IF NOT EXISTS 'read'@'%' IDENTIFIED BY 'dest-toolkit'`,
-      );
-      await Mysql8.root.query(
-        `CREATE USER IF NOT EXISTS 'write'@'%' IDENTIFIED BY 'dest-toolkit'`,
-      );
-      await Mysql8.root.query(
-        `GRANT ${readPrivileges.join(', ')} ON *.* TO 'read'@'%'`,
-      );
-      await Mysql8.root.query(
-        `GRANT ${writePrivileges.join(', ')} ON *.* TO 'write'@'%'`,
-      );
-      await Mysql8.root.query(`FLUSH PRIVILEGES`);
-    }
+    if (!this.name) return;
+    await Mysql8.root.query(`DROP DATABASE IF EXISTS \`${this.name}\``);
+    await Mysql8.root.query(`CREATE DATABASE \`${this.name}\``);
   }
 }
 

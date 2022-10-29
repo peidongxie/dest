@@ -78,53 +78,73 @@ class Mariadb implements Adapter {
     return Mariadb.root;
   }
 
+  async getSnapshot() {
+    if (this.name) {
+      const result: { Name: string }[] = await this.readable.query(
+        `SHOW TABLE STATUS`,
+      );
+      const names = result.map((row) => row.Name);
+      const entries = await Promise.all(
+        names.map(
+          async (name): Promise<[string, unknown[]]> => [
+            name,
+            await this.readable.query(`SELECT * FROM ${name}`),
+          ],
+        ),
+      );
+      return Object.fromEntries(entries);
+    } else {
+      const result: { Database: string }[] = await Mariadb.root.query(
+        `SHOW DATABASES`,
+      );
+      const entries = result.map((row) => [row.Database, []]);
+      return Object.fromEntries(entries);
+    }
+  }
+
   getWritableDataSource() {
     return this.writable;
   }
 
-  async postDestroy() {
-    if (this.name) {
-      await Mariadb.root.query(`DROP DATABASE IF EXISTS \`${this.name}\``);
+  async postCreate() {
+    if (this.name) return;
+    const result: { Database: string }[] = await Mariadb.root.query(
+      `SHOW DATABASES`,
+    );
+    const names = result
+      .filter((row) => {
+        return !protectedDatabases.includes(row.Database);
+      })
+      .map((row) => row.Database);
+    for (const name of names) {
+      await Mariadb.root.query(`DROP DATABASE IF EXISTS \`${name}\``);
     }
+    await Mariadb.root.query(`DROP USER IF EXISTS 'read'@'%'`);
+    await Mariadb.root.query(`DROP USER IF EXISTS 'write'@'%'`);
+    await Mariadb.root.query(
+      `CREATE USER IF NOT EXISTS 'read'@'%' IDENTIFIED BY 'dest-toolkit'`,
+    );
+    await Mariadb.root.query(
+      `CREATE USER IF NOT EXISTS 'write'@'%' IDENTIFIED BY 'dest-toolkit'`,
+    );
+    await Mariadb.root.query(
+      `GRANT ${readPrivileges.join(', ')} ON *.* TO 'read'@'%'`,
+    );
+    await Mariadb.root.query(
+      `GRANT ${writePrivileges.join(', ')} ON *.* TO 'write'@'%'`,
+    );
+    await Mariadb.root.query(`FLUSH PRIVILEGES`);
+  }
+
+  async postDestroy() {
+    if (!this.name) return;
+    await Mariadb.root.query(`DROP DATABASE \`${this.name}\``);
   }
 
   async preCreate() {
-    if (this.name) {
-      await Mariadb.root.query(
-        `CREATE DATABASE IF NOT EXISTS \`${this.name}\``,
-      );
-    }
-  }
-
-  async postCreate() {
-    if (!this.name) {
-      const result: { Database: string }[] = await Mariadb.root.query(
-        `SHOW DATABASES`,
-      );
-      const names = result
-        .filter((row) => {
-          return !protectedDatabases.includes(row.Database);
-        })
-        .map((row) => row.Database);
-      for (const name of names) {
-        await Mariadb.root.query(`DROP DATABASE IF EXISTS \`${name}\``);
-      }
-      await Mariadb.root.query(`DROP USER IF EXISTS 'read'@'%'`);
-      await Mariadb.root.query(`DROP USER IF EXISTS 'write'@'%'`);
-      await Mariadb.root.query(
-        `CREATE USER IF NOT EXISTS 'read'@'%' IDENTIFIED BY 'dest-toolkit'`,
-      );
-      await Mariadb.root.query(
-        `CREATE USER IF NOT EXISTS 'write'@'%' IDENTIFIED BY 'dest-toolkit'`,
-      );
-      await Mariadb.root.query(
-        `GRANT ${readPrivileges.join(', ')} ON *.* TO 'read'@'%'`,
-      );
-      await Mariadb.root.query(
-        `GRANT ${writePrivileges.join(', ')} ON *.* TO 'write'@'%'`,
-      );
-      await Mariadb.root.query(`FLUSH PRIVILEGES`);
-    }
+    if (!this.name) return;
+    await Mariadb.root.query(`DROP DATABASE IF EXISTS \`${this.name}\``);
+    await Mariadb.root.query(`CREATE DATABASE \`${this.name}\``);
   }
 }
 

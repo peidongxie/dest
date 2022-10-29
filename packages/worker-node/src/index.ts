@@ -21,7 +21,7 @@ const startServer = async () => {
   router.setRoute('POST', '/database', postDatabase);
   router.setRoute('PUT', '/database', putDatabase);
   router.setRoute('POST', '/query', postQuery);
-  const server = new Server<'HTTP'>('http');
+  const server = new Server('http');
   server.use(cors.getHandler());
   server.use(router.getHandler());
   server.listen(3001);

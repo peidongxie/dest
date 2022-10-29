@@ -30,6 +30,8 @@ const writeDriver = {
   }),
 };
 
+const protectedTables = ['sql_master', 'sqlite_sequence'];
+
 class Sqlite implements Adapter {
   name: string;
   readable: DataSource | null;
@@ -65,26 +67,48 @@ class Sqlite implements Adapter {
     return null;
   }
 
+  async getSnapshot() {
+    if (this.name) {
+      const result: { name: string }[] = await (
+        this.readable as DataSource
+      ).query(`SELECT name FROM sqlite_master WHERE type = "table"`);
+      const names = result
+        .filter((row) => {
+          return !protectedTables.includes(row.name);
+        })
+        .map((row) => row.name);
+      const entries = await Promise.all(
+        names.map(
+          async (name): Promise<[string, unknown[]]> => [
+            name,
+            await (this.readable as DataSource).query(`SELECT * FROM ${name}`),
+          ],
+        ),
+      );
+      return Object.fromEntries(entries);
+    } else {
+      const files = await readdir(dir);
+      const entries = files
+        .filter((file) => file.endsWith('.sqlite'))
+        .map((file) => [file.replace(/.sqlite$/, ''), []]);
+      return Object.fromEntries(entries);
+    }
+  }
+
   getWritableDataSource() {
     return this.writable;
   }
 
   async postDestroy() {
-    if (this.name) {
-      const file = this.name + '.sqlite';
-      await rm(join(dir, file), { force: true });
-    }
+    if (!this.name) return;
+    const file = this.name + '.sqlite';
+    await rm(join(dir, file), { force: true });
   }
 
-  async postCreate() {
-    if (!this.name) {
-      const files = await readdir(dir);
-      await Promise.all(
-        files.map((file) => {
-          return rm(join(dir, file), { recursive: true, force: true });
-        }),
-      );
-    }
+  async preCreate() {
+    if (!this.name) return;
+    const file = this.name + '.sqlite';
+    rm(join(dir, file), { force: true });
   }
 }
 

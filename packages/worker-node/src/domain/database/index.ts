@@ -76,6 +76,10 @@ class Database {
     return this.adapter.getRootDataSource()?.query(query) || null;
   }
 
+  snapshot(): Promise<Record<string, unknown[]>> {
+    return this.adapter.getSnapshot();
+  }
+
   write<T>(query: string): Promise<T> | null {
     return this.adapter.getWritableDataSource()?.query(query) || null;
   }

@@ -18,6 +18,7 @@ const handler: PluginHandler = async (req) => {
       code: 400,
       body: {
         success: false,
+        data: [],
       },
     };
   }
@@ -27,6 +28,7 @@ const handler: PluginHandler = async (req) => {
       code: 404,
       body: {
         success: false,
+        data: [],
       },
     };
   }
@@ -34,6 +36,7 @@ const handler: PluginHandler = async (req) => {
     code: 200,
     body: {
       success: true,
+      data: await database.snapshot(),
     },
   };
 };

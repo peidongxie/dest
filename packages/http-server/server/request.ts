@@ -195,7 +195,11 @@ class Request<T extends HttpType> {
     });
     const formData = new FormData();
     for await (const [name, value, filename] of formEntries) {
-      formData.set(name, value as string | globalThis.Blob, filename);
+      if (typeof value === 'string') {
+        formData.set(name, value);
+      } else {
+        formData.set(name, value, filename);
+      }
     }
     return formData;
   }
