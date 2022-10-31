@@ -2,7 +2,9 @@
   "include": [],
   "exclude": [],
   "references": [
+    { "path": "packages/grpc-client" },
     { "path": "packages/grpc-server" },
+    { "path": "packages/http-client" },
     { "path": "packages/http-server" },
     { "path": "packages/worker-node" }
   ],
