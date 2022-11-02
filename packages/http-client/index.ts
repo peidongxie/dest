@@ -1,4 +1,8 @@
-import Client, { type PluginRequest, type PluginResponse } from './client';
+import Client, {
+  type ClientOptions,
+  type RequestWrapped,
+  type ResponseWrapped,
+} from './client';
 
 const createClient = (
   ...args: ConstructorParameters<typeof Client>
@@ -6,4 +10,10 @@ const createClient = (
   return new Client(...args);
 };
 
-export { Client, createClient, type PluginRequest, type PluginResponse };
+export {
+  Client,
+  createClient,
+  type ClientOptions,
+  type RequestWrapped,
+  type ResponseWrapped,
+};

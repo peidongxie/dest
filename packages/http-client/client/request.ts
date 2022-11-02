@@ -3,7 +3,7 @@ import { type Readable } from 'stream';
 import { type ReadableStream } from 'stream/web';
 import { type URLSearchParams } from 'url';
 
-interface PluginRequest {
+interface RequestWrapped {
   method?: string;
   url?: string | URL;
   headers?: HeadersInit;
@@ -22,4 +22,4 @@ interface PluginRequest {
     | object;
 }
 
-export { type PluginRequest };
+export { type RequestWrapped };

@@ -2,7 +2,7 @@ import {
   Server as GrpcServer,
   ServerCredentials,
   type ChannelOptions,
-  type MethodDefinition,
+  type ServiceDefinition,
   type handleBidiStreamingCall,
   type handleClientStreamingCall,
   type handleServerStreamingCall,
@@ -21,7 +21,7 @@ type ServerOptions = ChannelOptions;
 
 type ServerRaw = GrpcServer;
 
-type ServerDefinition = MethodDefinition<unknown, unknown>;
+type ServerDefinition = ServiceDefinition[keyof ServiceDefinition];
 
 type ServerHandler =
   | handleUnaryCall<unknown, unknown>
@@ -135,9 +135,4 @@ class Server {
   }
 }
 
-export {
-  Server as default,
-  type ServerDefinition,
-  type ServerHandler,
-  type ServerOptions,
-};
+export { Server as default, type ServerOptions };

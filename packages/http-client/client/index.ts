@@ -1,3 +1,3 @@
-export { default } from './client';
-export { type PluginRequest } from './request';
-export { type PluginResponse } from './response';
+export { default, type ClientOptions } from './client';
+export { type RequestWrapped } from './request';
+export { type ResponseWrapped } from './response';

@@ -160,9 +160,4 @@ class Server {
   }
 }
 
-export {
-  Server as default,
-  type ServerHandler,
-  type ServerOptions,
-  type ServerType,
-};
+export { Server as default, type ServerOptions, type ServerType };
