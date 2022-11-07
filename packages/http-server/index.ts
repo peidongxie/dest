@@ -5,6 +5,8 @@ import Server, {
   type PluginHandler,
   type RequestWrapped,
   type ResponseWrapped,
+  type ServerOptions,
+  type ServerType,
 } from './server';
 
 const createServer = (
@@ -23,4 +25,6 @@ export {
   type PluginHandler,
   type RequestWrapped,
   type ResponseWrapped,
+  type ServerOptions,
+  type ServerType,
 };

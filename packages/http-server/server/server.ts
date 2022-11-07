@@ -119,6 +119,7 @@ class Server {
         } catch (e) {
           const pluginResponse: ResponseWrapped = {
             code: 500,
+            headers: responseWrapped.headers || {},
             body: isNativeError(e) ? e : String(e),
           };
           return pluginResponse;
@@ -160,9 +161,4 @@ class Server {
   }
 }
 
-export {
-  Server as default,
-  type ServerHandler,
-  type ServerOptions,
-  type ServerType,
-};
+export { Server as default, type ServerOptions, type ServerType };

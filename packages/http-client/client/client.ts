@@ -2,8 +2,8 @@ import { Blob, Buffer } from 'buffer';
 import { Readable } from 'stream';
 import { ReadableStream } from 'stream/web';
 import { isAnyArrayBuffer, isArrayBufferView, isNativeError } from 'util/types';
-import { type PluginRequest } from './request';
-import { type PluginResponse } from './response';
+import { type RequestWrapped } from './request';
+import { type ResponseWrapped } from './response';
 
 interface ClientOptions {
   defaultMethod?: string;
@@ -12,17 +12,17 @@ interface ClientOptions {
 }
 
 class Client {
-  defaultMethod: string;
-  defaultURL: URL;
-  defaultHeaders: Headers;
+  private defaultMethod: string;
+  private defaultURL: URL;
+  private defaultHeaders: Headers;
 
-  constructor(options: ClientOptions) {
+  constructor(options?: ClientOptions) {
     this.defaultMethod = options?.defaultMethod || 'GET';
     this.defaultURL = new URL(options?.defaultURL || 'http://localhost');
     this.defaultHeaders = new Headers(options?.defaultHeaders);
   }
 
-  async call(req: PluginRequest): Promise<PluginResponse> {
+  public async call(req: RequestWrapped): Promise<ResponseWrapped> {
     const url = new URL(req.url || '', this.defaultURL);
     const method = req.method || this.defaultMethod;
     const extraHeaders = new Headers(req.headers);

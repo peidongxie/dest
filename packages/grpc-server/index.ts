@@ -5,6 +5,7 @@ import Server, {
   type RequestWrapped,
   type ResponseWrapped,
   type RpcType,
+  type ServerOptions,
 } from './server';
 
 const createServer = (
@@ -22,4 +23,5 @@ export {
   type RequestWrapped,
   type ResponseWrapped,
   type RpcType,
+  type ServerOptions,
 };

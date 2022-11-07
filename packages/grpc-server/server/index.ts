@@ -5,5 +5,5 @@ export {
 } from './plugin';
 export { type RequestWrapped } from './request';
 export { type ResponseWrapped } from './response';
-export { default } from './server';
+export { default, type ServerOptions } from './server';
 export { type RpcType } from './type';

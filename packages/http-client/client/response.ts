@@ -1,8 +1,8 @@
-interface PluginResponse {
+interface ResponseWrapped {
   code: number;
   message: string;
   headers: Headers;
   body: Body;
 }
 
-export { type PluginResponse };
+export { type ResponseWrapped };
