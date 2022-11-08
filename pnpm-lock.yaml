@@ -159,8 +159,8 @@ importers:
 
   packages/worker-node:
     specifiers:
-      '@dest-toolkit/grpc-server': workspace:^0.1.13
-      '@dest-toolkit/http-server': workspace:^0.1.13
+      '@dest-toolkit/grpc-server': workspace:^0.1.14
+      '@dest-toolkit/http-server': workspace:^0.1.14
       '@types/node': ^18.11.9
       '@types/sqlite3': ^3.1.8
       '@types/type-is': ^1.6.3
