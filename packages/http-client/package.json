@@ -1,6 +1,6 @@
 {
   "name": "@dest-toolkit/http-client",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "private": false,
   "description": "A testing framework for database",
   "keywords": [
@@ -46,16 +46,16 @@
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
-    "@types/node": "^18.11.5",
-    "@typescript-eslint/eslint-plugin": "^5.41.0",
-    "@typescript-eslint/parser": "^5.41.0",
+    "@types/node": "^18.11.9",
+    "@typescript-eslint/eslint-plugin": "^5.42.1",
+    "@typescript-eslint/parser": "^5.42.1",
     "esbuild": "^0.14.54",
-    "eslint": "^8.26.0",
+    "eslint": "^8.27.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
     "fs-extra": "^10.1.0",
     "prettier": "^2.7.1",
-    "sort-package-json": "^2.0.0",
+    "sort-package-json": "^2.1.0",
     "typescript": "^4.8.4"
   },
   "packageManager": "pnpm@7.2.1"
