@@ -43,6 +43,7 @@
     "@grpc/grpc-js": "^1.7.3",
     "mysql2": "^2.3.3",
     "protobufjs": "^7.1.2",
+    "rxjs": "^7.5.7",
     "sqlite3": "^5.1.2",
     "typeorm": "^0.3.10"
   },

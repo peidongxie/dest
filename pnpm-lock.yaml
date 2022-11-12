@@ -177,6 +177,7 @@ importers:
       mysql2: ^2.3.3
       prettier: ^2.7.1
       protobufjs: ^7.1.2
+      rxjs: ^7.5.7
       sort-package-json: ^2.1.0
       sqlite3: ^5.1.2
       ts-proto: ^1.131.0
@@ -188,6 +189,7 @@ importers:
       '@grpc/grpc-js': 1.7.3
       mysql2: 2.3.3
       protobufjs: 7.1.2
+      rxjs: 7.5.7
       sqlite3: 5.1.2
       typeorm: 0.3.10_mysql2@2.3.3+sqlite3@5.1.2
     devDependencies:
@@ -2359,7 +2361,6 @@ packages:
     resolution: {integrity: sha512-z9MzKh/UcOqB3i20H6rtrlaE/CgjLOvheWK/9ILrbhROGTweAi1BaFsTT9FbwZi5Trr1qNRs+MXkhmR06awzQA==}
     dependencies:
       tslib: 2.4.1
-    dev: true
 
   /safe-buffer/5.2.1:
     resolution: {integrity: sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ==}
