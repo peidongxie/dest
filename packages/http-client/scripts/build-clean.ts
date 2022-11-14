@@ -10,7 +10,8 @@ const getBuildFiles = (dir: string): string[] => {
       if (stats.isDirectory()) {
         if (path === 'node_modules') return null;
         return getBuildFiles(path);
-      } else if (stats.isFile()) {
+      }
+      if (stats.isFile()) {
         if (/\.d\.ts$/.test(file)) return path;
         if (/\.js$/.test(file)) return path;
         if (/tsconfig\.tsbuildinfo/.test(file)) return path;

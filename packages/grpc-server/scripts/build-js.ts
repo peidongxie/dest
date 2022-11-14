@@ -12,7 +12,8 @@ const getEntryPoints = (dir: string): string[] => {
         if (path === 'node_modules') return null;
         if (path === 'scripts') return null;
         return getEntryPoints(path);
-      } else if (stats.isFile()) {
+      }
+      if (stats.isFile()) {
         if (/\.d\.ts$/.test(file)) return null;
         if (!/\.ts$/.test(file)) return null;
         return path;
