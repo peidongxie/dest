@@ -6,7 +6,7 @@ type AdapterTypeAlias = 'mysql';
 interface Adapter {
   getReadableDataSource: () => DataSource | null;
   getRootDataSource: () => DataSource | null;
-  getSnapshot: () => Promise<Record<string, unknown[]>>;
+  getSnapshot: () => Promise<{ name: string; rows: unknown[] }[]>;
   getWritableDataSource: () => DataSource | null;
   postCreate?: () => Promise<void>;
   postDestroy?: () => Promise<void>;
