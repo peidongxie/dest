@@ -77,21 +77,19 @@ class Sqlite implements Adapter {
           return !protectedTables.includes(row.name);
         })
         .map((row) => row.name);
-      const entries = await Promise.all(
-        names.map(
-          async (name): Promise<[string, unknown[]]> => [
-            name,
-            await (this.readable as DataSource).query(`SELECT * FROM ${name}`),
-          ],
-        ),
+      return Promise.all(
+        names.map(async (name) => ({
+          name,
+          rows: await (this.readable as DataSource).query(
+            `SELECT * FROM ${name}`,
+          ),
+        })),
       );
-      return Object.fromEntries(entries);
     } else {
       const files = await readdir(dir);
-      const entries = files
+      return files
         .filter((file) => file.endsWith('.sqlite'))
-        .map((file) => [file.replace(/.sqlite$/, ''), []]);
-      return Object.fromEntries(entries);
+        .map((file) => ({ name: file.replace(/.sqlite$/, ''), rows: [] }));
     }
   }
 

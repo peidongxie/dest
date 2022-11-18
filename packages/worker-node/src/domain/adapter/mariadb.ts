@@ -84,21 +84,17 @@ class Mariadb implements Adapter {
         `SHOW TABLE STATUS`,
       );
       const names = result.map((row) => row.Name);
-      const entries = await Promise.all(
-        names.map(
-          async (name): Promise<[string, unknown[]]> => [
-            name,
-            await this.readable.query(`SELECT * FROM ${name}`),
-          ],
-        ),
+      return Promise.all(
+        names.map(async (name) => ({
+          name,
+          rows: await this.readable.query(`SELECT * FROM ${name}`),
+        })),
       );
-      return Object.fromEntries(entries);
     } else {
       const result: { Database: string }[] = await Mariadb.root.query(
         `SHOW DATABASES`,
       );
-      const entries = result.map((row) => [row.Database, []]);
-      return Object.fromEntries(entries);
+      return result.map((row) => ({ name: row.Database, rows: [] }));
     }
   }
 

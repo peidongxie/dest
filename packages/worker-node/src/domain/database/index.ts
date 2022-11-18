@@ -76,7 +76,7 @@ class Database {
     return this.adapter.getRootDataSource()?.query(query) || null;
   }
 
-  snapshot(): Promise<Record<string, unknown[]>> {
+  snapshot(): Promise<{ name: string; rows: unknown[] }[]> {
     return this.adapter.getSnapshot();
   }
 
