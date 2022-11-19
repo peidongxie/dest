@@ -18,11 +18,26 @@ const getEntryPoints = (
     .filter((v): v is string => v !== null);
 };
 
+const getExtraDependencies = (dir: string): string[] => {
+  const files = readdirSync(dir);
+  return files
+    .map((file) => {
+      const path = join(dir, file);
+      const stats = statSync(path);
+      if (stats.isDirectory()) return getExtraDependencies(path);
+      if (stats.isFile()) return path;
+      return null;
+    })
+    .filter((v): v is string[] | string => v !== null)
+    .flat();
+};
+
 const execCommand = (command: string[]): void => {
   try {
     execSync(command.join(' '));
   } catch (e) {
-    console.error(e);
+    const { stdout } = e as { stdout: Buffer };
+    console.error(stdout?.toString());
   }
 };
 
@@ -37,7 +52,7 @@ const protoc = (source: string, target: string): void => {
     '--proto_path=' + dirname(source),
     '--plugin=node_modules/.bin/protoc-gen-ts_proto',
     '--ts_proto_out=' + target,
-    '--ts_proto_opt=esModuleInterop=true,outputServices-grpc-js',
+    '--ts_proto_opt=esModuleInterop=true',
     source,
   ]);
 };
@@ -72,6 +87,10 @@ const sed = (path: string): void => {
     '-i',
     '""',
     '-e',
+    '"/^declare var /d"',
+    '-e',
+    '"/^var globalThis:/,/^$/d"',
+    '-e',
     '"s/!)/)/g"',
     '-e',
     '"s/!,/,/g"',
@@ -83,6 +102,8 @@ const sed = (path: string): void => {
     '"s/(value: any)/(value: unknown)/g"',
     '-e',
     '"s/.\\/google\\/protobuf/..\\/google\\/protobuf/g"',
+    '-e',
+    '"s/bytesFromBase64(object.value)/bytesFromBase64(object.value as string)/g"',
     '-e',
     '"s/extends {}/extends Record<string, unknown>/g"',
     '-e',
@@ -136,6 +157,11 @@ const buildOptions: BuildOptions = {
     const targetPath = join('src/controller', entryDirectory);
     rm(targetPath);
     mv(sourcePath, targetPath);
+    const extraDependencies = getExtraDependencies(targetPath);
+    for (const extraDependency of extraDependencies) {
+      sed(extraDependency);
+      eslint(extraDependency);
+    }
   }
   await build(buildOptions);
 })();
