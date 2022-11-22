@@ -21,8 +21,8 @@ const buildOptions: BuildOptions = {
   define: {},
   entryPoints: ['src/index.ts'],
   external: [
-    '@dest-toolkit/http-server',
     '@dest-toolkit/grpc-server',
+    '@dest-toolkit/http-server',
     'sqlite3',
     'typeorm',
   ],

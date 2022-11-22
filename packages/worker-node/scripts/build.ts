@@ -52,7 +52,7 @@ const protoc = (source: string, target: string): void => {
     '--proto_path=' + dirname(source),
     '--plugin=node_modules/.bin/protoc-gen-ts_proto',
     '--ts_proto_out=' + target,
-    '--ts_proto_opt=esModuleInterop=true',
+    '--ts_proto_opt=esModuleInterop=true,outputServices=generic-definitions',
     source,
   ]);
 };
@@ -101,6 +101,8 @@ const sed = (path: string): void => {
     '-e',
     '"s/(value: any)/(value: unknown)/g"',
     '-e',
+    '"s/): unknown/): Record<string, unknown>/g"',
+    '-e',
     '"s/.\\/google\\/protobuf/..\\/google\\/protobuf/g"',
     '-e',
     '"s/bytesFromBase64(object.value)/bytesFromBase64(object.value as string)/g"',
@@ -120,7 +122,12 @@ const buildOptions: BuildOptions = {
   bundle: true,
   define: {},
   entryPoints: ['src/index.ts'],
-  external: ['@dest-toolkit/http-server', 'sqlite3', 'typeorm'],
+  external: [
+    '@dest-toolkit/grpc-server',
+    '@dest-toolkit/http-server',
+    'sqlite3',
+    'typeorm',
+  ],
   format: 'esm',
   inject: [],
   loader: {},
@@ -146,7 +153,7 @@ const buildOptions: BuildOptions = {
     const protoPath = join('protos', base + '.proto');
     const sourcePath = join('protos', base + '.ts');
     const targetPath = join('src/controller', base, 'proto.ts');
-    protoc(protoPath, 'protos');
+    protoc(protoPath, dirname(sourcePath));
     mv(sourcePath, targetPath);
     sed(targetPath);
     eslint(targetPath);
