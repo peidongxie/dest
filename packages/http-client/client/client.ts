@@ -39,7 +39,7 @@ class Client {
         : isArrayBufferView(extraBody)
         ? extraBody
         : extraBody instanceof Blob
-        ? extraBody
+        ? (extraBody as unknown as globalThis.Blob)
         : extraBody instanceof FormData
         ? extraBody
         : extraBody === null

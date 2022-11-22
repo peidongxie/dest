@@ -198,7 +198,7 @@ class Request<T extends HttpType> {
       if (typeof value === 'string') {
         formData.set(name, value);
       } else {
-        formData.set(name, value, filename);
+        formData.set(name, value as unknown as globalThis.Blob, filename);
       }
     }
     return formData;
