@@ -1,15 +1,53 @@
-import { type MethodDefinition } from '@grpc/grpc-js';
+import { type Reader, type Writer } from 'protobufjs/minimal';
 import { type RequestStream, type RequestWrapped } from './request';
 import { type ResponseStream, type ResponseWrapped } from './response';
 import { type RpcType } from './type';
 
-type PluginDefinition<T extends RpcType, ReqMsg, ResMsg> = MethodDefinition<
-  ReqMsg,
-  ResMsg
-> & {
-  requestStream: RequestStream<T>;
-  responseStream: ResponseStream<T>;
-};
+type Builtin =
+  | Date
+  | ((...args: never[]) => void)
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
+
+type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends Array<infer U>
+  ? Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U>
+  ? ReadonlyArray<DeepPartial<U>>
+  : T extends Record<string, unknown>
+  ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
+
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+
+type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
+
+interface PluginMessage<T> {
+  encode: (message: T, writer?: Writer) => Writer;
+  decode: (input: Reader | Uint8Array, length?: number) => T;
+  fromJSON: (object: Record<string, unknown>) => T;
+  toJSON: (message: T) => Record<string, unknown>;
+  fromPartial: <I extends Exact<DeepPartial<T>, I>>(object: I) => T;
+}
+
+type PluginMethod<T extends RpcType, ReqMsg, ResMsg> = T extends RpcType
+  ? {
+      name: string;
+      requestType: PluginMessage<ReqMsg>;
+      requestStream: RequestStream<T>;
+      responseType: PluginMessage<ResMsg>;
+      responseStream: ResponseStream<T>;
+      options: Record<string, unknown>;
+    }
+  : never;
 
 type PluginHandler<T extends RpcType, ReqMsg, ResMsg> = T extends RpcType
   ? (
@@ -19,9 +57,10 @@ type PluginHandler<T extends RpcType, ReqMsg, ResMsg> = T extends RpcType
 
 type Plugin<T extends RpcType, ReqMsg, ResMsg> = T extends RpcType
   ? {
-      definition: PluginDefinition<T, ReqMsg, ResMsg>;
+      serviceName: string;
+      method: PluginMethod<T, ReqMsg, ResMsg>;
       handler: PluginHandler<T, ReqMsg, ResMsg>;
     }
   : never;
 
-export { type Plugin, type PluginDefinition, type PluginHandler };
+export { type Plugin, type PluginHandler, type PluginMethod };
