@@ -1,7 +1,7 @@
 import Server, {
   type Plugin,
-  type PluginDefinition,
   type PluginHandler,
+  type PluginMethod,
   type RequestWrapped,
   type ResponseWrapped,
   type RpcType,
@@ -18,8 +18,8 @@ export {
   Server,
   createServer,
   type Plugin,
-  type PluginDefinition,
   type PluginHandler,
+  type PluginMethod,
   type RequestWrapped,
   type ResponseWrapped,
   type RpcType,
