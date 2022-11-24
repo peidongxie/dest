@@ -8,7 +8,7 @@ import {
   type handleServerStreamingCall,
   type handleUnaryCall,
 } from '@grpc/grpc-js';
-import { type Plugin, type PluginHandler, type PluginMethod } from './plugin';
+import { type Plugin, type PluginMethod } from './plugin';
 import Request, {
   type RequestRaw,
   type RequestStream,
@@ -27,7 +27,7 @@ type ServerRaw = GrpcServer;
 
 type ServerDefinition = ServiceDefinition[keyof ServiceDefinition];
 
-type ServerHandler =
+type ServerImplementation =
   | handleUnaryCall<unknown, unknown>
   | handleServerStreamingCall<unknown, unknown>
   | handleClientStreamingCall<unknown, unknown>
@@ -37,10 +37,7 @@ class Server {
   private raw: ServerRaw;
   private services: Map<
     string,
-    [
-      Map<string, PluginMethod<RpcType, unknown, unknown>>,
-      Map<string, PluginHandler<RpcType, unknown, unknown>>,
-    ]
+    Map<string, PluginMethod<RpcType, unknown, unknown>>
   >;
 
   public constructor(options?: ServerOptions) {
@@ -50,44 +47,45 @@ class Server {
 
   public callback(): [
     Record<string, ServerDefinition>,
-    Record<string, ServerHandler>,
+    Record<string, ServerImplementation>,
   ][] {
-    return Array.from(this.services.entries()).map(
-      ([serviceName, [methods, handlers]]) => {
-        return [
-          Object.fromEntries(
-            Array.from(methods.entries()).map(([methodName, method]) => [
+    return Array.from(this.services.entries()).map(([serviceName, methods]) => {
+      return [
+        Object.fromEntries(
+          Array.from(methods.entries()).map(
+            ([
+              methodName,
+              { requestType, requestStream, responseType, responseStream },
+            ]) => [
               methodName,
               {
                 path: `/${serviceName}/${methodName}`,
-                requestStream: method.requestStream,
-                responseStream: method.responseStream,
-                requestSerialize: (value: typeof method.requestType) =>
-                  Buffer.from(method.requestType.encode(value).finish()),
+                requestStream,
+                responseStream,
+                requestSerialize: (value: typeof requestType) =>
+                  Buffer.from(requestType.encode(value).finish()),
                 requestDeserialize: (value: Buffer) =>
-                  method.requestType.decode(value),
-                responseSerialize: (value: typeof method.responseType) =>
-                  Buffer.from(method.responseType.encode(value).finish()),
+                  requestType.decode(value),
+                responseSerialize: (value: typeof responseType) =>
+                  Buffer.from(responseType.encode(value).finish()),
                 responseDeserialize: (value: Buffer) =>
-                  method.responseType.decode(value),
+                  responseType.decode(value),
               },
-            ]),
+            ],
           ),
-          Object.fromEntries(
-            Array.from(handlers.entries()).map(([methodName, handler]) => [
+        ),
+        Object.fromEntries(
+          Array.from(methods.entries()).map(
+            ([methodName, { requestStream, responseStream, handler }]) => [
               methodName,
               async <T extends RpcType, ReqMsg, ResMsg>(
                 ...args: RequestRaw<T, ReqMsg> & ResponseRaw<T, ResMsg>
               ) => {
-                const pluginMethod = this.services
-                  .get(serviceName)?.[0]
-                  .get(methodName) as PluginMethod<T, ReqMsg, ResMsg>;
                 const pluginHandler = handler as (
                   req: RequestWrapped<T, ReqMsg>,
                 ) =>
                   | ResponseWrapped<T, ResMsg>
                   | Promise<ResponseWrapped<T, ResMsg>>;
-                const { requestStream, responseStream } = pluginMethod;
                 const request = new Request<T, ReqMsg>(
                   requestStream as RequestStream<T>,
                   args,
@@ -119,11 +117,11 @@ class Server {
                   stream.end();
                 }
               },
-            ]),
+            ],
           ),
-        ];
-      },
-    );
+        ),
+      ];
+    });
   }
 
   public async close(): Promise<GrpcServer> {
@@ -139,8 +137,8 @@ class Server {
   }
 
   public listen(port?: number, hostname?: string): Promise<GrpcServer> {
-    for (const [method, handler] of this.callback()) {
-      this.raw.addService(method, handler);
+    for (const [definition, implementation] of this.callback()) {
+      this.raw.addService(definition, implementation);
     }
     return new Promise((resolve, reject) =>
       this.raw.bindAsync(
@@ -159,17 +157,13 @@ class Server {
   }
 
   public use<ReqMsg, ResMsg>(plugin: Plugin<RpcType, ReqMsg, ResMsg>): void {
-    if (this.services.has(plugin.serviceName)) {
-      this.services.set(plugin.serviceName, [new Map(), new Map()]);
+    if (this.services.has(plugin.service)) {
+      this.services.set(plugin.service, new Map());
     }
-    const service = this.services.get(plugin.serviceName);
-    service?.[0].set(
+    const service = this.services.get(plugin.service);
+    service?.set(
       plugin.method.name,
       plugin.method as PluginMethod<RpcType, unknown, unknown>,
-    );
-    service?.[1].set(
-      plugin.method.name,
-      plugin.handler as PluginHandler<RpcType, unknown, unknown>,
     );
   }
 }

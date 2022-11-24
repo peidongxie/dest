@@ -38,6 +38,12 @@ interface PluginMessage<T> {
   fromPartial: <I extends Exact<DeepPartial<T>, I>>(object: I) => T;
 }
 
+type PluginHandler<T extends RpcType, ReqMsg, ResMsg> = T extends RpcType
+  ? (
+      req: RequestWrapped<T, ReqMsg>,
+    ) => ResponseWrapped<T, ResMsg> | Promise<ResponseWrapped<T, ResMsg>>
+  : never;
+
 type PluginMethod<T extends RpcType, ReqMsg, ResMsg> = T extends RpcType
   ? {
       name: string;
@@ -46,20 +52,14 @@ type PluginMethod<T extends RpcType, ReqMsg, ResMsg> = T extends RpcType
       responseType: PluginMessage<ResMsg>;
       responseStream: ResponseStream<T>;
       options: Record<string, unknown>;
+      handler: PluginHandler<T, ReqMsg, ResMsg>;
     }
-  : never;
-
-type PluginHandler<T extends RpcType, ReqMsg, ResMsg> = T extends RpcType
-  ? (
-      req: RequestWrapped<T, ReqMsg>,
-    ) => ResponseWrapped<T, ResMsg> | Promise<ResponseWrapped<T, ResMsg>>
   : never;
 
 type Plugin<T extends RpcType, ReqMsg, ResMsg> = T extends RpcType
   ? {
-      serviceName: string;
+      service: string;
       method: PluginMethod<T, ReqMsg, ResMsg>;
-      handler: PluginHandler<T, ReqMsg, ResMsg>;
     }
   : never;
 
