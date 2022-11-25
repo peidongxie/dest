@@ -10,11 +10,68 @@ import {
   type ServiceError,
   type ServiceDefinition,
 } from '@grpc/grpc-js';
+import { type Reader, type Writer } from 'protobufjs/minimal';
 import { type RequestWrapped } from './request';
 import { type ResponseWrapped } from './response';
 import { type RpcType } from './type';
 
-type ClientDefinition = ServiceDefinition[keyof ServiceDefinition];
+type Builtin =
+  | Date
+  | ((...args: never[]) => void)
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
+
+type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends Array<infer U>
+  ? Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U>
+  ? ReadonlyArray<DeepPartial<U>>
+  : T extends Record<string, unknown>
+  ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
+
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+
+type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
+
+interface ClientMessage<T> {
+  encode: (message: T, writer?: Writer) => Writer;
+  decode: (input: Reader | Uint8Array, length?: number) => T;
+  fromJSON: (object: Record<string, unknown>) => T;
+  toJSON: (message: T) => Record<string, unknown>;
+  fromPartial: <I extends Exact<DeepPartial<T>, I>>(object: I) => T;
+}
+
+interface ClientMethod {
+  name: string;
+  requestType: ClientMessage<
+    Parameters<
+      ServiceDefinition[keyof ServiceDefinition]['requestSerialize']
+    >[0]
+  >;
+  requestStream: boolean;
+  responseType: ClientMessage<
+    ReturnType<
+      ServiceDefinition[keyof ServiceDefinition]['responseDeserialize']
+    >
+  >;
+  responseStream: boolean;
+  options: Record<string, unknown>;
+}
+
+interface ClientDefinition {
+  name: string;
+  fullName: string;
+  methods: Record<string, ClientMethod>;
+}
 
 interface ClientOptions extends ChannelOptions {
   port?: number;
@@ -42,37 +99,53 @@ type ClientHandler<T extends RpcType, ReqMsg, ResMsg> = ClientHandlerMap<
 >[T];
 
 class Client {
-  private definitions: Record<string, ClientDefinition>;
+  private definition: ClientDefinition;
   private raw: ClientRaw;
 
-  constructor(
-    definitions: ClientDefinition[] | Record<string, ClientDefinition>,
-    options: ClientOptions,
-  ) {
-    this.definitions = Array.isArray(definitions)
-      ? Object.fromEntries(
-          definitions.map((definition) => [definition.path, definition]),
-        )
-      : Object.fromEntries(
-          Object.entries(definitions).map((entry) => [entry[1].path, entry[1]]),
-        );
-    const GenericClient = makeGenericClientConstructor(this.definitions, '');
+  constructor(definition: ClientDefinition, options?: ClientOptions) {
+    this.definition = definition;
+    const serviceName = this.definition.fullName;
+    const GenericClient = makeGenericClientConstructor(
+      Object.fromEntries(
+        Object.entries(this.definition.methods).map(
+          ([
+            methodName,
+            { requestType, requestStream, responseType, responseStream },
+          ]) => [
+            methodName,
+            {
+              path: `/${serviceName}/${methodName}`,
+              requestStream,
+              responseStream,
+              requestSerialize: (value: typeof requestType) =>
+                Buffer.from(requestType.encode(value).finish()),
+              requestDeserialize: (value: Buffer) => requestType.decode(value),
+              responseSerialize: (value: typeof responseType) =>
+                Buffer.from(responseType.encode(value).finish()),
+              responseDeserialize: (value: Buffer) =>
+                responseType.decode(value),
+            },
+          ],
+        ),
+      ),
+      serviceName,
+    );
     const hostname = options?.hostname || 'localhost';
     const port = options?.port || 50051;
     this.raw = new GenericClient(
       `${hostname}:${port}`,
-      options.credentials || credentials.createInsecure(),
+      options?.credentials || credentials.createInsecure(),
       options,
     );
   }
 
   public call<T extends RpcType, ReqMsg, ResMsg>(
-    path: string,
+    method: string,
     req: RequestWrapped<T, ReqMsg>,
   ): Promise<ResponseWrapped<T, ResMsg>> {
-    const { requestStream, responseStream } = this.definitions[path];
-    const handler = this.getHandler<T, ReqMsg, ResMsg>(path);
-    if (!handler) throw new TypeError('Invalid path');
+    const { requestStream, responseStream } = this.definition.methods[method];
+    const handler = this.getHandler<T, ReqMsg, ResMsg>(method);
+    if (!handler) throw new TypeError('Invalid method');
     if (!requestStream) {
       if (!responseStream) {
         const res = new Promise<ResponseWrapped<'UNARY', ResMsg>>(
@@ -138,9 +211,9 @@ class Client {
   }
 
   private getHandler<T extends RpcType, ReqMsg, ResMsg>(
-    path: string,
+    method: string,
   ): ClientHandler<T, ReqMsg, ResMsg> | null {
-    const handler = this.raw[path];
+    const handler = this.raw[method];
     if (!handler) return null;
     return handler.bind(this.raw);
   }
