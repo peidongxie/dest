@@ -45,8 +45,8 @@ type Exact<P, I extends P> = P extends Builtin
 interface ClientMessage<T> {
   encode: (message: T, writer?: Writer) => Writer;
   decode: (input: Reader | Uint8Array, length?: number) => T;
-  fromJSON: (object: Record<string, unknown>) => T;
-  toJSON: (message: T) => Record<string, unknown>;
+  fromJSON: (object: unknown) => T;
+  toJSON: (message: T) => unknown;
   fromPartial: <I extends Exact<DeepPartial<T>, I>>(object: I) => T;
 }
 

@@ -157,7 +157,7 @@ class Server {
   }
 
   public use<ReqMsg, ResMsg>(plugin: Plugin<RpcType, ReqMsg, ResMsg>): void {
-    if (this.services.has(plugin.service)) {
+    if (!this.services.has(plugin.service)) {
       this.services.set(plugin.service, new Map());
     }
     const service = this.services.get(plugin.service);
