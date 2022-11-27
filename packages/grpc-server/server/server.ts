@@ -49,10 +49,10 @@ class Server {
     Record<string, ServerDefinition>,
     Record<string, ServerImplementation>,
   ][] {
-    return Array.from(this.services.entries()).map(([serviceName, methods]) => {
+    return Array.from(this.services).map(([serviceName, methods]) => {
       return [
         Object.fromEntries(
-          Array.from(methods.entries()).map(
+          Array.from(methods).map(
             ([
               methodName,
               { requestType, requestStream, responseType, responseStream },
@@ -75,7 +75,7 @@ class Server {
           ),
         ),
         Object.fromEntries(
-          Array.from(methods.entries()).map(
+          Array.from(methods).map(
             ([methodName, { requestStream, responseStream, handler }]) => [
               methodName,
               async <T extends RpcType, ReqMsg, ResMsg>(

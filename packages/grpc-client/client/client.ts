@@ -67,12 +67,6 @@ interface ClientMethod {
   options: Record<string, unknown>;
 }
 
-interface ClientDefinition {
-  name: string;
-  fullName: string;
-  methods: Record<string, ClientMethod>;
-}
-
 interface ClientOptions extends ChannelOptions {
   port?: number;
   hostname?: string;
@@ -99,18 +93,33 @@ type ClientHandler<T extends RpcType, ReqMsg, ResMsg> = ClientHandlerMap<
 >[T];
 
 class Client {
-  private definition: ClientDefinition;
+  private methods: Map<string, ClientMethod>;
   private raw: ClientRaw;
 
-  constructor(definition: ClientDefinition, options?: ClientOptions) {
-    this.definition = definition;
-    const serviceName = this.definition.fullName;
+  constructor(
+    service: string,
+    methods: Record<string, ClientMethod>,
+    options?: ClientOptions,
+  ) {
+    const serviceName = service;
+    this.methods = new Map(
+      Array.from(Object.entries(methods)).map(([_, method]) => [
+        method.name,
+        method,
+      ]),
+    );
     const GenericClient = makeGenericClientConstructor(
       Object.fromEntries(
-        Object.entries(this.definition.methods).map(
+        Array.from(this.methods).map(
           ([
-            methodName,
-            { requestType, requestStream, responseType, responseStream },
+            _,
+            {
+              name: methodName,
+              requestType,
+              requestStream,
+              responseType,
+              responseStream,
+            },
           ]) => [
             methodName,
             {
@@ -143,9 +152,13 @@ class Client {
     method: string,
     req: RequestWrapped<T, ReqMsg>,
   ): Promise<ResponseWrapped<T, ResMsg>> {
-    const { requestStream, responseStream } = this.definition.methods[method];
-    const handler = this.getHandler<T, ReqMsg, ResMsg>(method);
-    if (!handler) throw new TypeError('Invalid method');
+    if (!this.methods.has(method)) throw new TypeError('Invalid method');
+    const { requestStream, responseStream } = this.methods.get(
+      method,
+    ) as ClientMethod;
+    const handler: ClientHandler<T, ReqMsg, ResMsg> = this.raw[method].bind(
+      this.raw,
+    );
     if (!requestStream) {
       if (!responseStream) {
         const res = new Promise<ResponseWrapped<'UNARY', ResMsg>>(
@@ -209,14 +222,6 @@ class Client {
       }
     }
   }
-
-  private getHandler<T extends RpcType, ReqMsg, ResMsg>(
-    method: string,
-  ): ClientHandler<T, ReqMsg, ResMsg> | null {
-    const handler = this.raw[method];
-    if (!handler) return null;
-    return handler.bind(this.raw);
-  }
 }
 
-export { Client as default, type ClientDefinition, type ClientOptions };
+export { Client as default, type ClientMethod, type ClientOptions };
