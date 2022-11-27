@@ -150,17 +150,18 @@ class Client {
 
   public call<T extends RpcType, ReqMsg, ResMsg>(
     method: string,
-    req: RequestWrapped<T, ReqMsg>,
-  ): Promise<ResponseWrapped<T, ResMsg>> {
-    if (!this.methods.has(method)) throw new TypeError('Invalid method');
+  ):
+    | ((req: RequestWrapped<T, ReqMsg>) => Promise<ResponseWrapped<T, ResMsg>>)
+    | null {
+    if (!this.methods.has(method)) return null;
     const { requestStream, responseStream } = this.methods.get(
       method,
     ) as ClientMethod;
     const handler: ClientHandler<T, ReqMsg, ResMsg> = this.raw[method].bind(
       this.raw,
     );
-    if (!requestStream) {
-      if (!responseStream) {
+    if (!requestStream && !responseStream) {
+      return (req) => {
         const res = new Promise<ResponseWrapped<'UNARY', ResMsg>>(
           (resolve, reject) => {
             (handler as ClientHandler<'UNARY', ReqMsg, ResMsg>)(
@@ -173,7 +174,10 @@ class Client {
           },
         );
         return res as Promise<ResponseWrapped<T, ResMsg>>;
-      } else {
+      };
+    }
+    if (!requestStream && responseStream) {
+      return (req) => {
         const res = new Promise<ResponseWrapped<'SERVER', ResMsg>>(
           (resolve) => {
             resolve(
@@ -184,9 +188,10 @@ class Client {
           },
         );
         return res as Promise<ResponseWrapped<T, ResMsg>>;
-      }
-    } else {
-      if (!responseStream) {
+      };
+    }
+    if (requestStream && !responseStream) {
+      return (req) => {
         const res = new Promise<ResponseWrapped<'CLIENT', ResMsg>>(
           (resolve, reject) => {
             const stream = (handler as ClientHandler<'CLIENT', ReqMsg, ResMsg>)(
@@ -207,7 +212,10 @@ class Client {
           },
         );
         return res as Promise<ResponseWrapped<T, ResMsg>>;
-      } else {
+      };
+    }
+    if (requestStream && responseStream) {
+      return (req) => {
         const res = new Promise<ResponseWrapped<'BIDI', ResMsg>>((resolve) => {
           const stream = (handler as ClientHandler<'BIDI', ReqMsg, ResMsg>)();
           (async () => {
@@ -219,8 +227,9 @@ class Client {
           resolve(stream);
         });
         return res as Promise<ResponseWrapped<T, ResMsg>>;
-      }
+      };
     }
+    return null;
   }
 }
 
