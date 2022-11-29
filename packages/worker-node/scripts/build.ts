@@ -1,31 +1,22 @@
 import { execSync } from 'child_process';
 import { build, type BuildOptions } from 'esbuild';
 import { existsSync, readdirSync, statSync } from 'fs-extra';
-import { basename, dirname, extname, join } from 'path';
+import { dirname, extname, join, relative } from 'path';
 
-const getEntryPoints = (
-  dir: string,
-  type: 'isFile' | 'isDirectory',
-): string[] => {
+const getEntryPoints = (dir: string): string[] => {
   const files = readdirSync(dir);
   return files
     .map((file) => {
       const path = join(dir, file);
       const stats = statSync(path);
-      if (stats[type]()) return file;
-      return null;
-    })
-    .filter((v): v is string => v !== null);
-};
-
-const getExtraDependencies = (dir: string): string[] => {
-  const files = readdirSync(dir);
-  return files
-    .map((file) => {
-      const path = join(dir, file);
-      const stats = statSync(path);
-      if (stats.isDirectory()) return getExtraDependencies(path);
-      if (stats.isFile()) return path;
+      if (stats.isDirectory()) {
+        return getEntryPoints(path);
+      }
+      if (stats.isFile()) {
+        if ('.proto' === extname(file)) {
+          return path;
+        }
+      }
       return null;
     })
     .filter((v): v is string[] | string => v !== null)
@@ -87,10 +78,6 @@ const sed = (path: string): void => {
     '-i',
     '""',
     '-e',
-    '"/^declare var /d"',
-    '-e',
-    '"/^var globalThis:/,/^$/d"',
-    '-e',
     '"s/!)/)/g"',
     '-e',
     '"s/!,/,/g"',
@@ -104,8 +91,6 @@ const sed = (path: string): void => {
     '"s/): unknown/): Record<string, unknown>/g"',
     '-e',
     '"s/.\\/google\\/protobuf/..\\/google\\/protobuf/g"',
-    '-e',
-    '"s/bytesFromBase64(object.value)/bytesFromBase64(object.value as string)/g"',
     '-e',
     '"s/extends {}/extends Record<string, unknown>/g"',
     '-e',
@@ -145,30 +130,16 @@ const buildOptions: BuildOptions = {
 };
 
 (async () => {
-  const entryFiles = getEntryPoints('protos', 'isFile');
-  for (const entryFile of entryFiles) {
-    const ext = extname(entryFile);
-    if (ext !== '.proto') continue;
-    const base = basename(entryFile, ext);
-    const protoPath = join('protos', base + '.proto');
-    const sourcePath = join('protos', base + '.ts');
-    const targetPath = join('src/controller', base, 'proto.ts');
+  const entryPoints = getEntryPoints('protos');
+  for (const entryPoint of entryPoints) {
+    const dir = dirname(relative('protos', entryPoint));
+    const protoPath = join('protos', dir, 'index.proto');
+    const sourcePath = join('protos', dir, 'index.ts');
+    const targetPath = join('src/controller', dir, 'proto.ts');
     protoc(protoPath, dirname(sourcePath));
     mv(sourcePath, targetPath);
     sed(targetPath);
     eslint(targetPath);
-  }
-  const entryDirectories = getEntryPoints('protos', 'isDirectory');
-  for (const entryDirectory of entryDirectories) {
-    const sourcePath = join('protos', entryDirectory);
-    const targetPath = join('src/controller', entryDirectory);
-    rm(targetPath);
-    mv(sourcePath, targetPath);
-    const extraDependencies = getExtraDependencies(targetPath);
-    for (const extraDependency of extraDependencies) {
-      sed(extraDependency);
-      eslint(extraDependency);
-    }
   }
   await build(buildOptions);
 })();
