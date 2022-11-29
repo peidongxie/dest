@@ -17,6 +17,6 @@
   "processor": "",
   "rules": {},
   "settings": {},
-  "noInlineConfig": true,
+  "noInlineConfig": false,
   "reportUnusedDisableDirectives": true
 }
