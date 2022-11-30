@@ -86,12 +86,7 @@ const buildOptions: BuildOptions = {
   bundle: true,
   define: {},
   entryPoints: ['src/index.ts'],
-  external: [
-    '@dest-toolkit/grpc-server',
-    '@dest-toolkit/http-server',
-    'sqlite3',
-    'typeorm',
-  ],
+  external: ['@dest-toolkit/grpc-client', '@dest-toolkit/http-client'],
   format: 'esm',
   inject: [],
   loader: {},
@@ -109,12 +104,12 @@ const buildOptions: BuildOptions = {
 };
 
 (async () => {
-  const entryPoints = getEntryPoints('protos');
+  const entryPoints = getEntryPoints('../worker-node/protos');
   for (const entryPoint of entryPoints) {
-    const dir = dirname(relative('protos', entryPoint));
-    const protoPath = join('protos', dir, 'index.proto');
-    const sourcePath = join('protos', dir, 'index.ts');
-    const targetPath = join('src/controller', dir, 'proto.ts');
+    const dir = dirname(relative('../worker-node/protos', entryPoint));
+    const protoPath = join('../worker-node/protos', dir, 'index.proto');
+    const sourcePath = join('../worker-node/protos', dir, 'index.ts');
+    const targetPath = join('src/worker', dir, 'proto.ts');
     protoc(protoPath, dirname(sourcePath));
     mv(sourcePath, targetPath);
     sed(targetPath);

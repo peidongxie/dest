@@ -1,6 +1,6 @@
 {
   "name": "@dest-toolkit/worker-node",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "private": true,
   "description": "A testing framework for database",
   "keywords": [
@@ -38,8 +38,8 @@
     "up:dev": "docker compose -f docker/compose.dev.yaml -p dest up -d"
   },
   "dependencies": {
-    "@dest-toolkit/grpc-server": "workspace:^0.1.16",
-    "@dest-toolkit/http-server": "workspace:^0.1.16",
+    "@dest-toolkit/grpc-server": "workspace:^0.1.17",
+    "@dest-toolkit/http-server": "workspace:^0.1.17",
     "mysql2": "^2.3.3",
     "protobufjs": "^7.1.2",
     "sqlite3": "^5.1.2",
@@ -49,8 +49,8 @@
     "@types/fs-extra": "^9.0.13",
     "@types/node": "^18.11.9",
     "@types/sqlite3": "^3.1.8",
-    "@typescript-eslint/eslint-plugin": "^5.44.0",
-    "@typescript-eslint/parser": "^5.44.0",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
     "esbuild": "^0.14.54",
     "eslint": "^8.28.0",
     "eslint-config-prettier": "^8.5.0",
@@ -59,7 +59,7 @@
     "grpc-tools": "^1.11.3",
     "prettier": "^2.8.0",
     "sort-package-json": "^2.1.0",
-    "ts-proto": "^1.134.0",
+    "ts-proto": "^1.135.0",
     "typescript": "^4.9.3"
   },
   "packageManager": "pnpm@7.2.1"
