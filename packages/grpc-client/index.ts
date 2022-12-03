@@ -1,5 +1,5 @@
 import Client, {
-  type ClientDefinition,
+  type ClientMethod,
   type ClientOptions,
   type RequestWrapped,
   type ResponseWrapped,
@@ -15,7 +15,7 @@ const createClient = (
 export {
   Client,
   createClient,
-  type ClientDefinition,
+  type ClientMethod,
   type ClientOptions,
   type RequestWrapped,
   type ResponseWrapped,
