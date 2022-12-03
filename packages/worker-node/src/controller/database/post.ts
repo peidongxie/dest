@@ -1,5 +1,11 @@
-import { type PluginHandler } from '@dest-toolkit/http-server';
+import { type Plugin } from '@dest-toolkit/grpc-server';
+import { type PluginHandler as HttpHandler } from '@dest-toolkit/http-server';
 import { type EntitySchemaOptions } from 'typeorm';
+import {
+  DatabaseDefinition,
+  type BaseResponse,
+  type SchemasRequest,
+} from './proto';
 import {
   adapterMapper,
   type AdapterType,
@@ -7,15 +13,13 @@ import {
 } from '../../domain';
 import { createDatabase } from '../../service';
 
-const handler: PluginHandler = async (req) => {
+const httpHandler: HttpHandler = async (req) => {
   const { url, body } = req;
-  const type =
-    adapterMapper[
-      url.searchParams.get('type') as AdapterType | AdapterTypeAlias
-    ];
-  const name = url.searchParams.get('name') || '';
+  const name = url.searchParams.get('name');
+  const type = url.searchParams.get('type');
+  const adapterType = adapterMapper[type as AdapterType | AdapterTypeAlias];
   const schemas = await body.json<EntitySchemaOptions<unknown>[]>();
-  if (!type || !name || !Array.isArray(schemas)) {
+  if (!name || !adapterType || !Array.isArray(schemas)) {
     return {
       code: 400,
       body: {
@@ -23,7 +27,7 @@ const handler: PluginHandler = async (req) => {
       },
     };
   }
-  const database = await createDatabase(type, name, schemas);
+  const database = await createDatabase(adapterType, name, schemas);
   if (!database) {
     return {
       code: 409,
@@ -40,4 +44,33 @@ const handler: PluginHandler = async (req) => {
   };
 };
 
-export default handler;
+const rpc: Plugin<'UNARY', SchemasRequest, BaseResponse> = {
+  service: DatabaseDefinition.fullName,
+  method: {
+    ...DatabaseDefinition.methods.postDatabase,
+    handler: async (req) => {
+      const { name, schemas, type } = req;
+      const adapterType = adapterMapper[type as AdapterType | AdapterTypeAlias];
+      if (!name || !adapterType) {
+        return {
+          success: false,
+        };
+      }
+      const database = await createDatabase(
+        adapterType,
+        name,
+        schemas.map((schema) => JSON.parse(schema)),
+      );
+      if (!database) {
+        return {
+          success: false,
+        };
+      }
+      return {
+        success: true,
+      };
+    },
+  },
+};
+
+export { httpHandler, rpc };

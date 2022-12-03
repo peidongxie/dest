@@ -1,4 +1,16 @@
-export { default as deleteDatabase } from './delete';
-export { default as getDatabase } from './get';
-export { default as postDatabase } from './post';
-export { default as putDatabase } from './put';
+export {
+  httpHandler as deleteDatabaseByHttp,
+  rpc as deleteDatabaseByRpc,
+} from './delete';
+export {
+  httpHandler as getDatabaseByHttp,
+  rpc as getDatabaseByRpc,
+} from './get';
+export {
+  httpHandler as postDatabaseByHttp,
+  rpc as postDatabaseByRpc,
+} from './post';
+export {
+  httpHandler as putDatabaseByHttp,
+  rpc as putDatabaseByRpc,
+} from './put';
