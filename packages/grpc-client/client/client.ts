@@ -104,7 +104,7 @@ class Client {
     const serviceName = service;
     this.methods = new Map(
       Array.from(Object.entries(methods)).map(([_, method]) => [
-        method.name,
+        method.name || _,
         method,
       ]),
     );
@@ -121,7 +121,7 @@ class Client {
               responseStream,
             },
           ]) => [
-            methodName,
+            methodName || _,
             {
               path: `/${serviceName}/${methodName}`,
               requestStream,
@@ -148,88 +148,96 @@ class Client {
     );
   }
 
-  public call<T extends RpcType, ReqMsg, ResMsg>(
+  public call<T extends RpcType, ReqMsg, ResMsg, Nullable = true>(
     method: string,
   ):
     | ((req: RequestWrapped<T, ReqMsg>) => Promise<ResponseWrapped<T, ResMsg>>)
-    | null {
-    if (!this.methods.has(method)) return null;
-    const { requestStream, responseStream } = this.methods.get(
-      method,
-    ) as ClientMethod;
-    const handler: ClientHandler<T, ReqMsg, ResMsg> = this.raw[method].bind(
-      this.raw,
-    );
-    if (!requestStream && !responseStream) {
-      return (req) => {
-        const res = new Promise<ResponseWrapped<'UNARY', ResMsg>>(
-          (resolve, reject) => {
-            (handler as ClientHandler<'UNARY', ReqMsg, ResMsg>)(
-              req as RequestWrapped<'UNARY', ReqMsg>,
-              (reason, value) => {
+    | (Nullable extends false ? never : null) {
+    if (this.methods.has(method)) {
+      const { requestStream, responseStream } = this.methods.get(
+        method,
+      ) as ClientMethod;
+      const handler: ClientHandler<T, ReqMsg, ResMsg> = this.raw[method].bind(
+        this.raw,
+      );
+      if (!requestStream && !responseStream) {
+        return (req) => {
+          const res = new Promise<ResponseWrapped<'UNARY', ResMsg>>(
+            (resolve, reject) => {
+              (handler as ClientHandler<'UNARY', ReqMsg, ResMsg>)(
+                req as RequestWrapped<'UNARY', ReqMsg>,
+                (reason, value) => {
+                  if (reason) reject(reason);
+                  else resolve(value);
+                },
+              );
+            },
+          );
+          return res as Promise<ResponseWrapped<T, ResMsg>>;
+        };
+      }
+      if (!requestStream && responseStream) {
+        return (req) => {
+          const res = new Promise<ResponseWrapped<'SERVER', ResMsg>>(
+            (resolve) => {
+              resolve(
+                (handler as ClientHandler<'SERVER', ReqMsg, ResMsg>)(
+                  req as RequestWrapped<'SERVER', ReqMsg>,
+                ),
+              );
+            },
+          );
+          return res as Promise<ResponseWrapped<T, ResMsg>>;
+        };
+      }
+      if (requestStream && !responseStream) {
+        return (req) => {
+          const res = new Promise<ResponseWrapped<'CLIENT', ResMsg>>(
+            (resolve, reject) => {
+              const stream = (
+                handler as ClientHandler<'CLIENT', ReqMsg, ResMsg>
+              )((reason, value) => {
                 if (reason) reject(reason);
                 else resolve(value);
-              },
-            );
-          },
-        );
-        return res as Promise<ResponseWrapped<T, ResMsg>>;
-      };
+              });
+              (async () => {
+                for await (const reqItem of req as RequestWrapped<
+                  'CLIENT',
+                  ReqMsg
+                >) {
+                  stream.write(reqItem);
+                }
+                stream.end();
+              })();
+            },
+          );
+          return res as Promise<ResponseWrapped<T, ResMsg>>;
+        };
+      }
+      if (requestStream && responseStream) {
+        return (req) => {
+          const res = new Promise<ResponseWrapped<'BIDI', ResMsg>>(
+            (resolve) => {
+              const stream = (
+                handler as ClientHandler<'BIDI', ReqMsg, ResMsg>
+              )();
+              (async () => {
+                for await (const reqItem of req as RequestWrapped<
+                  'BIDI',
+                  ReqMsg
+                >) {
+                  stream.write(reqItem);
+                }
+                stream.end();
+              })();
+              resolve(stream);
+            },
+          );
+          return res as Promise<ResponseWrapped<T, ResMsg>>;
+        };
+      }
     }
-    if (!requestStream && responseStream) {
-      return (req) => {
-        const res = new Promise<ResponseWrapped<'SERVER', ResMsg>>(
-          (resolve) => {
-            resolve(
-              (handler as ClientHandler<'SERVER', ReqMsg, ResMsg>)(
-                req as RequestWrapped<'SERVER', ReqMsg>,
-              ),
-            );
-          },
-        );
-        return res as Promise<ResponseWrapped<T, ResMsg>>;
-      };
-    }
-    if (requestStream && !responseStream) {
-      return (req) => {
-        const res = new Promise<ResponseWrapped<'CLIENT', ResMsg>>(
-          (resolve, reject) => {
-            const stream = (handler as ClientHandler<'CLIENT', ReqMsg, ResMsg>)(
-              (reason, value) => {
-                if (reason) reject(reason);
-                else resolve(value);
-              },
-            );
-            (async () => {
-              for await (const reqItem of req as RequestWrapped<
-                'CLIENT',
-                ReqMsg
-              >) {
-                stream.write(reqItem);
-              }
-              stream.end();
-            })();
-          },
-        );
-        return res as Promise<ResponseWrapped<T, ResMsg>>;
-      };
-    }
-    if (requestStream && responseStream) {
-      return (req) => {
-        const res = new Promise<ResponseWrapped<'BIDI', ResMsg>>((resolve) => {
-          const stream = (handler as ClientHandler<'BIDI', ReqMsg, ResMsg>)();
-          (async () => {
-            for await (const reqItem of req as RequestWrapped<'BIDI', ReqMsg>) {
-              stream.write(reqItem);
-            }
-            stream.end();
-          })();
-          resolve(stream);
-        });
-        return res as Promise<ResponseWrapped<T, ResMsg>>;
-      };
-    }
-    return null;
+    return null as Nullable extends false ? never : null;
   }
 }
 

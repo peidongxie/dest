@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package dest;
+
+service Query {
+  rpc PostQuery (QueryRequest) returns (ResultResponse) {}
+}
+
+message BaseRequest {
+  string type = 1;
+  string name = 2;
+}
+
+message QueryRequest {
+  string type = 1;
+  string name = 2;
+  string privilege = 3;
+  string query = 4;
+}
+
+message BaseResponse {
+  bool success = 1;
+}
+
+message ResultResponse {
+  bool success = 1;
+  uint32 time = 2;
+  string result = 3;
+}
