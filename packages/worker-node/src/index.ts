@@ -1,10 +1,16 @@
-import { Cors, Router, Server } from '@dest-toolkit/http-server';
+import { Server as RpcServer } from '@dest-toolkit/grpc-server';
+import { Cors, Router, Server as HttpServer } from '@dest-toolkit/http-server';
 import {
-  deleteDatabase,
-  getDatabase,
-  postDatabase,
-  postQuery,
-  putDatabase,
+  deleteDatabaseByHttp,
+  deleteDatabaseByRpc,
+  getDatabaseByHttp,
+  getDatabaseByRpc,
+  postDatabaseByHttp,
+  postDatabaseByRpc,
+  postQueryByHttp,
+  postQueryByRpc,
+  putDatabaseByHttp,
+  putDatabaseByRpc,
 } from './controller';
 import { createDatabase } from './service';
 
@@ -16,15 +22,23 @@ const createInitialDatabase = async () => {
 const startServer = async () => {
   const cors = new Cors();
   const router = new Router();
-  router.setRoute('DELETE', '/database', deleteDatabase);
-  router.setRoute('GET', '/database', getDatabase);
-  router.setRoute('POST', '/database', postDatabase);
-  router.setRoute('PUT', '/database', putDatabase);
-  router.setRoute('POST', '/query', postQuery);
-  const server = new Server('http');
-  server.use(cors.getHandler());
-  server.use(router.getHandler());
-  server.listen(3001);
+  router.setRoute('DELETE', '/database', deleteDatabaseByHttp);
+  router.setRoute('GET', '/database', getDatabaseByHttp);
+  router.setRoute('POST', '/database', postDatabaseByHttp);
+  router.setRoute('PUT', '/database', putDatabaseByHttp);
+  router.setRoute('POST', '/query', postQueryByHttp);
+  const httpServer = new HttpServer('http');
+  httpServer.use(cors.getHandler());
+  httpServer.use(router.getHandler());
+  httpServer.listen(3001);
+
+  const rpcServer = new RpcServer();
+  rpcServer.use(deleteDatabaseByRpc);
+  rpcServer.use(getDatabaseByRpc);
+  rpcServer.use(postDatabaseByRpc);
+  rpcServer.use(putDatabaseByRpc);
+  rpcServer.use(postQueryByRpc);
+  rpcServer.listen(3002);
 };
 
 await createInitialDatabase();
