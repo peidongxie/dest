@@ -8,65 +8,16 @@ import {
   type ClientUnaryCall,
   type ClientWritableStream,
   type ServiceError,
-  type ServiceDefinition,
 } from '@grpc/grpc-js';
-import { type Reader, type Writer } from 'protobufjs/minimal';
 import { type RequestWrapped } from './request';
 import { type ResponseWrapped } from './response';
-import { type RpcType } from './type';
-
-type Builtin =
-  | Date
-  | ((...args: never[]) => void)
-  | Uint8Array
-  | string
-  | number
-  | boolean
-  | undefined;
-
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends Array<infer U>
-  ? Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U>
-  ? ReadonlyArray<DeepPartial<U>>
-  : T extends Record<string, unknown>
-  ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
-
-type KeysOfUnion<T> = T extends T ? keyof T : never;
-
-type Exact<P, I extends P> = P extends Builtin
-  ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
-      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
-    };
-
-interface ClientMessage<T> {
-  encode: (message: T, writer?: Writer) => Writer;
-  decode: (input: Reader | Uint8Array, length?: number) => T;
-  fromJSON: (object: unknown) => T;
-  toJSON: (message: T) => unknown;
-  fromPartial: <I extends Exact<DeepPartial<T>, I>>(object: I) => T;
-}
-
-interface ClientMethod {
-  name: string;
-  requestType: ClientMessage<
-    Parameters<
-      ServiceDefinition[keyof ServiceDefinition]['requestSerialize']
-    >[0]
-  >;
-  requestStream: boolean;
-  responseType: ClientMessage<
-    ReturnType<
-      ServiceDefinition[keyof ServiceDefinition]['responseDeserialize']
-    >
-  >;
-  responseStream: boolean;
-  options: Record<string, unknown>;
-}
-
+import {
+  type ProtoDefinition,
+  type ProtoMethod,
+  type ReqMsg,
+  type ResMsg,
+  type RpcType,
+} from './type';
 interface ClientOptions extends ChannelOptions {
   port?: number;
   hostname?: string;
@@ -87,32 +38,23 @@ interface ClientHandlerMap<ReqMsg, ResMsg> {
   BIDI: () => ClientDuplexStream<ReqMsg, ResMsg>;
 }
 
-type ClientHandler<T extends RpcType, ReqMsg, ResMsg> = ClientHandlerMap<
-  ReqMsg,
-  ResMsg
->[T];
+type ClientHandler<
+  Method extends ProtoMethod,
+  T extends 'UNARY' | 'SERVER' | 'CLIENT' | 'BIDI' = RpcType<Method>,
+> = ClientHandlerMap<ReqMsg<Method>, ResMsg<Method>>[T];
 
-class Client {
-  private methods: Map<string, ClientMethod>;
+class Client<Definition extends ProtoDefinition> {
+  private methods: Map<string, ProtoMethod>;
   private raw: ClientRaw;
 
-  constructor(
-    service: string,
-    methods: Record<string, ClientMethod>,
-    options?: ClientOptions,
-  ) {
-    const serviceName = service;
-    this.methods = new Map(
-      Array.from(Object.entries(methods)).map(([_, method]) => [
-        method.name || _,
-        method,
-      ]),
-    );
+  constructor(definition: Definition, options?: ClientOptions) {
+    const serviceName = definition.fullName;
+    this.methods = new Map(Array.from(Object.entries(definition.methods)));
     const GenericClient = makeGenericClientConstructor(
       Object.fromEntries(
         Array.from(this.methods).map(
           ([
-            _,
+            callName,
             {
               name: methodName,
               requestType,
@@ -121,7 +63,7 @@ class Client {
               responseStream,
             },
           ]) => [
-            methodName || _,
+            callName,
             {
               path: `/${serviceName}/${methodName}`,
               requestStream,
@@ -148,97 +90,119 @@ class Client {
     );
   }
 
-  public call<T extends RpcType, ReqMsg, ResMsg, Nullable = true>(
-    method: string,
-  ):
-    | ((req: RequestWrapped<T, ReqMsg>) => Promise<ResponseWrapped<T, ResMsg>>)
-    | (Nullable extends false ? never : null) {
-    if (this.methods.has(method)) {
+  public call<CallName extends keyof Definition['methods']>(
+    method: CallName,
+  ): (
+    req: RequestWrapped<Definition['methods'][CallName]>,
+  ) => Promise<ResponseWrapped<Definition['methods'][CallName]>> {
+    const callName = method as string;
+    if (this.methods.has(callName)) {
       const { requestStream, responseStream } = this.methods.get(
-        method,
-      ) as ClientMethod;
-      const handler: ClientHandler<T, ReqMsg, ResMsg> = this.raw[method].bind(
-        this.raw,
-      );
+        callName,
+      ) as Definition['methods'][CallName];
+      const handler: ClientHandler<Definition['methods'][CallName]> = this.raw[
+        callName
+      ].bind(this.raw);
       if (!requestStream && !responseStream) {
-        return (req) => {
-          const res = new Promise<ResponseWrapped<'UNARY', ResMsg>>(
-            (resolve, reject) => {
-              (handler as ClientHandler<'UNARY', ReqMsg, ResMsg>)(
-                req as RequestWrapped<'UNARY', ReqMsg>,
-                (reason, value) => {
-                  if (reason) reject(reason);
-                  else resolve(value);
-                },
-              );
-            },
-          );
-          return res as Promise<ResponseWrapped<T, ResMsg>>;
+        return (req: RequestWrapped<Definition['methods'][CallName]>) => {
+          const res = new Promise<
+            ResponseWrapped<Definition['methods'][CallName], 'UNARY'>
+          >((resolve, reject) => {
+            (
+              handler as ClientHandler<Definition['methods'][CallName], 'UNARY'>
+            )(
+              req as RequestWrapped<Definition['methods'][CallName], 'UNARY'>,
+              (reason, value) => {
+                if (reason) reject(reason);
+                else resolve(value);
+              },
+            );
+          });
+          return res as Promise<
+            ResponseWrapped<Definition['methods'][CallName]>
+          >;
         };
       }
       if (!requestStream && responseStream) {
-        return (req) => {
-          const res = new Promise<ResponseWrapped<'SERVER', ResMsg>>(
-            (resolve) => {
-              resolve(
-                (handler as ClientHandler<'SERVER', ReqMsg, ResMsg>)(
-                  req as RequestWrapped<'SERVER', ReqMsg>,
-                ),
-              );
-            },
-          );
-          return res as Promise<ResponseWrapped<T, ResMsg>>;
+        return (req: RequestWrapped<Definition['methods'][CallName]>) => {
+          const res = new Promise<
+            ResponseWrapped<Definition['methods'][CallName], 'SERVER'>
+          >((resolve) => {
+            resolve(
+              (
+                handler as ClientHandler<
+                  Definition['methods'][CallName],
+                  'SERVER'
+                >
+              )(
+                req as RequestWrapped<
+                  Definition['methods'][CallName],
+                  'SERVER'
+                >,
+              ),
+            );
+          });
+          return res as Promise<
+            ResponseWrapped<Definition['methods'][CallName]>
+          >;
         };
       }
       if (requestStream && !responseStream) {
-        return (req) => {
-          const res = new Promise<ResponseWrapped<'CLIENT', ResMsg>>(
-            (resolve, reject) => {
-              const stream = (
-                handler as ClientHandler<'CLIENT', ReqMsg, ResMsg>
-              )((reason, value) => {
-                if (reason) reject(reason);
-                else resolve(value);
-              });
-              (async () => {
-                for await (const reqItem of req as RequestWrapped<
-                  'CLIENT',
-                  ReqMsg
-                >) {
-                  stream.write(reqItem);
-                }
-                stream.end();
-              })();
-            },
-          );
-          return res as Promise<ResponseWrapped<T, ResMsg>>;
+        return (req: RequestWrapped<Definition['methods'][CallName]>) => {
+          const res = new Promise<
+            ResponseWrapped<Definition['methods'][CallName], 'CLIENT'>
+          >((resolve, reject) => {
+            const stream = (
+              handler as ClientHandler<
+                Definition['methods'][CallName],
+                'CLIENT'
+              >
+            )((reason, value) => {
+              if (reason) reject(reason);
+              else resolve(value);
+            });
+            (async () => {
+              for await (const reqItem of req as RequestWrapped<
+                Definition['methods'][CallName],
+                'CLIENT'
+              >) {
+                stream.write(reqItem);
+              }
+              stream.end();
+            })();
+          });
+          return res as Promise<
+            ResponseWrapped<Definition['methods'][CallName]>
+          >;
         };
       }
       if (requestStream && responseStream) {
-        return (req) => {
-          const res = new Promise<ResponseWrapped<'BIDI', ResMsg>>(
-            (resolve) => {
-              const stream = (
-                handler as ClientHandler<'BIDI', ReqMsg, ResMsg>
-              )();
-              (async () => {
-                for await (const reqItem of req as RequestWrapped<
-                  'BIDI',
-                  ReqMsg
-                >) {
-                  stream.write(reqItem);
-                }
-                stream.end();
-              })();
-              resolve(stream);
-            },
-          );
-          return res as Promise<ResponseWrapped<T, ResMsg>>;
+        return (req: RequestWrapped<Definition['methods'][CallName]>) => {
+          const res = new Promise<
+            ResponseWrapped<Definition['methods'][CallName], 'BIDI'>
+          >((resolve) => {
+            const stream = (
+              handler as ClientHandler<Definition['methods'][CallName], 'BIDI'>
+            )();
+            (async () => {
+              for await (const reqItem of req as RequestWrapped<
+                Definition['methods'][CallName],
+                'BIDI'
+              >) {
+                stream.write(reqItem);
+              }
+              stream.end();
+            })();
+            resolve(stream);
+          });
+          return res as Promise<
+            ResponseWrapped<Definition['methods'][CallName]>
+          >;
         };
       }
     }
-    return null as Nullable extends false ? never : null;
+    throw new TypeError('Invalid method');
   }
 }
 
-export { Client as default, type ClientMethod, type ClientOptions };
+export { Client as default, type ClientOptions };
