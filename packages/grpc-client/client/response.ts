@@ -1,4 +1,4 @@
-import { type RpcType } from './type';
+import { type ProtoMethod, type ResMsg, type RpcType } from './type';
 
 interface ResponseWrappedMap<ResMsg> {
   UNARY: ResMsg;
@@ -6,7 +6,9 @@ interface ResponseWrappedMap<ResMsg> {
   CLIENT: ResMsg;
   BIDI: AsyncIterable<ResMsg>;
 }
-
-type ResponseWrapped<T extends RpcType, ResMsg> = ResponseWrappedMap<ResMsg>[T];
+type ResponseWrapped<
+  Method extends ProtoMethod,
+  T extends 'UNARY' | 'SERVER' | 'CLIENT' | 'BIDI' = RpcType<Method>,
+> = ResponseWrappedMap<ResMsg<Method>>[T];
 
 export { type ResponseWrapped };
