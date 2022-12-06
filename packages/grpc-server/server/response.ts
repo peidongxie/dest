@@ -1,28 +1,51 @@
 import {
+  type ServiceDefinition,
   type handleBidiStreamingCall,
   type handleClientStreamingCall,
   type handleServerStreamingCall,
   type handleUnaryCall,
 } from '@grpc/grpc-js';
-import { type RpcType } from './type';
-
-interface ResponseStreamMap {
-  UNARY: false;
-  SERVER: true;
-  CLIENT: false;
-  BIDI: true;
-}
-
-type ResponseStream<T extends RpcType> = ResponseStreamMap[T];
+import { type ProtoMethod, type ResMsg, type RpcType } from './type';
 
 interface ResponseRawMap<ResMsg> {
-  UNARY: Parameters<handleUnaryCall<unknown, ResMsg>>;
-  SERVER: Parameters<handleServerStreamingCall<unknown, ResMsg>>;
-  CLIENT: Parameters<handleClientStreamingCall<unknown, ResMsg>>;
-  BIDI: Parameters<handleBidiStreamingCall<unknown, ResMsg>>;
+  UNARY: Parameters<
+    handleUnaryCall<
+      ReturnType<
+        ServiceDefinition[keyof ServiceDefinition]['requestDeserialize']
+      >,
+      ResMsg
+    >
+  >;
+  SERVER: Parameters<
+    handleServerStreamingCall<
+      ReturnType<
+        ServiceDefinition[keyof ServiceDefinition]['requestDeserialize']
+      >,
+      ResMsg
+    >
+  >;
+  CLIENT: Parameters<
+    handleClientStreamingCall<
+      ReturnType<
+        ServiceDefinition[keyof ServiceDefinition]['requestDeserialize']
+      >,
+      ResMsg
+    >
+  >;
+  BIDI: Parameters<
+    handleBidiStreamingCall<
+      ReturnType<
+        ServiceDefinition[keyof ServiceDefinition]['requestDeserialize']
+      >,
+      ResMsg
+    >
+  >;
 }
 
-type ResponseRaw<T extends RpcType, ResMsg> = ResponseRawMap<ResMsg>[T];
+type ResponseRaw<
+  Method extends ProtoMethod,
+  T extends 'UNARY' | 'SERVER' | 'CLIENT' | 'BIDI' = RpcType<Method>,
+> = ResponseRawMap<ResMsg<Method>>[T];
 
 interface ResponseWrappedMap<ResMsg> {
   UNARY: Error | ResMsg;
@@ -31,25 +54,28 @@ interface ResponseWrappedMap<ResMsg> {
   BIDI: Error | Iterable<ResMsg> | AsyncIterable<ResMsg>;
 }
 
-type ResponseWrapped<T extends RpcType, ResMsg> = ResponseWrappedMap<ResMsg>[T];
+type ResponseWrapped<
+  Method extends ProtoMethod,
+  T extends 'UNARY' | 'SERVER' | 'CLIENT' | 'BIDI' = RpcType<Method>,
+> = ResponseWrappedMap<ResMsg<Method>>[T];
 
-class Response<T extends RpcType, ResMsg> {
-  private raw: ResponseRaw<T, ResMsg>;
-  private stream: ResponseStream<T>;
+class Response<Method extends ProtoMethod> {
+  private raw: ResponseRaw<Method>;
+  private stream: Method['responseStream'];
 
-  constructor(stream: ResponseStream<T>, res: ResponseRaw<T, ResMsg>) {
+  constructor(stream: Method['responseStream'], res: ResponseRaw<Method>) {
     this.raw = res;
     this.stream = stream;
   }
 
-  public async setResponse(res: ResponseWrapped<T, ResMsg>): Promise<void> {
+  public async setResponse(res: ResponseWrapped<Method>): Promise<void> {
     if (!this.stream) {
       const raw = this.raw as
-        | ResponseRaw<'UNARY', ResMsg>
-        | ResponseRaw<'CLIENT', ResMsg>;
+        | ResponseRaw<Method, 'UNARY'>
+        | ResponseRaw<Method, 'CLIENT'>;
       const wrapped = res as
-        | ResponseWrapped<'UNARY', ResMsg>
-        | ResponseWrapped<'CLIENT', ResMsg>;
+        | ResponseWrapped<Method, 'UNARY'>
+        | ResponseWrapped<Method, 'CLIENT'>;
       if (!(wrapped instanceof Error)) {
         raw[1](null, wrapped);
       } else {
@@ -57,11 +83,11 @@ class Response<T extends RpcType, ResMsg> {
       }
     } else {
       const raw = this.raw as
-        | ResponseRaw<'SERVER', ResMsg>
-        | ResponseRaw<'BIDI', ResMsg>;
+        | ResponseRaw<Method, 'SERVER'>
+        | ResponseRaw<Method, 'BIDI'>;
       const wrapped = res as
-        | ResponseWrapped<'SERVER', ResMsg>
-        | ResponseWrapped<'BIDI', ResMsg>;
+        | ResponseWrapped<Method, 'SERVER'>
+        | ResponseWrapped<Method, 'BIDI'>;
       if (!(wrapped instanceof Error)) {
         for await (const resMsg of wrapped) {
           raw[0].write(resMsg);
@@ -71,9 +97,4 @@ class Response<T extends RpcType, ResMsg> {
   }
 }
 
-export {
-  Response as default,
-  type ResponseRaw,
-  type ResponseStream,
-  type ResponseWrapped,
-};
+export { Response as default, type ResponseRaw, type ResponseWrapped };
