@@ -1,28 +1,51 @@
 import {
+  type ServiceDefinition,
   type handleBidiStreamingCall,
   type handleClientStreamingCall,
   type handleServerStreamingCall,
   type handleUnaryCall,
 } from '@grpc/grpc-js';
-import { type RpcType } from './type';
-
-interface RequestStreamMap {
-  UNARY: false;
-  SERVER: false;
-  CLIENT: true;
-  BIDI: true;
-}
-
-type RequestStream<T extends RpcType> = RequestStreamMap[T];
+import { type ProtoMethod, type ReqMsg, type RpcType } from './type';
 
 interface RequestRawMap<ReqMsg> {
-  UNARY: Parameters<handleUnaryCall<ReqMsg, unknown>>;
-  SERVER: Parameters<handleServerStreamingCall<ReqMsg, unknown>>;
-  CLIENT: Parameters<handleClientStreamingCall<ReqMsg, unknown>>;
-  BIDI: Parameters<handleBidiStreamingCall<ReqMsg, unknown>>;
+  UNARY: Parameters<
+    handleUnaryCall<
+      ReqMsg,
+      Parameters<
+        ServiceDefinition[keyof ServiceDefinition]['responseSerialize']
+      >[0]
+    >
+  >;
+  SERVER: Parameters<
+    handleServerStreamingCall<
+      ReqMsg,
+      Parameters<
+        ServiceDefinition[keyof ServiceDefinition]['responseSerialize']
+      >[0]
+    >
+  >;
+  CLIENT: Parameters<
+    handleClientStreamingCall<
+      ReqMsg,
+      Parameters<
+        ServiceDefinition[keyof ServiceDefinition]['responseSerialize']
+      >[0]
+    >
+  >;
+  BIDI: Parameters<
+    handleBidiStreamingCall<
+      ReqMsg,
+      Parameters<
+        ServiceDefinition[keyof ServiceDefinition]['responseSerialize']
+      >[0]
+    >
+  >;
 }
 
-type RequestRaw<T extends RpcType, ReqMsg> = RequestRawMap<ReqMsg>[T];
+type RequestRaw<
+  Method extends ProtoMethod,
+  T extends 'UNARY' | 'SERVER' | 'CLIENT' | 'BIDI' = RpcType<Method>,
+> = RequestRawMap<ReqMsg<Method>>[T];
 
 interface RequestWrappedMap<ReqMsg> {
   UNARY: ReqMsg;
@@ -31,45 +54,43 @@ interface RequestWrappedMap<ReqMsg> {
   BIDI: AsyncIterable<ReqMsg>;
 }
 
-type RequestWrapped<T extends RpcType, ReqMsg> = RequestWrappedMap<ReqMsg>[T];
+type RequestWrapped<
+  Method extends ProtoMethod,
+  T extends 'UNARY' | 'SERVER' | 'CLIENT' | 'BIDI' = RpcType<Method>,
+> = RequestWrappedMap<ReqMsg<Method>>[T];
 
-class Request<T extends RpcType, ReqMsg> {
-  private raw: RequestRaw<T, ReqMsg>;
-  private stream: RequestStream<T>;
+class Request<Method extends ProtoMethod> {
+  private raw: RequestRaw<Method>;
+  private stream: Method['requestStream'];
 
-  constructor(stream: RequestStream<T>, req: RequestRaw<T, ReqMsg>) {
+  constructor(stream: Method['requestStream'], req: RequestRaw<Method>) {
     this.raw = req;
     this.stream = stream;
   }
 
-  public getRequest(): RequestWrapped<T, ReqMsg> {
+  public getRequest(): RequestWrapped<Method> {
     if (!this.stream) {
       const raw = this.raw as
-        | RequestRaw<'UNARY', ReqMsg>
-        | RequestRaw<'SERVER', ReqMsg>;
+        | RequestRaw<Method, 'UNARY'>
+        | RequestRaw<Method, 'SERVER'>;
       const wrapped:
-        | RequestWrapped<'UNARY', ReqMsg>
-        | RequestWrapped<'SERVER', ReqMsg> = raw[0].request;
-      return wrapped as RequestWrapped<T, ReqMsg>;
+        | RequestWrapped<Method, 'UNARY'>
+        | RequestWrapped<Method, 'SERVER'> = raw[0].request;
+      return wrapped as RequestWrapped<Method>;
     } else {
       const raw = this.raw as
-        | RequestRaw<'CLIENT', ReqMsg>
-        | RequestRaw<'BIDI', ReqMsg>;
+        | RequestRaw<Method, 'CLIENT'>
+        | RequestRaw<Method, 'BIDI'>;
       const wrapped:
-        | RequestWrapped<'CLIENT', ReqMsg>
-        | RequestWrapped<'BIDI', ReqMsg> = (async function* () {
+        | RequestWrapped<Method, 'CLIENT'>
+        | RequestWrapped<Method, 'BIDI'> = (async function* () {
         for await (const reqMsg of raw[0]) {
-          yield reqMsg as ReqMsg;
+          yield reqMsg;
         }
       })();
-      return wrapped as RequestWrapped<T, ReqMsg>;
+      return wrapped as RequestWrapped<Method>;
     }
   }
 }
 
-export {
-  Request as default,
-  type RequestRaw,
-  type RequestStream,
-  type RequestWrapped,
-};
+export { Request as default, type RequestRaw, type RequestWrapped };
