@@ -163,8 +163,8 @@ importers:
 
   packages/main-node:
     specifiers:
-      '@dest-toolkit/grpc-client': workspace:^0.1.17
-      '@dest-toolkit/http-client': workspace:^0.1.17
+      '@dest-toolkit/grpc-client': workspace:^0.1.18
+      '@dest-toolkit/http-client': workspace:^0.1.18
       '@types/fs-extra': ^9.0.13
       '@types/node': ^18.11.11
       '@types/sqlite3': ^3.1.8
@@ -204,8 +204,8 @@ importers:
 
   packages/worker-node:
     specifiers:
-      '@dest-toolkit/grpc-server': workspace:^0.1.17
-      '@dest-toolkit/http-server': workspace:^0.1.17
+      '@dest-toolkit/grpc-server': workspace:^0.1.18
+      '@dest-toolkit/http-server': workspace:^0.1.18
       '@types/fs-extra': ^9.0.13
       '@types/node': ^18.11.11
       '@types/sqlite3': ^3.1.8
