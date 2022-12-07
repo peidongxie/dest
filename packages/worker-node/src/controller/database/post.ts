@@ -1,11 +1,7 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type PluginHandler as HttpHandler } from '@dest-toolkit/http-server';
 import { type EntitySchemaOptions } from 'typeorm';
-import {
-  DatabaseDefinition,
-  type BaseResponse,
-  type SchemasRequest,
-} from './proto';
+import { DatabaseDefinition } from './proto';
 import {
   adapterMapper,
   type AdapterType,
@@ -44,11 +40,10 @@ const httpHandler: HttpHandler = async (req) => {
   };
 };
 
-const rpc: Plugin<'UNARY', SchemasRequest, BaseResponse> = {
-  service: DatabaseDefinition.fullName,
-  method: {
-    ...DatabaseDefinition.methods.postDatabase,
-    handler: async (req) => {
+const rpc: Plugin<DatabaseDefinition> = {
+  definition: DatabaseDefinition,
+  handlers: {
+    postDatabase: async (req) => {
       const { name, schemas, type } = req;
       const adapterType = adapterMapper[type as AdapterType | AdapterTypeAlias];
       if (!name || !adapterType) {
