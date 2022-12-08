@@ -1,5 +1,5 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
-import { type PluginHandler as HttpHandler } from '@dest-toolkit/http-server';
+import { type Route } from '@dest-toolkit/http-server';
 import { DatabaseDefinition } from './proto';
 import {
   adapterMapper,
@@ -8,37 +8,41 @@ import {
 } from '../../domain';
 import { readDatabase } from '../../service';
 
-const httpHandler: HttpHandler = async (req) => {
-  const { url } = req;
-  const name = url.searchParams.get('name');
-  const type = url.searchParams.get('type');
-  const adapterType = adapterMapper[type as AdapterType | AdapterTypeAlias];
-  if (!name || !adapterType) {
+const http: Route = {
+  method: 'GET',
+  pathname: '/database',
+  handler: async (req) => {
+    const { url } = req;
+    const name = url.searchParams.get('name');
+    const type = url.searchParams.get('type');
+    const adapterType = adapterMapper[type as AdapterType | AdapterTypeAlias];
+    if (!name || !adapterType) {
+      return {
+        code: 400,
+        body: {
+          success: false,
+          data: [],
+        },
+      };
+    }
+    const database = readDatabase(adapterType, name);
+    if (!database) {
+      return {
+        code: 404,
+        body: {
+          success: false,
+          data: [],
+        },
+      };
+    }
     return {
-      code: 400,
+      code: 200,
       body: {
-        success: false,
-        data: [],
+        success: true,
+        data: await database.snapshot(),
       },
     };
-  }
-  const database = readDatabase(adapterType, name);
-  if (!database) {
-    return {
-      code: 404,
-      body: {
-        success: false,
-        data: [],
-      },
-    };
-  }
-  return {
-    code: 200,
-    body: {
-      success: true,
-      data: await database.snapshot(),
-    },
-  };
+  },
 };
 
 const rpc: Plugin<DatabaseDefinition> = {
@@ -71,4 +75,4 @@ const rpc: Plugin<DatabaseDefinition> = {
   },
 };
 
-export { httpHandler, rpc };
+export { http, rpc };

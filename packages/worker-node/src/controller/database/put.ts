@@ -1,5 +1,5 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
-import { type PluginHandler as HttpHandler } from '@dest-toolkit/http-server';
+import { type Route } from '@dest-toolkit/http-server';
 import { DatabaseDefinition } from './proto';
 import {
   adapterMapper,
@@ -8,52 +8,56 @@ import {
 } from '../../domain';
 import { updateDatabase } from '../../service';
 
-const httpHandler: HttpHandler = async (req) => {
-  const { url, body } = req;
-  const name = url.searchParams.get('name');
-  const type = url.searchParams.get('type');
-  const adapterType = adapterMapper[type as AdapterType | AdapterTypeAlias];
-  const action = `/${url.pathname}/`
-    .replace(/\/+/g, '/')
-    .match(/^\/database\/(remove|save)\//)?.[1] as
-    | 'remove'
-    | 'save'
-    | undefined;
-  const data = await body.json<{ name: string; rows: unknown[] }[]>();
-  if (
-    !name ||
-    !adapterType ||
-    !action ||
-    !Array.isArray(data) ||
-    data.some((item) => {
-      if (!item.name) return true;
-      if (typeof item.name !== 'string') return true;
-      if (!Array.isArray(item.rows)) return true;
-      return false;
-    })
-  ) {
+const http: Route = {
+  method: 'PUT',
+  pathname: '/database',
+  handler: async (req) => {
+    const { url, body } = req;
+    const name = url.searchParams.get('name');
+    const type = url.searchParams.get('type');
+    const adapterType = adapterMapper[type as AdapterType | AdapterTypeAlias];
+    const action = `/${url.pathname}/`
+      .replace(/\/+/g, '/')
+      .match(/^\/database\/(remove|save)\//)?.[1] as
+      | 'remove'
+      | 'save'
+      | undefined;
+    const data = await body.json<{ name: string; rows: unknown[] }[]>();
+    if (
+      !name ||
+      !adapterType ||
+      !action ||
+      !Array.isArray(data) ||
+      data.some((item) => {
+        if (!item.name) return true;
+        if (typeof item.name !== 'string') return true;
+        if (!Array.isArray(item.rows)) return true;
+        return false;
+      })
+    ) {
+      return {
+        code: 400,
+        body: {
+          success: false,
+        },
+      };
+    }
+    const database = await updateDatabase(adapterType, name, action, data);
+    if (!database) {
+      return {
+        code: 404,
+        body: {
+          success: false,
+        },
+      };
+    }
     return {
-      code: 400,
+      code: 200,
       body: {
-        success: false,
+        success: true,
       },
     };
-  }
-  const database = await updateDatabase(adapterType, name, action, data);
-  if (!database) {
-    return {
-      code: 404,
-      body: {
-        success: false,
-      },
-    };
-  }
-  return {
-    code: 200,
-    body: {
-      success: true,
-    },
-  };
+  },
 };
 
 const rpc: Plugin<DatabaseDefinition> = {
@@ -98,4 +102,4 @@ const rpc: Plugin<DatabaseDefinition> = {
   },
 };
 
-export { httpHandler, rpc };
+export { http, rpc };

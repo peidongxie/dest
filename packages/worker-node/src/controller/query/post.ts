@@ -1,5 +1,5 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
-import { type PluginHandler as HttpHandler } from '@dest-toolkit/http-server';
+import { type Route } from '@dest-toolkit/http-server';
 import { QueryDefinition } from './proto';
 import {
   adapterMapper,
@@ -8,53 +8,57 @@ import {
 } from '../../domain';
 import { createQuery } from '../../service';
 
-const httpHandler: HttpHandler = async (req) => {
-  const { url, body } = req;
-  const name = url.searchParams.get('name');
-  const type = url.searchParams.get('type');
-  const adapterType = adapterMapper[type as AdapterType | AdapterTypeAlias];
-  const privilege = `/${url.pathname}/`
-    .replace(/\/+/g, '/')
-    .match(/^\/query\/(read|root|write)\//)?.[1] as
-    | 'read'
-    | 'root'
-    | 'write'
-    | undefined;
-  const query = await body.text();
-  if (
-    Number(!name) ^ Number(privilege === 'root') ||
-    !adapterType ||
-    (privilege !== 'read' && privilege !== 'root' && privilege !== 'write') ||
-    !query
-  ) {
+const http: Route = {
+  method: 'POST',
+  pathname: '/query',
+  handler: async (req) => {
+    const { url, body } = req;
+    const name = url.searchParams.get('name');
+    const type = url.searchParams.get('type');
+    const adapterType = adapterMapper[type as AdapterType | AdapterTypeAlias];
+    const privilege = `/${url.pathname}/`
+      .replace(/\/+/g, '/')
+      .match(/^\/query\/(read|root|write)\//)?.[1] as
+      | 'read'
+      | 'root'
+      | 'write'
+      | undefined;
+    const query = await body.text();
+    if (
+      Number(!name) ^ Number(privilege === 'root') ||
+      !adapterType ||
+      (privilege !== 'read' && privilege !== 'root' && privilege !== 'write') ||
+      !query
+    ) {
+      return {
+        code: 400,
+        body: {
+          success: false,
+          time: 0,
+          result: '',
+        },
+      };
+    }
+    const result = await createQuery(adapterType, name || '', privilege, query);
+    if (!result) {
+      return {
+        code: 404,
+        body: {
+          success: false,
+          time: 0,
+          result: '',
+        },
+      };
+    }
     return {
-      code: 400,
+      code: 201,
       body: {
-        success: false,
-        time: 0,
-        result: '',
+        success: true,
+        time: Number(result.time),
+        result: result.result,
       },
     };
-  }
-  const result = await createQuery(adapterType, name || '', privilege, query);
-  if (!result) {
-    return {
-      code: 404,
-      body: {
-        success: false,
-        time: 0,
-        result: '',
-      },
-    };
-  }
-  return {
-    code: 201,
-    body: {
-      success: true,
-      time: Number(result.time),
-      result: result.result,
-    },
-  };
+  },
 };
 
 const rpc: Plugin<QueryDefinition> = {
@@ -99,4 +103,4 @@ const rpc: Plugin<QueryDefinition> = {
   },
 };
 
-export { httpHandler, rpc };
+export { http, rpc };
