@@ -1,10 +1,6 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type PluginHandler as HttpHandler } from '@dest-toolkit/http-server';
-import {
-  DatabaseDefinition,
-  type BaseRequest,
-  type BaseResponse,
-} from './proto';
+import { DatabaseDefinition } from './proto';
 import {
   adapterMapper,
   type AdapterType,
@@ -42,11 +38,10 @@ const httpHandler: HttpHandler = async (req) => {
   };
 };
 
-const rpc: Plugin<'UNARY', BaseRequest, BaseResponse> = {
-  service: DatabaseDefinition.fullName,
-  method: {
-    ...DatabaseDefinition.methods.deleteDatabase,
-    handler: async (req) => {
+const rpc: Plugin<DatabaseDefinition> = {
+  definition: DatabaseDefinition,
+  handlers: {
+    deleteDatabase: async (req) => {
       const { name, type } = req;
       const adapterType = adapterMapper[type as AdapterType | AdapterTypeAlias];
       if (!name || !adapterType) {

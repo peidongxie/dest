@@ -82,6 +82,19 @@ const sed = (path: string): void => {
   ]);
 };
 
+const createProto = () => {
+  for (const entryPoint of getEntryPoints('protos')) {
+    const dir = dirname(relative('protos', entryPoint));
+    const protoPath = join('protos', dir, 'index.proto');
+    const sourcePath = join('protos', dir, 'index.ts');
+    const targetPath = join('src/controller', dir, 'proto.ts');
+    protoc(protoPath, dirname(sourcePath));
+    mv(sourcePath, targetPath);
+    sed(targetPath);
+    eslint(targetPath);
+  }
+};
+
 const buildOptions: BuildOptions = {
   bundle: true,
   define: {},
@@ -109,16 +122,6 @@ const buildOptions: BuildOptions = {
 };
 
 (async () => {
-  const entryPoints = getEntryPoints('protos');
-  for (const entryPoint of entryPoints) {
-    const dir = dirname(relative('protos', entryPoint));
-    const protoPath = join('protos', dir, 'index.proto');
-    const sourcePath = join('protos', dir, 'index.ts');
-    const targetPath = join('src/controller', dir, 'proto.ts');
-    protoc(protoPath, dirname(sourcePath));
-    mv(sourcePath, targetPath);
-    sed(targetPath);
-    eslint(targetPath);
-  }
+  createProto();
   await build(buildOptions);
 })();

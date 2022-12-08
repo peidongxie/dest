@@ -1,10 +1,6 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type PluginHandler as HttpHandler } from '@dest-toolkit/http-server';
-import {
-  QueryDefinition,
-  type QueryRequest,
-  type ResultResponse,
-} from './proto';
+import { QueryDefinition } from './proto';
 import {
   adapterMapper,
   type AdapterType,
@@ -61,11 +57,10 @@ const httpHandler: HttpHandler = async (req) => {
   };
 };
 
-const rpc: Plugin<'UNARY', QueryRequest, ResultResponse> = {
-  service: QueryDefinition.fullName,
-  method: {
-    ...QueryDefinition.methods.postQuery,
-    handler: async (req) => {
+const rpc: Plugin<QueryDefinition> = {
+  definition: QueryDefinition,
+  handlers: {
+    postQuery: async (req) => {
       const { name, privilege, query, type } = req;
       const adapterType = adapterMapper[type as AdapterType | AdapterTypeAlias];
       if (
