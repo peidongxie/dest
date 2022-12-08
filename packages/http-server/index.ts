@@ -1,4 +1,4 @@
-import { Cors, Router } from './plugins';
+import { Cors, Router, type AllowOptions, type Route } from './plugins';
 import Server, {
   type HttpType,
   type Plugin,
@@ -20,11 +20,13 @@ export {
   Router,
   Server,
   createServer,
+  type AllowOptions,
   type HttpType,
   type Plugin,
   type PluginHandler,
   type RequestWrapped,
   type ResponseWrapped,
+  type Route,
   type ServerOptions,
   type ServerType,
 };

@@ -6,11 +6,13 @@ interface AllowOptions {
   origin?: (origin: string) => boolean;
 }
 
+type PluginAllowOptions = Required<AllowOptions>;
+
 type AddPrefix<Prefix extends string, Type> = {
   [Key in keyof Type as `${Prefix}${Capitalize<string & Key>}`]: Type[Key];
 };
 
-interface Options extends AddPrefix<'allow', AllowOptions> {
+interface PluginOptions extends AddPrefix<'allow', AllowOptions> {
   maxAge?: number;
 }
 
@@ -24,11 +26,11 @@ const defaultOptions = {
 };
 
 class Cors implements Plugin {
-  private allowOptions: Required<AllowOptions>;
+  private allowOptions: PluginAllowOptions;
   private enable: boolean;
   private maxAge: number;
 
-  public constructor(options?: Options | boolean) {
+  public constructor(options?: PluginOptions | boolean) {
     this.enable = options !== false;
     if (options === true || options === false || options == undefined) {
       this.allowOptions = defaultOptions.allowOptions;
@@ -98,4 +100,4 @@ class Cors implements Plugin {
   }
 }
 
-export { Cors as default };
+export { Cors as default, type AllowOptions };

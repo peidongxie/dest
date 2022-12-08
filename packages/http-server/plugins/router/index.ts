@@ -1,12 +1,18 @@
 import { type Plugin, type PluginHandler } from '../../server';
 
 interface Route {
+  method: string | string[];
+  pathname: string;
+  handler: PluginHandler;
+}
+
+interface PluginRoute {
   method: string[];
   pathname: RegExp;
   handler: PluginHandler;
 }
 
-interface Options {
+interface PluginOptions {
   prefix?: string;
 }
 
@@ -24,18 +30,18 @@ const validMethod = [
 
 class Router implements Plugin {
   private prefix: string;
-  private routingTable: Route[];
+  private routes: PluginRoute[];
 
-  public constructor(options?: Options) {
+  public constructor(options?: PluginOptions) {
     this.prefix = (options?.prefix || '').trim();
-    this.routingTable = [];
+    this.routes = [];
   }
 
   public getHandler(): PluginHandler {
     return (req) => {
       const { method, url } = req;
       const pathname = `/${url.pathname}/`.replace(/\/+/g, '/');
-      const route = this.routingTable.find((route) => {
+      const route = this.routes.find((route) => {
         if (!route.method.includes(method)) return false;
         if (!route.pathname.test(pathname)) return false;
         return true;
@@ -54,14 +60,10 @@ class Router implements Plugin {
     this.prefix = (prefix || '').trim();
   }
 
-  public setRoute(
-    method: string | string[],
-    pathname: string,
-    handler: PluginHandler,
-  ): void {
+  public setRoute({ method, pathname, handler }: Route): void {
     const validMethod = this.getValidMethod(method);
     const validPathname = this.getValidPathname(pathname);
-    const route = this.routingTable.find((route) => {
+    const route = this.routes.find((route) => {
       if (route.method.toString() !== validMethod.toString()) return false;
       if (route.pathname.toString() !== validPathname.toString()) return false;
       return true;
@@ -69,7 +71,7 @@ class Router implements Plugin {
     if (route) {
       route.handler = handler;
     } else {
-      this.routingTable.push({
+      this.routes.push({
         method: validMethod,
         pathname: validPathname,
         handler: handler,
@@ -93,4 +95,4 @@ class Router implements Plugin {
   }
 }
 
-export { Router as default };
+export { Router as default, type Route };
