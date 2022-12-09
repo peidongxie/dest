@@ -1,1 +1,1 @@
-export { httpHandler as postQueryByHttp, rpc as postQueryByRpc } from './post';
+export { http as postQueryByHttp, rpc as postQueryByRpc } from './post';

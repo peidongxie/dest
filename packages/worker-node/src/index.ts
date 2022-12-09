@@ -22,11 +22,11 @@ const createInitialDatabase = async () => {
 const startServer = async () => {
   const cors = new Cors();
   const router = new Router();
-  router.setRoute('DELETE', '/database', deleteDatabaseByHttp);
-  router.setRoute('GET', '/database', getDatabaseByHttp);
-  router.setRoute('POST', '/database', postDatabaseByHttp);
-  router.setRoute('PUT', '/database', putDatabaseByHttp);
-  router.setRoute('POST', '/query', postQueryByHttp);
+  router.setRoute(deleteDatabaseByHttp);
+  router.setRoute(getDatabaseByHttp);
+  router.setRoute(postDatabaseByHttp);
+  router.setRoute(putDatabaseByHttp);
+  router.setRoute(postQueryByHttp);
   const httpServer = new HttpServer('http');
   httpServer.use(cors.getHandler());
   httpServer.use(router.getHandler());
