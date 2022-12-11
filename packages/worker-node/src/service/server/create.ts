@@ -5,8 +5,6 @@ const service = async (
   port: number,
   hostname?: string,
 ): Promise<Server | null> => {
-  const server = Server.store.get(port) || null;
-  if (server) return null;
   return new Server(type).listen(port, hostname);
 };
 
