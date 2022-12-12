@@ -12,19 +12,19 @@ import {
   putDatabaseByHttp,
   putDatabaseByRpc,
 } from '../../controller';
+import { TaskRunner } from '../task-runner';
 
 enum ServerState {
-  INITIALIZED = 0,
-  RUNNING = 1,
-  TERMINATED = 2,
+  INITIALIZED,
+  RUNNING,
+  TERMINATED,
 }
 
-class Server {
+class Server extends TaskRunner {
   private raw: HttpServer | RpcServer;
-  private state: ServerState;
-  private tasks: (() => Promise<void>)[];
 
   constructor(type: 'http' | 'rpc') {
+    super(ServerState.INITIALIZED);
     if (type === 'http') {
       const cors = new Cors();
       const router = new Router();
@@ -46,38 +46,9 @@ class Server {
     } else {
       throw new TypeError('Invalid server type');
     }
-    this.state = ServerState.INITIALIZED;
-    this.tasks = [];
   }
 
-  private runTask<T>(
-    stateTransition: (state: ServerState) => ServerState | null,
-    sideEffect: () => Promise<T>,
-  ): Promise<T> {
-    const state = stateTransition(this.state);
-    if (state === null) return Promise.reject(new TypeError(''));
-    const promise = new Promise<T>((resolve, reject) => {
-      this.state = state;
-      this.tasks.push(async () => {
-        try {
-          const result = await sideEffect();
-          this.tasks.pop();
-          if (this.tasks.length > 0) {
-            this.tasks[0]();
-          }
-          resolve(result);
-        } catch (e) {
-          reject(e);
-        }
-      });
-    });
-    if (this.tasks.length === 1) {
-      this.tasks[0]();
-    }
-    return promise;
-  }
-
-  async close(): Promise<this> {
+  public async close(): Promise<this> {
     return this.runTask(
       (state) =>
         state === ServerState.RUNNING ? ServerState.TERMINATED : null,
@@ -88,7 +59,7 @@ class Server {
     );
   }
 
-  async listen(port: number, hostname?: string): Promise<this> {
+  public async listen(port: number, hostname?: string): Promise<this> {
     return this.runTask(
       (state) =>
         state === ServerState.INITIALIZED ? ServerState.RUNNING : null,
