@@ -9,12 +9,6 @@ enum DatabaseState {
 }
 
 class Database extends TaskRunner {
-  static store: Record<AdapterType, Map<string, Database>> = {
-    mariadb: new Map(),
-    'mysql:8': new Map(),
-    sqlite: new Map(),
-  };
-
   adapter: Adapter;
   name: string;
   type: AdapterType;
@@ -42,7 +36,6 @@ class Database extends TaskRunner {
         } else {
           await this.adapter.getRootDataSource()?.initialize();
         }
-        // Database.store[this.type].set(this.name, this);
         await this.adapter.postCreate?.();
         return this;
       },
@@ -55,7 +48,6 @@ class Database extends TaskRunner {
         state === DatabaseState.RUNNING ? DatabaseState.TERMINATED : null,
       async () => {
         await this.adapter.preDestroy?.();
-        // Database.store[this.type].delete(this.name);
         if (this.name) {
           await this.adapter.getReadableDataSource()?.destroy();
           await this.adapter.getWritableDataSource()?.destroy();
