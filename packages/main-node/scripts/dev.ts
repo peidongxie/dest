@@ -1,7 +1,10 @@
-import { execSync } from 'child_process';
+import { execSync, fork, type ChildProcess } from 'child_process';
 import { build, type BuildOptions } from 'esbuild';
-import { existsSync, readdirSync, statSync } from 'fs-extra';
+import { existsSync, readdirSync, statSync, watch } from 'fs-extra';
 import { dirname, extname, join, relative } from 'path';
+
+let childProcess: ChildProcess | null = null;
+const entryPoints = new Set<string>();
 
 const getEntryPoints = (dir: string): string[] => {
   const files = readdirSync(dir);
@@ -84,6 +87,12 @@ const sed = (path: string): void => {
 
 const createProto = () => {
   for (const entryPoint of getEntryPoints('../worker-node/protos')) {
+    if (!entryPoints.has(entryPoint)) {
+      entryPoints.add(entryPoint);
+      watch(entryPoint, () => createProto());
+    }
+  }
+  for (const entryPoint of getEntryPoints('../worker-node/protos')) {
     const dir = dirname(relative('../worker-node/protos', entryPoint));
     const protoPath = join('../worker-node/protos', dir, 'index.proto');
     const sourcePath = join('../worker-node/protos', dir, 'index.ts');
@@ -95,6 +104,19 @@ const createProto = () => {
   }
 };
 
+const startChildProcess = () => {
+  if (!childProcess) {
+    childProcess = fork('dist/index.js');
+  }
+};
+
+const stopChildProcess = () => {
+  if (childProcess) {
+    childProcess.kill();
+    childProcess = null;
+  }
+};
+
 const buildOptions: BuildOptions = {
   bundle: true,
   define: {},
@@ -103,20 +125,26 @@ const buildOptions: BuildOptions = {
   format: 'esm',
   inject: [],
   loader: {},
-  minify: true,
-  minifyWhitespace: true,
-  minifyIdentifiers: true,
-  minifySyntax: true,
+  minify: false,
+  minifyWhitespace: false,
+  minifyIdentifiers: false,
+  minifySyntax: false,
   outdir: 'dist',
   platform: 'node',
   sourcemap: false,
   splitting: true,
   target: 'esnext',
-  watch: false,
+  watch: {
+    onRebuild: () => {
+      stopChildProcess();
+      startChildProcess();
+    },
+  },
   write: true,
 };
 
 (async () => {
   createProto();
   await build(buildOptions);
+  startChildProcess();
 })();
