@@ -4,11 +4,11 @@ import Mysql8 from './mysql8';
 import Sqlite from './sqlite';
 import { type Adapter, type AdapterType, type AdapterTypeAlias } from './type';
 
-const adapterMapper: Record<AdapterType | AdapterTypeAlias, AdapterType> = {
-  mariadb: 'mariadb',
-  mysql: 'mysql:8',
-  'mysql:8': 'mysql:8',
-  sqlite: 'sqlite',
+const adapterMapper: Record<AdapterTypeAlias, AdapterType> = {
+  2049: 'sqlite',
+  3306: 'mariadb',
+  3307: 'mysql:8',
+  93307: 'mysql:8',
 };
 
 const createAdapter = (

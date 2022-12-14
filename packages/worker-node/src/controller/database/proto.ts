@@ -3,26 +3,116 @@ import _m0 from 'protobufjs/minimal';
 
 export const protobufPackage = 'dest';
 
+export enum DatabaseType {
+  DEFAULT_TYPE = 0,
+  SQLITE = 2049,
+  MARIADB = 3306,
+  MYSQL8 = 3307,
+  MYSQL = 93307,
+  UNRECOGNIZED = -1,
+}
+
+export function databaseTypeFromJSON(object: any): DatabaseType {
+  switch (object) {
+    case 0:
+    case 'DEFAULT_TYPE':
+      return DatabaseType.DEFAULT_TYPE;
+    case 2049:
+    case 'SQLITE':
+      return DatabaseType.SQLITE;
+    case 3306:
+    case 'MARIADB':
+      return DatabaseType.MARIADB;
+    case 3307:
+    case 'MYSQL8':
+      return DatabaseType.MYSQL8;
+    case 93307:
+    case 'MYSQL':
+      return DatabaseType.MYSQL;
+    case -1:
+    case 'UNRECOGNIZED':
+    default:
+      return DatabaseType.UNRECOGNIZED;
+  }
+}
+
+export function databaseTypeToJSON(object: DatabaseType): string {
+  switch (object) {
+    case DatabaseType.DEFAULT_TYPE:
+      return 'DEFAULT_TYPE';
+    case DatabaseType.SQLITE:
+      return 'SQLITE';
+    case DatabaseType.MARIADB:
+      return 'MARIADB';
+    case DatabaseType.MYSQL8:
+      return 'MYSQL8';
+    case DatabaseType.MYSQL:
+      return 'MYSQL';
+    case DatabaseType.UNRECOGNIZED:
+    default:
+      return 'UNRECOGNIZED';
+  }
+}
+
+export enum DatabaseAction {
+  DEFAULT_ACTION = 0,
+  REMOVE = 1,
+  SAVE = 2,
+  UNRECOGNIZED = -1,
+}
+
+export function databaseActionFromJSON(object: any): DatabaseAction {
+  switch (object) {
+    case 0:
+    case 'DEFAULT_ACTION':
+      return DatabaseAction.DEFAULT_ACTION;
+    case 1:
+    case 'REMOVE':
+      return DatabaseAction.REMOVE;
+    case 2:
+    case 'SAVE':
+      return DatabaseAction.SAVE;
+    case -1:
+    case 'UNRECOGNIZED':
+    default:
+      return DatabaseAction.UNRECOGNIZED;
+  }
+}
+
+export function databaseActionToJSON(object: DatabaseAction): string {
+  switch (object) {
+    case DatabaseAction.DEFAULT_ACTION:
+      return 'DEFAULT_ACTION';
+    case DatabaseAction.REMOVE:
+      return 'REMOVE';
+    case DatabaseAction.SAVE:
+      return 'SAVE';
+    case DatabaseAction.UNRECOGNIZED:
+    default:
+      return 'UNRECOGNIZED';
+  }
+}
+
 export interface DataItem {
   name: string;
   rows: string[];
 }
 
 export interface BaseRequest {
-  type: string;
+  type: DatabaseType;
   name: string;
 }
 
 export interface SchemasRequest {
-  type: string;
+  type: DatabaseType;
   name: string;
   schemas: string[];
 }
 
 export interface DataRequest {
-  type: string;
+  type: DatabaseType;
   name: string;
-  action: string;
+  action: DatabaseAction;
   data: DataItem[];
 }
 
@@ -103,7 +193,7 @@ export const DataItem = {
 };
 
 function createBaseBaseRequest(): BaseRequest {
-  return { type: '', name: '' };
+  return { type: 0, name: '' };
 }
 
 export const BaseRequest = {
@@ -111,8 +201,8 @@ export const BaseRequest = {
     message: BaseRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
-    if (message.type !== '') {
-      writer.uint32(10).string(message.type);
+    if (message.type !== 0) {
+      writer.uint32(8).int32(message.type);
     }
     if (message.name !== '') {
       writer.uint32(18).string(message.name);
@@ -128,7 +218,7 @@ export const BaseRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.type = reader.string();
+          message.type = reader.int32() as any;
           break;
         case 2:
           message.name = reader.string();
@@ -143,14 +233,14 @@ export const BaseRequest = {
 
   fromJSON(object: any): BaseRequest {
     return {
-      type: isSet(object.type) ? String(object.type) : '',
+      type: isSet(object.type) ? databaseTypeFromJSON(object.type) : 0,
       name: isSet(object.name) ? String(object.name) : '',
     };
   },
 
   toJSON(message: BaseRequest): unknown {
     const obj: any = {};
-    message.type !== undefined && (obj.type = message.type);
+    message.type !== undefined && (obj.type = databaseTypeToJSON(message.type));
     message.name !== undefined && (obj.name = message.name);
     return obj;
   },
@@ -159,14 +249,14 @@ export const BaseRequest = {
     object: I,
   ): BaseRequest {
     const message = createBaseBaseRequest();
-    message.type = object.type ?? '';
+    message.type = object.type ?? 0;
     message.name = object.name ?? '';
     return message;
   },
 };
 
 function createBaseSchemasRequest(): SchemasRequest {
-  return { type: '', name: '', schemas: [] };
+  return { type: 0, name: '', schemas: [] };
 }
 
 export const SchemasRequest = {
@@ -174,8 +264,8 @@ export const SchemasRequest = {
     message: SchemasRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
-    if (message.type !== '') {
-      writer.uint32(10).string(message.type);
+    if (message.type !== 0) {
+      writer.uint32(8).int32(message.type);
     }
     if (message.name !== '') {
       writer.uint32(18).string(message.name);
@@ -194,7 +284,7 @@ export const SchemasRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.type = reader.string();
+          message.type = reader.int32() as any;
           break;
         case 2:
           message.name = reader.string();
@@ -212,7 +302,7 @@ export const SchemasRequest = {
 
   fromJSON(object: any): SchemasRequest {
     return {
-      type: isSet(object.type) ? String(object.type) : '',
+      type: isSet(object.type) ? databaseTypeFromJSON(object.type) : 0,
       name: isSet(object.name) ? String(object.name) : '',
       schemas: Array.isArray(object?.schemas)
         ? object.schemas.map((e: any) => String(e))
@@ -222,7 +312,7 @@ export const SchemasRequest = {
 
   toJSON(message: SchemasRequest): unknown {
     const obj: any = {};
-    message.type !== undefined && (obj.type = message.type);
+    message.type !== undefined && (obj.type = databaseTypeToJSON(message.type));
     message.name !== undefined && (obj.name = message.name);
     if (message.schemas) {
       obj.schemas = message.schemas.map((e) => e);
@@ -236,7 +326,7 @@ export const SchemasRequest = {
     object: I,
   ): SchemasRequest {
     const message = createBaseSchemasRequest();
-    message.type = object.type ?? '';
+    message.type = object.type ?? 0;
     message.name = object.name ?? '';
     message.schemas = object.schemas?.map((e) => e) || [];
     return message;
@@ -244,7 +334,7 @@ export const SchemasRequest = {
 };
 
 function createBaseDataRequest(): DataRequest {
-  return { type: '', name: '', action: '', data: [] };
+  return { type: 0, name: '', action: 0, data: [] };
 }
 
 export const DataRequest = {
@@ -252,14 +342,14 @@ export const DataRequest = {
     message: DataRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
-    if (message.type !== '') {
-      writer.uint32(10).string(message.type);
+    if (message.type !== 0) {
+      writer.uint32(8).int32(message.type);
     }
     if (message.name !== '') {
       writer.uint32(18).string(message.name);
     }
-    if (message.action !== '') {
-      writer.uint32(26).string(message.action);
+    if (message.action !== 0) {
+      writer.uint32(24).int32(message.action);
     }
     for (const v of message.data) {
       DataItem.encode(v!, writer.uint32(34).fork()).ldelim();
@@ -275,13 +365,13 @@ export const DataRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.type = reader.string();
+          message.type = reader.int32() as any;
           break;
         case 2:
           message.name = reader.string();
           break;
         case 3:
-          message.action = reader.string();
+          message.action = reader.int32() as any;
           break;
         case 4:
           message.data.push(DataItem.decode(reader, reader.uint32()));
@@ -296,9 +386,9 @@ export const DataRequest = {
 
   fromJSON(object: any): DataRequest {
     return {
-      type: isSet(object.type) ? String(object.type) : '',
+      type: isSet(object.type) ? databaseTypeFromJSON(object.type) : 0,
       name: isSet(object.name) ? String(object.name) : '',
-      action: isSet(object.action) ? String(object.action) : '',
+      action: isSet(object.action) ? databaseActionFromJSON(object.action) : 0,
       data: Array.isArray(object?.data)
         ? object.data.map((e: any) => DataItem.fromJSON(e))
         : [],
@@ -307,9 +397,10 @@ export const DataRequest = {
 
   toJSON(message: DataRequest): unknown {
     const obj: any = {};
-    message.type !== undefined && (obj.type = message.type);
+    message.type !== undefined && (obj.type = databaseTypeToJSON(message.type));
     message.name !== undefined && (obj.name = message.name);
-    message.action !== undefined && (obj.action = message.action);
+    message.action !== undefined &&
+      (obj.action = databaseActionToJSON(message.action));
     if (message.data) {
       obj.data = message.data.map((e) => (e ? DataItem.toJSON(e) : undefined));
     } else {
@@ -322,9 +413,9 @@ export const DataRequest = {
     object: I,
   ): DataRequest {
     const message = createBaseDataRequest();
-    message.type = object.type ?? '';
+    message.type = object.type ?? 0;
     message.name = object.name ?? '';
-    message.action = object.action ?? '';
+    message.action = object.action ?? 0;
     message.data = object.data?.map((e) => DataItem.fromPartial(e)) || [];
     return message;
   },

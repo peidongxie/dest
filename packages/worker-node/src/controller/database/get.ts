@@ -1,11 +1,7 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { DatabaseDefinition } from './proto';
-import {
-  adapterMapper,
-  type AdapterType,
-  type AdapterTypeAlias,
-} from '../../domain';
+import { adapterMapper, type AdapterTypeAlias } from '../../domain';
 import { readDatabase } from '../../service';
 
 const http: Route = {
@@ -15,7 +11,7 @@ const http: Route = {
     const { url } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const adapterType = adapterMapper[type as AdapterType | AdapterTypeAlias];
+    const adapterType = adapterMapper[Number(type) as AdapterTypeAlias];
     if (!name || !adapterType) {
       return {
         code: 400,
@@ -50,7 +46,7 @@ const rpc: Plugin<DatabaseDefinition> = {
   handlers: {
     getDatabase: async (req) => {
       const { name, type } = req;
-      const adapterType = adapterMapper[type as AdapterType | AdapterTypeAlias];
+      const adapterType = adapterMapper[type as AdapterTypeAlias];
       if (!name || !adapterType) {
         return {
           success: false,

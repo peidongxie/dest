@@ -9,26 +9,40 @@ service Database {
   rpc PutDatabase (DataRequest) returns (BaseResponse) {}
 }
 
+enum DatabaseType {
+  DEFAULT_TYPE = 0;
+  SQLITE = 2049;
+  MARIADB = 3306;
+  MYSQL8 = 3307;
+  MYSQL = 93307;
+}
+
+enum DatabaseAction {
+  DEFAULT_ACTION = 0;
+  REMOVE = 1;
+  SAVE = 2;
+}
+
 message DataItem {
   string name = 1;
   repeated string rows = 2;
 }
 
 message BaseRequest {
-  string type = 1;
+  DatabaseType type = 1;
   string name = 2;
 }
 
 message SchemasRequest {
-  string type = 1;
+  DatabaseType type = 1;
   string name = 2;
   repeated string schemas = 3;
 }
 
 message DataRequest {
-  string type = 1;
+  DatabaseType type = 1;
   string name = 2;
-  string action = 3;
+  DatabaseAction action = 3;
   repeated DataItem data = 4;
 }
 
