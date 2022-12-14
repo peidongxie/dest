@@ -1,13 +1,12 @@
-import { Database, type AdapterType } from '../../domain';
-import readDatabase from './read';
+import { type AdapterType, type Database } from '../../domain';
+import { deletePool } from '../pool';
 
 const service = async (
   type: AdapterType,
   name: string,
 ): Promise<Database | null> => {
-  const database = readDatabase(type, name);
-  if (!database) return null;
-  return database.destroy();
+  const database = deletePool<Database>(['database', type, name]);
+  return database?.destroy() || null;
 };
 
 export default service;
