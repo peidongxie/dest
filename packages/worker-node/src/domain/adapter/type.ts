@@ -1,7 +1,7 @@
 import { type DataSource } from 'typeorm';
 
 type AdapterType = 'mariadb' | 'mysql:8' | 'sqlite';
-type AdapterTypeAlias = 'mysql';
+type AdapterTypeAlias = 2049 | 3306 | 3307 | 93307;
 
 interface Adapter {
   getReadableDataSource: () => DataSource | null;

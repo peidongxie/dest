@@ -1,4 +1,4 @@
-import { store } from './store';
+import { store } from './constant';
 
 const service = <T>(tags: (boolean | number | string)[]): T | null => {
   const key = tags.join();

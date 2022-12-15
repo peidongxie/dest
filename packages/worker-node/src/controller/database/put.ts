@@ -1,12 +1,16 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
-import { DatabaseDefinition } from './proto';
-import {
-  adapterMapper,
-  type AdapterType,
-  type AdapterTypeAlias,
-} from '../../domain';
+import { DatabaseAction, DatabaseDefinition } from './proto';
+import { adapterMapper, type AdapterTypeAlias } from '../../domain';
 import { updateDatabase } from '../../service';
+
+const actionMapper: Record<
+  DatabaseAction.REMOVE | DatabaseAction.SAVE,
+  'remove' | 'save'
+> = {
+  [DatabaseAction.REMOVE]: 'remove',
+  [DatabaseAction.SAVE]: 'save',
+};
 
 const http: Route = {
   method: 'PUT',
@@ -15,18 +19,17 @@ const http: Route = {
     const { url, body } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const adapterType = adapterMapper[type as AdapterType | AdapterTypeAlias];
-    const action = `/${url.pathname}/`
-      .replace(/\/+/g, '/')
-      .match(/^\/database\/(remove|save)\//)?.[1] as
-      | 'remove'
-      | 'save'
-      | undefined;
+    const adapterType = adapterMapper[Number(type) as AdapterTypeAlias];
+    const action = Number(
+      `/${url.pathname}/`
+        .replace(/\/+/g, '/')
+        .match(/^\/database\/(1|2)\//)?.[1],
+    );
     const data = await body.json<{ name: string; rows: unknown[] }[]>();
     if (
       !name ||
       !adapterType ||
-      !action ||
+      (action !== DatabaseAction.REMOVE && action !== DatabaseAction.SAVE) ||
       !Array.isArray(data) ||
       data.some((item) => {
         if (!item.name) return true;
@@ -42,7 +45,12 @@ const http: Route = {
         },
       };
     }
-    const database = await updateDatabase(adapterType, name, action, data);
+    const database = await updateDatabase(
+      adapterType,
+      name,
+      actionMapper[action],
+      data,
+    );
     if (!database) {
       return {
         code: 404,
@@ -65,11 +73,11 @@ const rpc: Plugin<DatabaseDefinition> = {
   handlers: {
     putDatabase: async (req) => {
       const { action, data, name, type } = req;
-      const adapterType = adapterMapper[type as AdapterType | AdapterTypeAlias];
+      const adapterType = adapterMapper[type as AdapterTypeAlias];
       if (
         !adapterType ||
         !name ||
-        (action !== 'remove' && action !== 'save') ||
+        (action !== DatabaseAction.REMOVE && action !== DatabaseAction.SAVE) ||
         data.some((item) => {
           if (!item.name) return true;
           if (typeof item.name !== 'string') return true;
@@ -84,7 +92,7 @@ const rpc: Plugin<DatabaseDefinition> = {
       const database = await updateDatabase(
         adapterType,
         name,
-        action,
+        actionMapper[action],
         data.map(({ name, rows }) => ({
           name,
           rows: rows.map((row) => JSON.parse(row)),
