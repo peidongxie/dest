@@ -3,15 +3,111 @@ import _m0 from 'protobufjs/minimal';
 
 export const protobufPackage = 'dest';
 
+export enum QueryType {
+  DEFAULT_TYPE = 0,
+  SQLITE = 2049,
+  MARIADB = 3306,
+  MYSQL8 = 3307,
+  MYSQL = 93307,
+  UNRECOGNIZED = -1,
+}
+
+export function queryTypeFromJSON(object: any): QueryType {
+  switch (object) {
+    case 0:
+    case 'DEFAULT_TYPE':
+      return QueryType.DEFAULT_TYPE;
+    case 2049:
+    case 'SQLITE':
+      return QueryType.SQLITE;
+    case 3306:
+    case 'MARIADB':
+      return QueryType.MARIADB;
+    case 3307:
+    case 'MYSQL8':
+      return QueryType.MYSQL8;
+    case 93307:
+    case 'MYSQL':
+      return QueryType.MYSQL;
+    case -1:
+    case 'UNRECOGNIZED':
+    default:
+      return QueryType.UNRECOGNIZED;
+  }
+}
+
+export function queryTypeToJSON(object: QueryType): string {
+  switch (object) {
+    case QueryType.DEFAULT_TYPE:
+      return 'DEFAULT_TYPE';
+    case QueryType.SQLITE:
+      return 'SQLITE';
+    case QueryType.MARIADB:
+      return 'MARIADB';
+    case QueryType.MYSQL8:
+      return 'MYSQL8';
+    case QueryType.MYSQL:
+      return 'MYSQL';
+    case QueryType.UNRECOGNIZED:
+    default:
+      return 'UNRECOGNIZED';
+  }
+}
+
+export enum QueryPrivilege {
+  DEFAULT_PRIVILEGE = 0,
+  READ = 1,
+  WRITE = 2,
+  ROOT = 3,
+  UNRECOGNIZED = -1,
+}
+
+export function queryPrivilegeFromJSON(object: any): QueryPrivilege {
+  switch (object) {
+    case 0:
+    case 'DEFAULT_PRIVILEGE':
+      return QueryPrivilege.DEFAULT_PRIVILEGE;
+    case 1:
+    case 'READ':
+      return QueryPrivilege.READ;
+    case 2:
+    case 'WRITE':
+      return QueryPrivilege.WRITE;
+    case 3:
+    case 'ROOT':
+      return QueryPrivilege.ROOT;
+    case -1:
+    case 'UNRECOGNIZED':
+    default:
+      return QueryPrivilege.UNRECOGNIZED;
+  }
+}
+
+export function queryPrivilegeToJSON(object: QueryPrivilege): string {
+  switch (object) {
+    case QueryPrivilege.DEFAULT_PRIVILEGE:
+      return 'DEFAULT_PRIVILEGE';
+    case QueryPrivilege.READ:
+      return 'READ';
+    case QueryPrivilege.WRITE:
+      return 'WRITE';
+    case QueryPrivilege.ROOT:
+      return 'ROOT';
+    case QueryPrivilege.UNRECOGNIZED:
+    default:
+      return 'UNRECOGNIZED';
+  }
+}
+
 export interface BaseRequest {
-  type: string;
+  type: QueryType;
   name: string;
 }
 
 export interface QueryRequest {
-  type: string;
+  type: QueryType;
   name: string;
-  privilege: string;
+  privilege: QueryPrivilege;
   query: string;
 }
 
@@ -26,7 +122,7 @@ export interface ResultResponse {
 }
 
 function createBaseBaseRequest(): BaseRequest {
-  return { type: '', name: '' };
+  return { type: 0, name: '' };
 }
 
 export const BaseRequest = {
@@ -34,8 +130,8 @@ export const BaseRequest = {
     message: BaseRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
-    if (message.type !== '') {
-      writer.uint32(10).string(message.type);
+    if (message.type !== 0) {
+      writer.uint32(8).int32(message.type);
     }
     if (message.name !== '') {
       writer.uint32(18).string(message.name);
@@ -51,7 +147,7 @@ export const BaseRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.type = reader.string();
+          message.type = reader.int32() as any;
           break;
         case 2:
           message.name = reader.string();
@@ -66,14 +162,14 @@ export const BaseRequest = {
 
   fromJSON(object: any): BaseRequest {
     return {
-      type: isSet(object.type) ? String(object.type) : '',
+      type: isSet(object.type) ? queryTypeFromJSON(object.type) : 0,
       name: isSet(object.name) ? String(object.name) : '',
     };
   },
 
   toJSON(message: BaseRequest): unknown {
     const obj: any = {};
-    message.type !== undefined && (obj.type = message.type);
+    message.type !== undefined && (obj.type = queryTypeToJSON(message.type));
     message.name !== undefined && (obj.name = message.name);
     return obj;
   },
@@ -82,14 +178,14 @@ export const BaseRequest = {
     object: I,
   ): BaseRequest {
     const message = createBaseBaseRequest();
-    message.type = object.type ?? '';
+    message.type = object.type ?? 0;
     message.name = object.name ?? '';
     return message;
   },
 };
 
 function createBaseQueryRequest(): QueryRequest {
-  return { type: '', name: '', privilege: '', query: '' };
+  return { type: 0, name: '', privilege: 0, query: '' };
 }
 
 export const QueryRequest = {
@@ -97,14 +193,14 @@ export const QueryRequest = {
     message: QueryRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
-    if (message.type !== '') {
-      writer.uint32(10).string(message.type);
+    if (message.type !== 0) {
+      writer.uint32(8).int32(message.type);
     }
     if (message.name !== '') {
       writer.uint32(18).string(message.name);
     }
-    if (message.privilege !== '') {
-      writer.uint32(26).string(message.privilege);
+    if (message.privilege !== 0) {
+      writer.uint32(24).int32(message.privilege);
     }
     if (message.query !== '') {
       writer.uint32(34).string(message.query);
@@ -120,13 +216,13 @@ export const QueryRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.type = reader.string();
+          message.type = reader.int32() as any;
           break;
         case 2:
           message.name = reader.string();
           break;
         case 3:
-          message.privilege = reader.string();
+          message.privilege = reader.int32() as any;
           break;
         case 4:
           message.query = reader.string();
@@ -141,18 +237,21 @@ export const QueryRequest = {
 
   fromJSON(object: any): QueryRequest {
     return {
-      type: isSet(object.type) ? String(object.type) : '',
+      type: isSet(object.type) ? queryTypeFromJSON(object.type) : 0,
       name: isSet(object.name) ? String(object.name) : '',
-      privilege: isSet(object.privilege) ? String(object.privilege) : '',
+      privilege: isSet(object.privilege)
+        ? queryPrivilegeFromJSON(object.privilege)
+        : 0,
       query: isSet(object.query) ? String(object.query) : '',
     };
   },
 
   toJSON(message: QueryRequest): unknown {
     const obj: any = {};
-    message.type !== undefined && (obj.type = message.type);
+    message.type !== undefined && (obj.type = queryTypeToJSON(message.type));
     message.name !== undefined && (obj.name = message.name);
-    message.privilege !== undefined && (obj.privilege = message.privilege);
+    message.privilege !== undefined &&
+      (obj.privilege = queryPrivilegeToJSON(message.privilege));
     message.query !== undefined && (obj.query = message.query);
     return obj;
   },
@@ -161,9 +260,9 @@ export const QueryRequest = {
     object: I,
   ): QueryRequest {
     const message = createBaseQueryRequest();
-    message.type = object.type ?? '';
+    message.type = object.type ?? 0;
     message.name = object.name ?? '';
-    message.privilege = object.privilege ?? '';
+    message.privilege = object.privilege ?? 0;
     message.query = object.query ?? '';
     return message;
   },

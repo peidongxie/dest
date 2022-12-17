@@ -1,12 +1,17 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
-import { QueryDefinition } from './proto';
-import {
-  adapterMapper,
-  type AdapterType,
-  type AdapterTypeAlias,
-} from '../../domain';
+import { QueryDefinition, QueryPrivilege } from './proto';
+import { adapterMapper, type AdapterTypeAlias } from '../../domain';
 import { createQuery } from '../../service';
+
+const privilegeMapper: Record<
+  QueryPrivilege.READ | QueryPrivilege.WRITE | QueryPrivilege.ROOT,
+  'read' | 'write' | 'root'
+> = {
+  [QueryPrivilege.READ]: 'read',
+  [QueryPrivilege.WRITE]: 'write',
+  [QueryPrivilege.ROOT]: 'root',
+};
 
 const http: Route = {
   method: 'POST',
@@ -15,19 +20,19 @@ const http: Route = {
     const { url, body } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const adapterType = adapterMapper[type as AdapterType | AdapterTypeAlias];
-    const privilege = `/${url.pathname}/`
-      .replace(/\/+/g, '/')
-      .match(/^\/query\/(read|root|write)\//)?.[1] as
-      | 'read'
-      | 'root'
-      | 'write'
-      | undefined;
+    const adapterType = adapterMapper[Number(type) as AdapterTypeAlias];
+    const privilege = Number(
+      `/${url.pathname}/`
+        .replace(/\/+/g, '/')
+        .match(/^\/query\/(0|1|2)\//)?.[1],
+    );
     const query = await body.text();
     if (
-      Number(!name) ^ Number(privilege === 'root') ||
+      Number(!name) ^ Number(privilege === QueryPrivilege.ROOT) ||
       !adapterType ||
-      (privilege !== 'read' && privilege !== 'root' && privilege !== 'write') ||
+      (privilege !== QueryPrivilege.READ &&
+        privilege !== QueryPrivilege.WRITE &&
+        privilege !== QueryPrivilege.ROOT) ||
       !query
     ) {
       return {
@@ -39,7 +44,12 @@ const http: Route = {
         },
       };
     }
-    const result = await createQuery(adapterType, name || '', privilege, query);
+    const result = await createQuery(
+      adapterType,
+      name || '',
+      privilegeMapper[privilege],
+      query,
+    );
     if (!result) {
       return {
         code: 404,
@@ -66,13 +76,13 @@ const rpc: Plugin<QueryDefinition> = {
   handlers: {
     postQuery: async (req) => {
       const { name, privilege, query, type } = req;
-      const adapterType = adapterMapper[type as AdapterType | AdapterTypeAlias];
+      const adapterType = adapterMapper[type as AdapterTypeAlias];
       if (
-        Number(!name) ^ Number(privilege === 'root') ||
+        Number(!name) ^ Number(privilege === QueryPrivilege.ROOT) ||
         !adapterType ||
-        (privilege !== 'read' &&
-          privilege !== 'root' &&
-          privilege !== 'write') ||
+        (privilege !== QueryPrivilege.READ &&
+          privilege !== QueryPrivilege.WRITE &&
+          privilege !== QueryPrivilege.ROOT) ||
         !query
       ) {
         return {
@@ -84,7 +94,7 @@ const rpc: Plugin<QueryDefinition> = {
       const result = await createQuery(
         adapterType,
         name || '',
-        privilege,
+        privilegeMapper[privilege],
         query,
       );
       if (!result) {
