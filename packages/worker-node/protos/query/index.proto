@@ -6,15 +6,30 @@ service Query {
   rpc PostQuery (QueryRequest) returns (ResultResponse) {}
 }
 
+enum QueryType {
+  DEFAULT_TYPE = 0;
+  SQLITE = 2049;
+  MARIADB = 3306;
+  MYSQL8 = 3307;
+  MYSQL = 93307;
+}
+
+enum QueryPrivilege {
+  DEFAULT_PRIVILEGE = 0;
+  READ = 1;
+  WRITE = 2;
+  ROOT = 3;
+}
+
 message BaseRequest {
-  string type = 1;
+  QueryType type = 1;
   string name = 2;
 }
 
 message QueryRequest {
-  string type = 1;
+  QueryType type = 1;
   string name = 2;
-  string privilege = 3;
+  QueryPrivilege privilege = 3;
   string query = 4;
 }
 

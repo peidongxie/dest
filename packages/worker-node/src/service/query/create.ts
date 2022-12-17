@@ -4,7 +4,7 @@ import readDatabase from '../database/read';
 const service = async <T>(
   type: AdapterType,
   name: string,
-  privilege: 'read' | 'root' | 'write',
+  privilege: 'read' | 'write' | 'root',
   query: string,
 ): Promise<{ time: bigint; result: T } | null> => {
   const database = readDatabase(type, name);

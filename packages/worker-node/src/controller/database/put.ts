@@ -75,8 +75,8 @@ const rpc: Plugin<DatabaseDefinition> = {
       const { action, data, name, type } = req;
       const adapterType = adapterMapper[type as AdapterTypeAlias];
       if (
-        !adapterType ||
         !name ||
+        !adapterType ||
         (action !== DatabaseAction.REMOVE && action !== DatabaseAction.SAVE) ||
         data.some((item) => {
           if (!item.name) return true;
