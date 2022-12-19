@@ -4,7 +4,7 @@ import { DatabaseDefinition } from './proto';
 import { adapterMapper, type AdapterTypeAlias } from '../../domain';
 import { readDatabase } from '../../service';
 
-const http: Route = {
+const getDatabaseByHttp: Route = {
   method: 'GET',
   pathname: '/database',
   handler: async (req) => {
@@ -41,7 +41,7 @@ const http: Route = {
   },
 };
 
-const rpc: Plugin<DatabaseDefinition> = {
+const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
   definition: DatabaseDefinition,
   handlers: {
     getDatabase: async (req) => {
@@ -71,4 +71,4 @@ const rpc: Plugin<DatabaseDefinition> = {
   },
 };
 
-export { http, rpc };
+export { getDatabaseByHttp, getDatabaseByRpc };

@@ -12,7 +12,7 @@ const actionMapper: Record<
   [DatabaseAction.SAVE]: 'save',
 };
 
-const http: Route = {
+const putDatabaseByHttp: Route = {
   method: 'PUT',
   pathname: '/database',
   handler: async (req) => {
@@ -68,7 +68,7 @@ const http: Route = {
   },
 };
 
-const rpc: Plugin<DatabaseDefinition> = {
+const putDatabaseByRpc: Plugin<DatabaseDefinition> = {
   definition: DatabaseDefinition,
   handlers: {
     putDatabase: async (req) => {
@@ -110,4 +110,4 @@ const rpc: Plugin<DatabaseDefinition> = {
   },
 };
 
-export { http, rpc };
+export { putDatabaseByHttp, putDatabaseByRpc };

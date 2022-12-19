@@ -4,7 +4,7 @@ import { DatabaseDefinition } from './proto';
 import { adapterMapper, type AdapterTypeAlias } from '../../domain';
 import { deleteDatabase } from '../../service';
 
-const http: Route = {
+const deleteDatabaseByHttp: Route = {
   method: 'DELETE',
   pathname: '/database',
   handler: async (req) => {
@@ -38,7 +38,7 @@ const http: Route = {
   },
 };
 
-const rpc: Plugin<DatabaseDefinition> = {
+const deleteDatabaseByRpc: Plugin<DatabaseDefinition> = {
   definition: DatabaseDefinition,
   handlers: {
     deleteDatabase: async (req) => {
@@ -62,4 +62,4 @@ const rpc: Plugin<DatabaseDefinition> = {
   },
 };
 
-export { http, rpc };
+export { deleteDatabaseByHttp, deleteDatabaseByRpc };
