@@ -13,7 +13,7 @@ const privilegeMapper: Record<
   [QueryPrivilege.ROOT]: 'root',
 };
 
-const http: Route = {
+const postQueryByHttp: Route = {
   method: 'POST',
   pathname: '/query',
   handler: async (req) => {
@@ -71,7 +71,7 @@ const http: Route = {
   },
 };
 
-const rpc: Plugin<QueryDefinition> = {
+const postQueryByRpc: Plugin<QueryDefinition> = {
   definition: QueryDefinition,
   handlers: {
     postQuery: async (req) => {
@@ -113,4 +113,4 @@ const rpc: Plugin<QueryDefinition> = {
   },
 };
 
-export { http, rpc };
+export { postQueryByHttp, postQueryByRpc };

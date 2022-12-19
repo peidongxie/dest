@@ -5,7 +5,7 @@ import { DatabaseDefinition } from './proto';
 import { adapterMapper, type AdapterTypeAlias } from '../../domain';
 import { createDatabase } from '../../service';
 
-const http: Route = {
+const postDatabaseByHttp: Route = {
   method: 'POST',
   pathname: '/database',
   handler: async (req) => {
@@ -40,7 +40,7 @@ const http: Route = {
   },
 };
 
-const rpc: Plugin<DatabaseDefinition> = {
+const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
   definition: DatabaseDefinition,
   handlers: {
     postDatabase: async (req) => {
@@ -68,4 +68,4 @@ const rpc: Plugin<DatabaseDefinition> = {
   },
 };
 
-export { http, rpc };
+export { postDatabaseByHttp, postDatabaseByRpc };
