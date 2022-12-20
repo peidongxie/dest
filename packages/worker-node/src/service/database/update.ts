@@ -1,7 +1,7 @@
 import { type AdapterType, type Database } from '../../domain';
 import { readPool } from '../pool';
 
-const service = async (
+const updateDatabase = async (
   type: AdapterType,
   name: string,
   action: 'remove' | 'save',
@@ -14,4 +14,4 @@ const service = async (
   return database;
 };
 
-export default service;
+export { updateDatabase };

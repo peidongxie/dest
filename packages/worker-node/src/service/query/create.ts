@@ -1,7 +1,7 @@
 import { type AdapterType } from '../../domain';
-import readDatabase from '../database/read';
+import { readDatabase } from '../database';
 
-const service = async <T>(
+const createQuery = async <T>(
   type: AdapterType,
   name: string,
   privilege: 'read' | 'write' | 'root',
@@ -20,4 +20,4 @@ const service = async <T>(
   };
 };
 
-export default service;
+export { createQuery };

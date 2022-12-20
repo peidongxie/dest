@@ -2,7 +2,7 @@ import { type EntitySchemaOptions } from 'typeorm';
 import { Database, type AdapterType } from '../../domain';
 import { createPool } from '../pool';
 
-const service = async (
+const createDatabase = async (
   type: AdapterType,
   name: string,
   schemas: EntitySchemaOptions<unknown>[],
@@ -14,4 +14,4 @@ const service = async (
   return database?.create() || null;
 };
 
-export default service;
+export { createDatabase };

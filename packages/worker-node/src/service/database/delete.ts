@@ -1,7 +1,7 @@
 import { type AdapterType, type Database } from '../../domain';
 import { deletePool } from '../pool';
 
-const service = async (
+const deleteDatabase = async (
   type: AdapterType,
   name: string,
 ): Promise<Database | null> => {
@@ -9,4 +9,4 @@ const service = async (
   return database?.destroy() || null;
 };
 
-export default service;
+export { deleteDatabase };
