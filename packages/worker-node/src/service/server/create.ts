@@ -1,7 +1,7 @@
 import { Server } from '../../domain';
 import { createMemo } from '../memo';
 
-const service = async (
+const createServer = async (
   type: 'http' | 'rpc',
   port: number,
   hostname?: string,
@@ -10,4 +10,4 @@ const service = async (
   return server?.listen(port, hostname) || null;
 };
 
-export default service;
+export { createServer };

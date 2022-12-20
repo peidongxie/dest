@@ -1,9 +1,9 @@
 import { type Server } from '../../domain';
-import { deletePool } from '../memo';
+import { deleteMemo } from '../memo';
 
-const service = async (port: number): Promise<Server | null> => {
-  const server = deletePool<Server>(['server', port]);
+const deleteServer = async (port: number): Promise<Server | null> => {
+  const server = deleteMemo<Server>(['server', port]);
   return server?.close() || null;
 };
 
-export default service;
+export { deleteServer };
