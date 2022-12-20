@@ -1,7 +1,7 @@
 import { Server } from '../../domain';
 import { readMemo } from '../memo';
 
-const readServer = (type: 'http' | 'rpc', port: number): Server | null => {
+const readServer = (port: number): Server | null => {
   return readMemo<Server>(['server', port]);
 };
 

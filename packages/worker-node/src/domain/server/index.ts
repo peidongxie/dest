@@ -1,17 +1,14 @@
-import { Server as RpcServer } from '@dest-toolkit/grpc-server';
-import { Cors, Router, Server as HttpServer } from '@dest-toolkit/http-server';
 import {
-  deleteDatabaseByHttp,
-  deleteDatabaseByRpc,
-  getDatabaseByHttp,
-  getDatabaseByRpc,
-  postDatabaseByHttp,
-  postDatabaseByRpc,
-  postQueryByHttp,
-  postQueryByRpc,
-  putDatabaseByHttp,
-  putDatabaseByRpc,
-} from '../../controller';
+  Server as RpcServer,
+  type Plugin,
+  type ProtoDefinition,
+} from '@dest-toolkit/grpc-server';
+import {
+  Cors,
+  Router,
+  Server as HttpServer,
+  type Route,
+} from '@dest-toolkit/http-server';
 import { TaskRunner } from '../task-runner';
 
 enum ServerState {
@@ -23,28 +20,38 @@ enum ServerState {
 class Server extends TaskRunner {
   private raw: HttpServer | RpcServer;
 
-  constructor(type: 'http' | 'rpc') {
+  constructor(api: Route[] | Plugin<ProtoDefinition>[]) {
     super(ServerState.INITIALIZED);
-    if (type === 'http') {
+    const routes = api as Route[];
+    const plugins = api as Plugin<ProtoDefinition>[];
+    if (
+      routes.every(
+        (route) =>
+          Reflect.has(route, 'handler') &&
+          Reflect.has(route, 'method') &&
+          Reflect.has(route, 'pathname'),
+      )
+    ) {
       const cors = new Cors();
       const router = new Router();
-      router.setRoute(deleteDatabaseByHttp);
-      router.setRoute(getDatabaseByHttp);
-      router.setRoute(postDatabaseByHttp);
-      router.setRoute(putDatabaseByHttp);
-      router.setRoute(postQueryByHttp);
+      for (const route of routes) {
+        router.setRoute(route);
+      }
       this.raw = new HttpServer('http');
       this.raw.use(cors.getHandler());
       this.raw.use(router.getHandler());
-    } else if (type === 'rpc') {
+    } else if (
+      plugins.every(
+        (plugin) =>
+          Reflect.has(plugin, 'definition') && Reflect.has(plugin, 'handler'),
+      )
+    ) {
       this.raw = new RpcServer();
-      this.raw.use(deleteDatabaseByRpc);
-      this.raw.use(getDatabaseByRpc);
-      this.raw.use(postDatabaseByRpc);
-      this.raw.use(putDatabaseByRpc);
-      this.raw.use(postQueryByRpc);
+      for (const plugin of plugins) {
+        this.raw.use(plugin);
+      }
     } else {
-      throw new TypeError('Invalid server type');
+      throw new TypeError('Invalid server api');
     }
   }
 
