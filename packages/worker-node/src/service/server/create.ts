@@ -1,12 +1,12 @@
 import { Server } from '../../domain';
-import { createPool } from '../pool';
+import { createMemo } from '../memo';
 
 const service = async (
   type: 'http' | 'rpc',
   port: number,
   hostname?: string,
 ): Promise<Server | null> => {
-  const server = createPool(['server', port], new Server(type));
+  const server = createMemo(['server', port], new Server(type));
   return server?.listen(port, hostname) || null;
 };
 

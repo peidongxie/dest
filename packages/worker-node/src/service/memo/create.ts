@@ -1,6 +1,6 @@
 import { store } from './constant';
 
-const createPool = <T>(
+const createMemo = <T>(
   tags: (boolean | number | string)[],
   target: T,
 ): T | null => {
@@ -10,4 +10,4 @@ const createPool = <T>(
   return target;
 };
 
-export { createPool };
+export { createMemo };

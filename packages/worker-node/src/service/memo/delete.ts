@@ -1,6 +1,6 @@
 import { store } from './constant';
 
-const deletePool = <T>(tags: (boolean | number | string)[]): T | null => {
+const deleteMemo = <T>(tags: (boolean | number | string)[]): T | null => {
   const key = tags.join();
   if (!store.has(key)) return null;
   const target = store.get(key) as T;
@@ -8,4 +8,4 @@ const deletePool = <T>(tags: (boolean | number | string)[]): T | null => {
   return target;
 };
 
-export { deletePool };
+export { deleteMemo };
