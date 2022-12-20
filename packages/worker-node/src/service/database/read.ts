@@ -1,8 +1,8 @@
 import { type AdapterType, type Database } from '../../domain';
-import { readPool } from '../pool';
+import { readMemo } from '../memo';
 
-const service = (type: AdapterType, name: string): Database | null => {
-  return readPool(['database', type, name]);
+const readDatabase = (type: AdapterType, name: string): Database | null => {
+  return readMemo(['database', type, name]);
 };
 
-export default service;
+export { readDatabase };

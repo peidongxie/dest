@@ -1,4 +1,4 @@
-export { default as createDatabase } from './create';
-export { default as deleteDatabase } from './delete';
-export { default as readDatabase } from './read';
-export { default as updateDatabase } from './update';
+export * from './create';
+export * from './delete';
+export * from './read';
+export * from './update';

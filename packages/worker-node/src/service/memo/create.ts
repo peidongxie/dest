@@ -1,6 +1,6 @@
 import { store } from './constant';
 
-const service = <T>(
+const createMemo = <T>(
   tags: (boolean | number | string)[],
   target: T,
 ): T | null => {
@@ -10,4 +10,4 @@ const service = <T>(
   return target;
 };
 
-export default service;
+export { createMemo };
