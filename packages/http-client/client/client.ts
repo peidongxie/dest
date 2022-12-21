@@ -33,7 +33,7 @@ class Client {
 
   constructor(options?: ClientOptions) {
     this.defaultMethod = options?.defaultMethod || 'GET';
-    this.defaultURL = new URL(options?.defaultURL || 'http://localhost');
+    this.defaultURL = new URL(options?.defaultURL || 'http://localhost/');
     this.defaultHeaders = new Headers(options?.defaultHeaders);
     this.reqHandlers = [];
     this.resHandlers = [];
@@ -48,7 +48,7 @@ class Client {
           requestWrapped.method = method;
         }
         if (url !== undefined) {
-          requestWrapped.url = url;
+          requestWrapped.url = new URL(url, requestWrapped.url);
         }
         if (headers !== undefined) {
           for (const header of new Headers(headers)) {
