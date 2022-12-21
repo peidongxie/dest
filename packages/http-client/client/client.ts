@@ -2,66 +2,50 @@ import { Blob, Buffer } from 'buffer';
 import { Readable } from 'stream';
 import { ReadableStream } from 'stream/web';
 import { isAnyArrayBuffer, isArrayBufferView, isNativeError } from 'util/types';
+import { URL } from 'url';
 import { type Plugin, type PluginHandler } from './plugin';
 import { type RequestWrapped } from './request';
 import { type ResponseWrapped } from './response';
 
 interface ClientOptions {
   defaultMethod?: string;
-  defaultURL?: string | URL;
+  defaultUrl?: string | URL;
   defaultHeaders?: HeadersInit;
 }
 
 class Client {
-  private defaultMethod: string;
-  private defaultHeaders: Headers;
-  private defaultReqHandler = (): RequestWrapped => ({
-    method: this.defaultMethod,
-    url: this.defaultURL,
-    headers: new Headers(this.defaultHeaders),
-    body: null,
-  });
-  private defaultResHandler = (res: Response): ResponseWrapped => ({
-    code: res.status,
-    message: res.statusText,
-    headers: res.headers,
-    body: res,
-  });
-  private defaultURL: URL;
   private reqHandlers: PluginHandler<RequestWrapped>[];
   private resHandlers: PluginHandler<ResponseWrapped>[];
 
   constructor(options?: ClientOptions) {
-    this.defaultMethod = options?.defaultMethod || 'GET';
-    this.defaultURL = new URL(options?.defaultURL || 'http://localhost/');
-    this.defaultHeaders = new Headers(options?.defaultHeaders);
-    this.reqHandlers = [];
+    this.reqHandlers = [
+      (req) => {
+        const method = req.method || options?.defaultMethod || 'GET';
+        const url = new URL(
+          req.url?.toString() || '',
+          options?.defaultUrl || 'http://localhost/',
+        );
+        const headers = new Headers(options?.defaultHeaders);
+        for (const header of new Headers(req.headers)) {
+          headers.set(...header);
+        }
+        const body = req.body || null;
+        return {
+          method,
+          url,
+          headers,
+          body,
+        };
+      },
+    ];
     this.resHandlers = [];
   }
 
   public async call(req: RequestWrapped): Promise<ResponseWrapped> {
-    const requestWrapped = await (async () => {
-      const requestWrapped = this.defaultReqHandler();
-      for (const pluginHandler of this.reqHandlers) {
-        const { method, url, headers, body } = await pluginHandler(req);
-        if (method !== undefined) {
-          requestWrapped.method = method;
-        }
-        if (url !== undefined) {
-          requestWrapped.url = new URL(url, requestWrapped.url);
-        }
-        if (headers !== undefined) {
-          for (const header of new Headers(headers)) {
-            (requestWrapped.headers as Headers).set(...header);
-          }
-        }
-        if (body !== undefined) {
-          requestWrapped.body = body;
-          break;
-        }
-      }
-      return requestWrapped;
-    })();
+    let requestWrapped = req;
+    for (const pluginHandler of this.reqHandlers) {
+      requestWrapped = await pluginHandler(req);
+    }
     const { body, headers, method, url } = requestWrapped;
     const fetchUrl = url as URL | RequestInfo;
     const fetchBody: BodyInit | null =
@@ -95,29 +79,15 @@ class Client {
       headers: fetchHeaders,
       method: fetchMethod,
     });
-    const res = this.defaultResHandler(fetchRes);
-    const responseWrapped = await (async () => {
-      const responseWrapped = { ...res };
-      for (const pluginHandler of this.resHandlers) {
-        const { code, message, headers, body } = await pluginHandler(res);
-        if (code !== undefined) {
-          responseWrapped.code = code;
-        }
-        if (message !== undefined) {
-          responseWrapped.message = message;
-        }
-        if (headers !== undefined) {
-          for (const header of new Headers(headers)) {
-            responseWrapped.headers.set(...header);
-          }
-        }
-        if (body !== undefined) {
-          responseWrapped.body = body;
-          break;
-        }
-      }
-      return responseWrapped;
-    })();
+    let responseWrapped: ResponseWrapped = {
+      code: fetchRes.status,
+      message: fetchRes.statusText,
+      headers: fetchRes.headers,
+      body: fetchRes,
+    };
+    for (const pluginHandler of this.resHandlers) {
+      responseWrapped = await pluginHandler(responseWrapped);
+    }
     return responseWrapped;
   }
 
