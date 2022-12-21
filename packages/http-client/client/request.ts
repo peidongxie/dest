@@ -20,6 +20,7 @@ interface RequestWrapped {
     | Error
     | URLSearchParams
     | object;
+  [key: symbol]: unknown;
 }
 
 export { type RequestWrapped };

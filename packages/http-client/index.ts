@@ -3,6 +3,7 @@ import Client, {
   type RequestWrapped,
   type ResponseWrapped,
 } from './client';
+import { Router, type Route } from './plugins';
 
 const createClient = (
   ...args: ConstructorParameters<typeof Client>
@@ -12,8 +13,10 @@ const createClient = (
 
 export {
   Client,
+  Router,
   createClient,
   type ClientOptions,
   type RequestWrapped,
   type ResponseWrapped,
+  type Route,
 };
