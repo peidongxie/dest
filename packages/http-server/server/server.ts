@@ -11,9 +11,9 @@ import {
   type ServerOptions as HttpsServerOptions,
 } from 'https';
 import { isNativeError } from 'util/types';
+import { type Plugin, type PluginHandler } from './plugin';
 import Request, { type RequestRaw } from './request';
 import Response, { type ResponseRaw, type ResponseWrapped } from './response';
-import { type Plugin, type PluginHandler } from './plugin';
 import { type HttpType } from './type';
 
 interface ServerTypeMap {
