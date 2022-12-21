@@ -1,7 +1,7 @@
 import { type Blob } from 'buffer';
 import { type Readable } from 'stream';
 import { type ReadableStream } from 'stream/web';
-import { type URLSearchParams } from 'url';
+import { type URL, type URLSearchParams } from 'url';
 
 interface RequestWrapped {
   method?: string;

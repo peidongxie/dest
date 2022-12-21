@@ -1,11 +1,5 @@
 import { type Plugin, type PluginHandler } from '../../server';
 
-interface Route {
-  method: string | string[];
-  pathname: string;
-  handler: PluginHandler;
-}
-
 interface PluginRoute {
   method: string[];
   pathname: RegExp;
@@ -27,6 +21,12 @@ const validMethod = [
   'PATCH',
   'TRACE',
 ];
+
+interface Route {
+  method: string | string[];
+  pathname: string;
+  handler: PluginHandler;
+}
 
 class Router implements Plugin {
   private prefix: string;

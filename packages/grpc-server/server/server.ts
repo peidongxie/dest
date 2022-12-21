@@ -143,7 +143,7 @@ class Server {
     });
   }
 
-  public async close(): Promise<GrpcServer> {
+  public async close(): Promise<ServerRaw> {
     return new Promise((resolve, reject) =>
       this.raw.tryShutdown((e) => {
         if (e) {
@@ -155,7 +155,7 @@ class Server {
     );
   }
 
-  public listen(port?: number, hostname?: string): Promise<GrpcServer> {
+  public listen(port?: number, hostname?: string): Promise<ServerRaw> {
     for (const [definition, implementation] of this.callback()) {
       this.raw.addService(definition, implementation);
     }

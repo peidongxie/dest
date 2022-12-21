@@ -2,71 +2,102 @@ import { Blob, Buffer } from 'buffer';
 import { Readable } from 'stream';
 import { ReadableStream } from 'stream/web';
 import { isAnyArrayBuffer, isArrayBufferView, isNativeError } from 'util/types';
+import { URL } from 'url';
+import { type Plugin, type PluginHandler } from './plugin';
 import { type RequestWrapped } from './request';
 import { type ResponseWrapped } from './response';
 
 interface ClientOptions {
   defaultMethod?: string;
-  defaultURL?: string | URL;
+  defaultUrl?: string | URL;
   defaultHeaders?: HeadersInit;
 }
 
 class Client {
-  private defaultMethod: string;
-  private defaultURL: URL;
-  private defaultHeaders: Headers;
+  private reqHandlers: PluginHandler<RequestWrapped>[];
+  private resHandlers: PluginHandler<ResponseWrapped>[];
 
   constructor(options?: ClientOptions) {
-    this.defaultMethod = options?.defaultMethod || 'GET';
-    this.defaultURL = new URL(options?.defaultURL || 'http://localhost');
-    this.defaultHeaders = new Headers(options?.defaultHeaders);
+    this.reqHandlers = [
+      (req) => {
+        const method = req.method || options?.defaultMethod || 'GET';
+        const url = new URL(
+          req.url?.toString() || '',
+          options?.defaultUrl || 'http://localhost/',
+        );
+        const headers = new Headers(options?.defaultHeaders);
+        for (const header of new Headers(req.headers)) {
+          headers.set(...header);
+        }
+        const body = req.body || null;
+        return {
+          method,
+          url,
+          headers,
+          body,
+        };
+      },
+    ];
+    this.resHandlers = [];
   }
 
   public async call(req: RequestWrapped): Promise<ResponseWrapped> {
-    const url = new URL(req.url || '', this.defaultURL);
-    const method = req.method || this.defaultMethod;
-    const extraHeaders = new Headers(req.headers);
-    const headers = new Headers(this.defaultHeaders);
-    for (const header of extraHeaders) {
-      headers.set(...header);
+    let requestWrapped = req;
+    for (const pluginHandler of this.reqHandlers) {
+      requestWrapped = await pluginHandler(req);
     }
-    const extraBody = req.body || null;
-    const body: BodyInit | null =
-      extraBody instanceof Buffer
-        ? extraBody
-        : isAnyArrayBuffer(extraBody)
-        ? Buffer.from(extraBody)
-        : isArrayBufferView(extraBody)
-        ? extraBody
-        : extraBody instanceof Blob
-        ? (extraBody as unknown as globalThis.Blob)
-        : extraBody instanceof FormData
-        ? extraBody
-        : extraBody === null
-        ? extraBody
-        : extraBody instanceof Readable
-        ? Readable.toWeb(extraBody)
-        : extraBody instanceof ReadableStream
-        ? extraBody
-        : typeof extraBody === 'string'
-        ? extraBody
-        : isNativeError(extraBody)
-        ? extraBody.toString()
-        : extraBody instanceof URLSearchParams
-        ? extraBody
-        : JSON.stringify(extraBody);
-    console.log(body, typeof body);
-    const res = await globalThis.fetch(url, {
-      method,
-      headers,
-      body,
+    const { body, headers, method, url } = requestWrapped;
+    const fetchUrl = url as URL | RequestInfo;
+    const fetchBody: BodyInit | null =
+      body instanceof Buffer
+        ? body
+        : isAnyArrayBuffer(body)
+        ? Buffer.from(body)
+        : isArrayBufferView(body)
+        ? body
+        : body instanceof Blob
+        ? (body as unknown as globalThis.Blob)
+        : body instanceof FormData
+        ? body
+        : body === null
+        ? body
+        : body instanceof Readable
+        ? Readable.toWeb(body)
+        : body instanceof ReadableStream
+        ? body
+        : typeof body === 'string'
+        ? body
+        : isNativeError(body)
+        ? body.toString()
+        : body instanceof URLSearchParams
+        ? body
+        : JSON.stringify(body);
+    const fetchHeaders = headers as HeadersInit;
+    const fetchMethod = method as string;
+    const fetchRes = await globalThis.fetch(fetchUrl, {
+      body: fetchBody,
+      headers: fetchHeaders,
+      method: fetchMethod,
     });
-    return {
-      code: res.status,
-      message: res.statusText,
-      headers: res.headers,
-      body: res,
+    let responseWrapped: ResponseWrapped = {
+      code: fetchRes.status,
+      message: fetchRes.statusText,
+      headers: fetchRes.headers,
+      body: fetchRes,
     };
+    for (const pluginHandler of this.resHandlers) {
+      responseWrapped = await pluginHandler(responseWrapped);
+    }
+    return responseWrapped;
+  }
+
+  public use(plugin: Plugin): void {
+    const reqHandler =
+      typeof plugin === 'function' ? plugin : plugin?.getReqHandler?.();
+    reqHandler && this.reqHandlers.push(reqHandler);
+    const resHandler =
+      typeof plugin === 'function' ? plugin : plugin?.getResHandler?.();
+    resHandler && this.resHandlers.push(resHandler);
   }
 }
 
