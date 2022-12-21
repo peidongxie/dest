@@ -2,35 +2,47 @@ import {
   type Plugin,
   type PluginHandler,
   type RequestWrapped,
+  type ResponseWrapped,
 } from '../../client';
 
 interface PluginOptions {
   nameSymbol?: symbol;
-  dataSymbol?: symbol;
-  handlerSymbol?: symbol;
+  reqSymbol?: symbol;
+  resSymbol?: symbol;
 }
 
-interface Route<T> {
+interface Route<ReqData, ResData> {
   name: string;
-  handler: (
+  reqHandler?: (
     req: RequestWrapped,
-    data: T,
+    data: ReqData,
   ) => RequestWrapped | Promise<RequestWrapped>;
+  resHandler?: (
+    res: ResponseWrapped,
+    data: ResData,
+  ) => ResponseWrapped | Promise<ResponseWrapped>;
+}
+
+interface PluginRoute {
+  reqHandler: PluginHandler<RequestWrapped> | null;
+  resHandler: PluginHandler<ResponseWrapped> | null;
 }
 
 class Router implements Plugin {
-  private dataSymbol: symbol;
   private nameSymbol: symbol;
-  private routes: Map<string, PluginHandler<RequestWrapped>>;
+  private routes: Map<string, PluginRoute>;
+  private reqSymbol: symbol;
+  private resSymbol: symbol;
 
   public constructor(options?: PluginOptions) {
-    this.dataSymbol = options?.dataSymbol || Symbol();
     this.nameSymbol = options?.nameSymbol || Symbol();
+    this.reqSymbol = options?.reqSymbol || Symbol();
+    this.resSymbol = options?.resSymbol || Symbol();
     this.routes = new Map();
   }
 
   public getDataSymbol(): symbol {
-    return this.dataSymbol;
+    return this.reqSymbol;
   }
 
   public getNameSymbol(): symbol {
@@ -40,14 +52,34 @@ class Router implements Plugin {
   public getReqHandler(): PluginHandler<RequestWrapped> {
     return (req) => {
       const name = req[this.nameSymbol];
-      const handler = this.routes.get(name as string);
+      const handler = this.routes.get(name as string)?.reqHandler;
       if (!handler) return req;
       return handler(req);
     };
   }
 
-  public setRoute<T>({ name, handler }: Route<T>): void {
-    this.routes.set(name, (req) => handler(req, req[this.dataSymbol] as T));
+  public getResHandler(): PluginHandler<ResponseWrapped> {
+    return (res) => {
+      const name = res[this.nameSymbol];
+      const handler = this.routes.get(name as string)?.resHandler;
+      if (!handler) return res;
+      return handler(res);
+    };
+  }
+
+  public setRoute<ReqData, ResData>({
+    name,
+    reqHandler,
+    resHandler,
+  }: Route<ReqData, ResData>): void {
+    this.routes.set(name, {
+      reqHandler: reqHandler
+        ? (req) => reqHandler(req, req[this.reqSymbol] as ReqData)
+        : null,
+      resHandler: resHandler
+        ? (res) => resHandler(res, res[this.resSymbol] as ResData)
+        : null,
+    });
   }
 }
 
