@@ -1,85 +1,87 @@
+import { URL } from 'url';
 import {
   type Plugin,
   type PluginHandler,
   type RequestWrapped,
-  type ResponseWrapped,
 } from '../../client';
 
 interface PluginOptions {
-  nameSymbol?: symbol;
-  reqSymbol?: symbol;
-  resSymbol?: symbol;
+  host?: string;
 }
 
-interface Route<ReqData, ResData> {
-  name: string;
-  reqHandler?: (
-    req: RequestWrapped,
-    data: ReqData,
-  ) => RequestWrapped | Promise<RequestWrapped>;
-  resHandler?: (
-    res: ResponseWrapped,
-    data: ResData,
-  ) => ResponseWrapped | Promise<ResponseWrapped>;
+interface UrlLike {
+  protocol: string;
+  host: string;
+  pathname: string;
+  searchParams: URLSearchParams;
 }
 
 interface PluginRoute {
-  reqHandler: PluginHandler<RequestWrapped> | null;
-  resHandler: PluginHandler<ResponseWrapped> | null;
+  pathname: RegExp;
+  redirect: UrlLike;
+  method: string;
+}
+
+interface Route {
+  pathname: string;
+  redirect: string;
+  method?: string;
 }
 
 class Router implements Plugin {
-  private nameSymbol: symbol;
-  private routes: Map<string, PluginRoute>;
-  private reqSymbol: symbol;
-  private resSymbol: symbol;
+  private host: string;
+  private routes: PluginRoute[];
 
   public constructor(options?: PluginOptions) {
-    this.nameSymbol = options?.nameSymbol || Symbol();
-    this.reqSymbol = options?.reqSymbol || Symbol();
-    this.resSymbol = options?.resSymbol || Symbol();
-    this.routes = new Map();
+    this.host = options?.host || 'localhost';
+    this.routes = [];
   }
 
-  public getDataSymbol(): symbol {
-    return this.reqSymbol;
-  }
-
-  public getNameSymbol(): symbol {
-    return this.nameSymbol;
-  }
-
-  public getReqHandler(): PluginHandler<RequestWrapped> {
+  public getReqHandler(): PluginHandler<Required<RequestWrapped>> {
     return (req) => {
-      const name = req[this.nameSymbol];
-      const handler = this.routes.get(name as string)?.reqHandler;
-      if (!handler) return req;
-      return handler(req);
+      const url = new URL(req.url.toString());
+      const host = url.host;
+      const pathname = `/${url.pathname}/`.replace(/\/+/g, '/');
+      if (this.host !== host) return req;
+      const route = this.routes.find((route) => route.pathname.test(pathname));
+      if (!route) return req;
+      url.protocol = route.redirect.protocol || url.protocol;
+      url.host = route.redirect.host;
+      url.pathname = route.redirect.pathname;
+      for (const [key, value] of route.redirect.searchParams) {
+        url.searchParams.append(key, value);
+      }
+      return {
+        method: route.method || req.method,
+        url: url,
+        headers: req.headers,
+        body: req.body,
+      };
     };
   }
 
-  public getResHandler(): PluginHandler<ResponseWrapped> {
-    return (res) => {
-      const name = res[this.nameSymbol];
-      const handler = this.routes.get(name as string)?.resHandler;
-      if (!handler) return res;
-      return handler(res);
-    };
-  }
-
-  public setRoute<ReqData, ResData>({
-    name,
-    reqHandler,
-    resHandler,
-  }: Route<ReqData, ResData>): void {
-    this.routes.set(name, {
-      reqHandler: reqHandler
-        ? (req) => reqHandler(req, req[this.reqSymbol] as ReqData)
-        : null,
-      resHandler: resHandler
-        ? (res) => resHandler(res, res[this.resSymbol] as ResData)
-        : null,
+  public setRoute({ pathname, redirect, method }: Route): void {
+    this.routes.push({
+      pathname: RegExp(`^/${pathname}/`.replace(/\/+/g, '/')),
+      method: method || '',
+      redirect: this.parseUrlLike(redirect),
     });
+  }
+
+  private parseUrlLike(urlLike: string): UrlLike {
+    if (!urlLike.includes(':')) {
+      return {
+        ...this.parseUrlLike('http://' + urlLike),
+        protocol: '',
+      };
+    }
+    const url = new URL(urlLike);
+    return {
+      protocol: url.protocol,
+      host: url.host,
+      pathname: url.pathname,
+      searchParams: url.searchParams,
+    };
   }
 }
 
