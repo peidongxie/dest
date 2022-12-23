@@ -14,8 +14,8 @@ interface ClientOptions {
 }
 
 class Client {
-  private reqHandlers: PluginHandler<RequestWrapped>[];
-  private resHandlers: PluginHandler<ResponseWrapped>[];
+  private reqHandlers: PluginHandler<Required<RequestWrapped>>[];
+  private resHandlers: PluginHandler<Required<ResponseWrapped>>[];
 
   constructor(options?: ClientOptions) {
     this.reqHandlers = [
@@ -42,9 +42,9 @@ class Client {
   }
 
   public async call(req: RequestWrapped): Promise<ResponseWrapped> {
-    let requestWrapped = req;
+    let requestWrapped = req as Required<RequestWrapped>;
     for (const pluginHandler of this.reqHandlers) {
-      requestWrapped = await pluginHandler(req);
+      requestWrapped = await pluginHandler(requestWrapped);
     }
     const { body, headers, method, url } = requestWrapped;
     const fetchUrl = url as URL | RequestInfo;
