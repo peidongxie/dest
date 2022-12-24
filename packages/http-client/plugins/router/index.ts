@@ -1,4 +1,4 @@
-import { URL } from 'url';
+import { URL, URLSearchParams } from 'url';
 import {
   type Plugin,
   type PluginHandler,
@@ -13,11 +13,11 @@ interface UrlLike {
   protocol: string;
   host: string;
   pathname: string;
-  searchParams: URLSearchParams;
+  search: string;
 }
 
 interface PluginRoute {
-  pathname: RegExp;
+  pathname: string;
   redirect: UrlLike;
   method: string;
 }
@@ -40,17 +40,20 @@ class Router implements Plugin {
   public getReqHandler(): PluginHandler<Required<RequestWrapped>> {
     return (req) => {
       const url = new URL(req.url.toString());
-      const host = url.host;
       const pathname = `/${url.pathname}/`.replace(/\/+/g, '/');
-      if (this.host !== host) return req;
-      const route = this.routes.find((route) => route.pathname.test(pathname));
+      if (this.host !== url.host) return req;
+      const route = this.routes.find((route) =>
+        route.pathname.startsWith(pathname),
+      );
       if (!route) return req;
       url.protocol = route.redirect.protocol || url.protocol;
       url.host = route.redirect.host;
-      url.pathname = route.redirect.pathname;
-      for (const [key, value] of route.redirect.searchParams) {
-        url.searchParams.append(key, value);
+      url.pathname =
+        route.redirect.pathname + pathname.substring(route.pathname.length);
+      for (const [name, value] of new URLSearchParams(route.redirect.search)) {
+        url.searchParams.append(name, value);
       }
+      this.resolveDynamicPathname(url);
       return {
         method: route.method || req.method,
         url: url,
@@ -61,10 +64,12 @@ class Router implements Plugin {
   }
 
   public setRoute({ pathname, redirect, method }: Route): void {
+    const urlLike = this.parseUrlLike(redirect);
+    this.resolveDynamicPathname(urlLike);
     this.routes.push({
-      pathname: RegExp(`^/${pathname}/`.replace(/\/+/g, '/')),
+      pathname: `^/${pathname}/`.replace(/\/+/g, '/'),
       method: method || '',
-      redirect: this.parseUrlLike(redirect),
+      redirect: urlLike,
     });
   }
 
@@ -80,8 +85,22 @@ class Router implements Plugin {
       protocol: url.protocol,
       host: url.host,
       pathname: url.pathname,
-      searchParams: url.searchParams,
+      search: url.search,
     };
+  }
+
+  private resolveDynamicPathname(urlLike: UrlLike): void {
+    let pathname = urlLike.pathname;
+    const searchParams = new URLSearchParams();
+    for (const [name, value] of new URLSearchParams(urlLike.search)) {
+      if (pathname.includes(`[${name}]`)) {
+        pathname = pathname.replaceAll(`[${name}]`, value);
+      } else {
+        searchParams.append(name, value);
+      }
+    }
+    urlLike.pathname = pathname;
+    urlLike.search = searchParams.toString();
   }
 }
 
