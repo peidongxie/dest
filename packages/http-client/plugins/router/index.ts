@@ -17,7 +17,7 @@ interface UrlLike {
 }
 
 interface PluginRoute {
-  pathname: RegExp;
+  pathname: string;
   redirect: UrlLike;
   method: string;
 }
@@ -40,21 +40,22 @@ class Router implements Plugin {
   public getReqHandler(): PluginHandler<Required<RequestWrapped>> {
     return (req) => {
       const url = new URL(req.url.toString());
-      const host = url.host;
       const pathname = `/${url.pathname}/`.replace(/\/+/g, '/');
-      if (this.host !== host) return req;
-      const route = this.routes.find((route) => route.pathname.test(pathname));
+      if (this.host !== url.host) return req;
+      const route = this.routes.find((route) =>
+        route.pathname.startsWith(pathname),
+      );
       if (!route) return req;
-      const { method, redirect } = route;
-      url.protocol = redirect.protocol || url.protocol;
-      url.host = redirect.host;
-      url.pathname = redirect.pathname;
-      for (const [name, value] of new URLSearchParams(redirect.search)) {
+      url.protocol = route.redirect.protocol || url.protocol;
+      url.host = route.redirect.host;
+      url.pathname =
+        route.redirect.pathname + pathname.substring(route.pathname.length);
+      for (const [name, value] of new URLSearchParams(route.redirect.search)) {
         url.searchParams.append(name, value);
       }
       this.resolveDynamicPathname(url);
       return {
-        method: method || req.method,
+        method: route.method || req.method,
         url: url,
         headers: req.headers,
         body: req.body,
@@ -66,7 +67,7 @@ class Router implements Plugin {
     const urlLike = this.parseUrlLike(redirect);
     this.resolveDynamicPathname(urlLike);
     this.routes.push({
-      pathname: RegExp(`^/${pathname}/`.replace(/\/+/g, '/')),
+      pathname: `^/${pathname}/`.replace(/\/+/g, '/'),
       method: method || '',
       redirect: urlLike,
     });
