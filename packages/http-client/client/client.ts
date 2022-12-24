@@ -2,7 +2,7 @@ import { Blob, Buffer } from 'buffer';
 import { Readable } from 'stream';
 import { ReadableStream } from 'stream/web';
 import { isAnyArrayBuffer, isArrayBufferView, isNativeError } from 'util/types';
-import { URL } from 'url';
+import { URL, URLSearchParams } from 'url';
 import { type Plugin, type PluginHandler } from './plugin';
 import { type RequestWrapped } from './request';
 import { type ResponseWrapped } from './response';

@@ -1,4 +1,4 @@
-import { URL } from 'url';
+import { URL, URLSearchParams } from 'url';
 import {
   type Plugin,
   type PluginHandler,
@@ -13,7 +13,7 @@ interface UrlLike {
   protocol: string;
   host: string;
   pathname: string;
-  searchParams: URLSearchParams;
+  search: string;
 }
 
 interface PluginRoute {
@@ -45,14 +45,16 @@ class Router implements Plugin {
       if (this.host !== host) return req;
       const route = this.routes.find((route) => route.pathname.test(pathname));
       if (!route) return req;
-      url.protocol = route.redirect.protocol || url.protocol;
-      url.host = route.redirect.host;
-      url.pathname = route.redirect.pathname;
-      for (const [key, value] of route.redirect.searchParams) {
-        url.searchParams.append(key, value);
+      const { method, redirect } = route;
+      url.protocol = redirect.protocol || url.protocol;
+      url.host = redirect.host;
+      url.pathname = redirect.pathname;
+      for (const [name, value] of new URLSearchParams(redirect.search)) {
+        url.searchParams.append(name, value);
       }
+      this.resolveDynamicPathname(url);
       return {
-        method: route.method || req.method,
+        method: method || req.method,
         url: url,
         headers: req.headers,
         body: req.body,
@@ -61,10 +63,12 @@ class Router implements Plugin {
   }
 
   public setRoute({ pathname, redirect, method }: Route): void {
+    const urlLike = this.parseUrlLike(redirect);
+    this.resolveDynamicPathname(urlLike);
     this.routes.push({
       pathname: RegExp(`^/${pathname}/`.replace(/\/+/g, '/')),
       method: method || '',
-      redirect: this.parseUrlLike(redirect),
+      redirect: urlLike,
     });
   }
 
@@ -80,8 +84,22 @@ class Router implements Plugin {
       protocol: url.protocol,
       host: url.host,
       pathname: url.pathname,
-      searchParams: url.searchParams,
+      search: url.search,
     };
+  }
+
+  private resolveDynamicPathname(urlLike: UrlLike): void {
+    let pathname = urlLike.pathname;
+    const searchParams = new URLSearchParams();
+    for (const [name, value] of new URLSearchParams(urlLike.search)) {
+      if (pathname.includes(`[${name}]`)) {
+        pathname = pathname.replaceAll(`[${name}]`, value);
+      } else {
+        searchParams.append(name, value);
+      }
+    }
+    urlLike.pathname = pathname;
+    urlLike.search = searchParams.toString();
   }
 }
 
