@@ -67,7 +67,7 @@ class Router implements Plugin {
     const urlLike = this.parseUrlLike(redirect);
     this.resolveDynamicPathname(urlLike);
     this.routes.push({
-      pathname: `^/${pathname}/`.replace(/\/+/g, '/'),
+      pathname: `/${pathname}/`.replace(/\/+/g, '/'),
       method: method || '',
       redirect: urlLike,
     });
