@@ -40,22 +40,32 @@ class Router implements Plugin {
   public getReqHandler(): PluginHandler<Required<RequestWrapped>> {
     return (req) => {
       const url = new URL(req.url.toString());
-      const pathname = `/${url.pathname}/`.replace(/\/+/g, '/');
-      if (this.host !== url.host) return req;
-      const route = this.routes.find((route) =>
-        route.pathname.startsWith(pathname),
-      );
+      const actualMethod = req.method;
+      const actualProtocol = url.protocol;
+      const actualHost = url.host;
+      const actualPathname = `/${url.pathname}/`.replace(/\/+/g, '/');
+      const actualSearch = url.search;
+      const expectedHost = this.host;
+      if (expectedHost !== actualHost) return req;
+      const route = this.routes.find((route) => {
+        const expectedPathname = route.pathname;
+        return actualPathname.startsWith(expectedPathname);
+      });
       if (!route) return req;
-      url.protocol = route.redirect.protocol || url.protocol;
-      url.host = route.redirect.host;
+      const expectedPathname = route.pathname;
+      const targetMethod = route.method;
+      const targetProtocol = route.redirect.protocol;
+      const targetHost = route.redirect.host;
+      const targetPathname = route.redirect.pathname;
+      const targetSearch = route.redirect.search;
+      url.protocol = targetProtocol || actualProtocol;
+      url.host = targetHost;
       url.pathname =
-        route.redirect.pathname + pathname.substring(route.pathname.length);
-      for (const [name, value] of new URLSearchParams(route.redirect.search)) {
-        url.searchParams.append(name, value);
-      }
+        targetPathname + actualPathname.substring(expectedPathname.length);
+      url.search = this.mergeSearch(targetSearch, actualSearch);
       this.resolveDynamicPathname(url);
       return {
-        method: route.method || req.method,
+        method: targetMethod || actualMethod,
         url: url,
         headers: req.headers,
         body: req.body,
@@ -69,8 +79,21 @@ class Router implements Plugin {
     this.routes.push({
       pathname: `/${pathname}/`.replace(/\/+/g, '/'),
       method: method || '',
-      redirect: urlLike,
+      redirect: {
+        ...urlLike,
+        pathname: `/${urlLike.pathname}/`.replace(/\/+/g, '/'),
+      },
     });
+  }
+
+  private mergeSearch(...searchList: string[]): string {
+    const searchParams = new URLSearchParams();
+    for (const search of searchList) {
+      for (const [name, value] of new URLSearchParams(search)) {
+        searchParams.append(name, value);
+      }
+    }
+    return searchParams.toString();
   }
 
   private parseUrlLike(urlLike: string): UrlLike {
