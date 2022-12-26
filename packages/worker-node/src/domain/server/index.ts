@@ -25,7 +25,7 @@ class Server extends TaskRunner {
     const routes = api as Route[];
     const plugins = api as Plugin<ProtoDefinition>[];
     if (
-      routes.every(
+      routes.every?.(
         (route) =>
           Reflect.has(route, 'handler') &&
           Reflect.has(route, 'method') &&
@@ -41,9 +41,9 @@ class Server extends TaskRunner {
       this.raw.use(cors.getHandler());
       this.raw.use(router.getHandler());
     } else if (
-      plugins.every(
+      plugins.every?.(
         (plugin) =>
-          Reflect.has(plugin, 'definition') && Reflect.has(plugin, 'handler'),
+          Reflect.has(plugin, 'definition') && Reflect.has(plugin, 'handlers'),
       )
     ) {
       this.raw = new RpcServer();
