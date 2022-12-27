@@ -97,7 +97,7 @@ class Router implements Plugin {
   }
 
   private parseUrlLike(urlLike: string): UrlLike {
-    if (!urlLike.includes(':')) {
+    if (!urlLike.includes('://')) {
       return {
         ...this.parseUrlLike('http://' + urlLike),
         protocol: '',
