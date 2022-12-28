@@ -4,7 +4,7 @@ import { readMemo } from '../memo';
 const updateDatabase = async (
   type: AdapterType,
   name: string,
-  action: 'remove' | 'save',
+  action: 'save' | 'remove',
   data: { name: string; rows: unknown[] }[],
 ): Promise<Database | null> => {
   const database = readMemo<Database>(['database', type, name]);

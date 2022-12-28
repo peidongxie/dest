@@ -24,7 +24,7 @@ const postQueryByHttp: Route = {
     const privilege = Number(
       `/${url.pathname}/`
         .replace(/\/+/g, '/')
-        .match(/^\/query\/(0|1|2)\//)?.[1],
+        .match(/^\/query\/(1|2)\//)?.[1] || 0,
     );
     const query = await body.text();
     if (
