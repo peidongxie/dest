@@ -6,13 +6,12 @@ const createQuery = async <T>(
   name: string,
   privilege: 'read' | 'write' | 'root',
   query: string,
-): Promise<{ time: bigint; result: T } | null> => {
+): Promise<{ time: bigint; result: T[] } | null> => {
   const database = readDatabase(type, name);
   if (!database) return null;
   const start = process.hrtime.bigint();
-  const promise = database[privilege]<T>(query);
-  if (!promise) return null;
-  const result = await promise;
+  const result = await database[privilege]<T>(query);
+  if (!result) return null;
   const end = process.hrtime.bigint();
   return {
     time: end - start,

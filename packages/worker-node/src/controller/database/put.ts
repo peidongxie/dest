@@ -5,11 +5,11 @@ import { adapterMapper, type AdapterTypeAlias } from '../../domain';
 import { updateDatabase } from '../../service';
 
 const actionMapper: Record<
-  DatabaseAction.REMOVE | DatabaseAction.SAVE,
-  'remove' | 'save'
+  DatabaseAction.SAVE | DatabaseAction.REMOVE,
+  'save' | 'remove'
 > = {
-  [DatabaseAction.REMOVE]: 'remove',
   [DatabaseAction.SAVE]: 'save',
+  [DatabaseAction.REMOVE]: 'remove',
 };
 
 const putDatabaseByHttp: Route = {
@@ -23,14 +23,14 @@ const putDatabaseByHttp: Route = {
     const action = Number(
       `/${url.pathname}/`
         .replace(/\/+/g, '/')
-        .match(/^\/database\/(1|2)\//)?.[1],
+        .match(/^\/database\/(1|2)\//)?.[1] || 0,
     );
     const data = await body.json<{ name: string; rows: unknown[] }[]>();
     if (
       !name ||
       !adapterType ||
-      (action !== DatabaseAction.REMOVE && action !== DatabaseAction.SAVE) ||
       !Array.isArray(data) ||
+      (action !== DatabaseAction.SAVE && action !== DatabaseAction.REMOVE) ||
       data.some((item) => {
         if (!item.name) return true;
         if (typeof item.name !== 'string') return true;
@@ -77,7 +77,7 @@ const putDatabaseByRpc: Plugin<DatabaseDefinition> = {
       if (
         !name ||
         !adapterType ||
-        (action !== DatabaseAction.REMOVE && action !== DatabaseAction.SAVE) ||
+        (action !== DatabaseAction.SAVE && action !== DatabaseAction.REMOVE) ||
         data.some((item) => {
           if (!item.name) return true;
           if (typeof item.name !== 'string') return true;

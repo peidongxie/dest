@@ -56,8 +56,8 @@ export function databaseTypeToJSON(object: DatabaseType): string {
 
 export enum DatabaseAction {
   DEFAULT_ACTION = 0,
-  REMOVE = 1,
-  SAVE = 2,
+  SAVE = 1,
+  REMOVE = 2,
   UNRECOGNIZED = -1,
 }
 
@@ -67,11 +67,11 @@ export function databaseActionFromJSON(object: any): DatabaseAction {
     case 'DEFAULT_ACTION':
       return DatabaseAction.DEFAULT_ACTION;
     case 1:
-    case 'REMOVE':
-      return DatabaseAction.REMOVE;
-    case 2:
     case 'SAVE':
       return DatabaseAction.SAVE;
+    case 2:
+    case 'REMOVE':
+      return DatabaseAction.REMOVE;
     case -1:
     case 'UNRECOGNIZED':
     default:
@@ -83,10 +83,10 @@ export function databaseActionToJSON(object: DatabaseAction): string {
   switch (object) {
     case DatabaseAction.DEFAULT_ACTION:
       return 'DEFAULT_ACTION';
-    case DatabaseAction.REMOVE:
-      return 'REMOVE';
     case DatabaseAction.SAVE:
       return 'SAVE';
+    case DatabaseAction.REMOVE:
+      return 'REMOVE';
     case DatabaseAction.UNRECOGNIZED:
     default:
       return 'UNRECOGNIZED';

@@ -19,8 +19,8 @@ enum DatabaseType {
 
 enum DatabaseAction {
   DEFAULT_ACTION = 0;
-  REMOVE = 1;
-  SAVE = 2;
+  SAVE = 1;
+  REMOVE = 2;
 }
 
 message DataItem {
