@@ -60,53 +60,55 @@ class Database extends TaskRunner {
     );
   }
 
-  async remove(target: string, entities: unknown[]): Promise<this> {
+  async remove<T>(target: string, entities: unknown[]): Promise<T[] | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
       async () => {
         await this.adapter.preRemove?.();
-        await this.adapter
+        const rows = await this.adapter
           .getWritableDataSource()
           ?.getRepository(target)
           .remove(entities);
         await this.adapter.postRemove?.();
-        return this;
+        if (!Array.isArray(rows)) return null;
+        return rows as T[];
       },
     );
   }
 
-  async save(target: string, entities: unknown[]): Promise<Database> {
+  async save<T>(target: string, entities: unknown[]): Promise<T[] | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
       async () => {
         await this.adapter.preSave?.();
-        await this.adapter
+        const rows = await this.adapter
           .getWritableDataSource()
           ?.getRepository(target)
           .save(entities);
         await this.adapter.postSave?.();
-        return this;
+        if (!Array.isArray(rows)) return null;
+        return rows as T[];
       },
     );
   }
 
-  read<T>(query: string): Promise<T> | null {
+  read<T>(query: string): Promise<T[] | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
-      async () => {
+      () => {
         return this.adapter.getReadableDataSource()?.query(query) || null;
       },
     );
   }
 
-  root<T>(query: string): Promise<T> | null {
+  root<T>(query: string): Promise<T[] | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
-      async () => {
+      () => {
         return this.adapter.getRootDataSource()?.query(query) || null;
       },
     );
@@ -122,11 +124,11 @@ class Database extends TaskRunner {
     );
   }
 
-  write<T>(query: string): Promise<T> | null {
+  write<T>(query: string): Promise<T[] | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
-      async () => {
+      () => {
         return this.adapter.getWritableDataSource()?.query(query) || null;
       },
     );
