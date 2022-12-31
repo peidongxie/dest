@@ -6,7 +6,9 @@ type AdapterTypeAlias = 2049 | 3306 | 3307 | 93307;
 interface Adapter {
   getReadableDataSource: () => DataSource | null;
   getRootDataSource: () => DataSource | null;
-  getSnapshot: () => Promise<{ name: string; rows: unknown[] }[]>;
+  getSnapshot: () => Promise<
+    { time: number; table: string; rows: unknown[] }[]
+  >;
   getWritableDataSource: () => DataSource | null;
   postCreate?: () => Promise<void>;
   postDestroy?: () => Promise<void>;

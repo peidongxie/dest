@@ -80,21 +80,36 @@ class Mysql8 implements Adapter {
 
   async getSnapshot() {
     if (this.name) {
-      const result: { Name: string }[] = await this.readable.query(
+      const rows: { Name: string }[] = await this.readable.query(
         `SHOW TABLE STATUS`,
       );
-      const names = result.map((row) => row.Name);
+      const tables = rows.map((row) => row.Name);
       return Promise.all(
-        names.map(async (name) => ({
-          name,
-          rows: await this.readable.query(`SELECT * FROM ${name}`),
-        })),
+        tables.map(async (table) => {
+          const start = process.hrtime.bigint();
+          const rows = await this.readable.query(`SELECT * FROM ${table}`);
+          const end = process.hrtime.bigint();
+          return {
+            time: Number(end - start),
+            table,
+            rows,
+          };
+        }),
       );
     } else {
-      const result: { Database: string }[] = await Mysql8.root.query(
+      const rows: { Database: string }[] = await Mysql8.root.query(
         `SHOW DATABASES`,
       );
-      return result.map((row) => ({ name: row.Database, rows: [] }));
+      const tables = rows.map((row) => row.Database);
+      return Promise.all(
+        tables.map(async (table) => {
+          return {
+            time: 0,
+            table,
+            rows: [],
+          };
+        }),
+      );
     }
   }
 
