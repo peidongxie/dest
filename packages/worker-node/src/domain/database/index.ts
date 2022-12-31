@@ -71,8 +71,8 @@ class Database extends TaskRunner {
           ?.getRepository(target)
           .remove(entities);
         await this.adapter.postRemove?.();
-        if (!Array.isArray(rows)) return null;
-        return rows as T[];
+        if (!rows) return null;
+        return Array.isArray(rows) ? rows : [rows];
       },
     );
   }
@@ -88,28 +88,36 @@ class Database extends TaskRunner {
           ?.getRepository(target)
           .save(entities);
         await this.adapter.postSave?.();
-        if (!Array.isArray(rows)) return null;
-        return rows as T[];
+        if (!rows) return null;
+        return Array.isArray(rows) ? rows : [rows];
       },
     );
   }
 
-  read<T>(query: string): Promise<T[] | null> {
+  read<T>(query: string, values: unknown[]): Promise<T[] | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
-      () => {
-        return this.adapter.getReadableDataSource()?.query(query) || null;
+      async () => {
+        const dataSource = this.adapter.getReadableDataSource();
+        if (!dataSource) return null;
+        const rows = await dataSource.query(query, values);
+        if (!rows) return null;
+        return Array.isArray(rows) ? rows : [rows];
       },
     );
   }
 
-  root<T>(query: string): Promise<T[] | null> {
+  root<T>(query: string, values: unknown[]): Promise<T[] | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
-      () => {
-        return this.adapter.getRootDataSource()?.query(query) || null;
+      async () => {
+        const dataSource = this.adapter.getRootDataSource();
+        if (!dataSource) return null;
+        const rows = await dataSource.query(query, values);
+        if (!rows) return null;
+        return Array.isArray(rows) ? rows : [rows];
       },
     );
   }
@@ -124,12 +132,16 @@ class Database extends TaskRunner {
     );
   }
 
-  write<T>(query: string): Promise<T[] | null> {
+  write<T>(query: string, values: unknown[]): Promise<T[] | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
-      () => {
-        return this.adapter.getWritableDataSource()?.query(query) || null;
+      async () => {
+        const dataSource = this.adapter.getWritableDataSource();
+        if (!dataSource) return null;
+        const rows = await dataSource.query(query, values);
+        if (!rows) return null;
+        return Array.isArray(rows) ? rows : [rows];
       },
     );
   }
