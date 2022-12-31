@@ -8,6 +8,12 @@ enum DatabaseState {
   TERMINATED,
 }
 
+interface ResultItem<T> {
+  time: number;
+  table: string;
+  rows: T[];
+}
+
 class Database extends TaskRunner {
   adapter: Adapter;
   name: string;
@@ -60,61 +66,99 @@ class Database extends TaskRunner {
     );
   }
 
-  async remove<T>(target: string, entities: unknown[]): Promise<T[] | null> {
+  async remove<T>(
+    target: string,
+    entities: unknown[],
+  ): Promise<ResultItem<T> | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
       async () => {
+        const start = process.hrtime.bigint();
         await this.adapter.preRemove?.();
         const rows = await this.adapter
           .getWritableDataSource()
           ?.getRepository(target)
           .remove(entities);
         await this.adapter.postRemove?.();
-        if (!Array.isArray(rows)) return null;
-        return rows as T[];
+        const end = process.hrtime.bigint();
+        if (!rows) return null;
+        return {
+          time: Number(end - start),
+          table: target,
+          rows: Array.isArray(rows) ? rows : [rows],
+        };
       },
     );
   }
 
-  async save<T>(target: string, entities: unknown[]): Promise<T[] | null> {
+  async save<T>(
+    target: string,
+    entities: unknown[],
+  ): Promise<ResultItem<T> | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
       async () => {
+        const start = process.hrtime.bigint();
         await this.adapter.preSave?.();
         const rows = await this.adapter
           .getWritableDataSource()
           ?.getRepository(target)
           .save(entities);
         await this.adapter.postSave?.();
-        if (!Array.isArray(rows)) return null;
-        return rows as T[];
+        const end = process.hrtime.bigint();
+        if (!rows) return null;
+        return {
+          time: Number(end - start),
+          table: target,
+          rows: Array.isArray(rows) ? rows : [rows],
+        };
       },
     );
   }
 
-  read<T>(query: string): Promise<T[] | null> {
+  read<T>(query: string, values: unknown[]): Promise<ResultItem<T> | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
-      () => {
-        return this.adapter.getReadableDataSource()?.query(query) || null;
+      async () => {
+        const dataSource = this.adapter.getReadableDataSource();
+        if (!dataSource) return null;
+        const start = process.hrtime.bigint();
+        const rows = await dataSource.query(query, values);
+        const end = process.hrtime.bigint();
+        if (!rows) return null;
+        return {
+          time: Number(end - start),
+          table: '',
+          rows: Array.isArray(rows) ? rows : [rows],
+        };
       },
     );
   }
 
-  root<T>(query: string): Promise<T[] | null> {
+  root<T>(query: string, values: unknown[]): Promise<ResultItem<T> | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
-      () => {
-        return this.adapter.getRootDataSource()?.query(query) || null;
+      async () => {
+        const dataSource = this.adapter.getRootDataSource();
+        if (!dataSource) return null;
+        const start = process.hrtime.bigint();
+        const rows = await dataSource.query(query, values);
+        const end = process.hrtime.bigint();
+        if (!rows) return null;
+        return {
+          time: Number(end - start),
+          table: '',
+          rows: Array.isArray(rows) ? rows : [rows],
+        };
       },
     );
   }
 
-  snapshot(): Promise<{ name: string; rows: unknown[] }[]> {
+  snapshot(): Promise<ResultItem<unknown>[]> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
@@ -124,12 +168,22 @@ class Database extends TaskRunner {
     );
   }
 
-  write<T>(query: string): Promise<T[] | null> {
+  write<T>(query: string, values: unknown[]): Promise<ResultItem<T> | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
-      () => {
-        return this.adapter.getWritableDataSource()?.query(query) || null;
+      async () => {
+        const dataSource = this.adapter.getWritableDataSource();
+        if (!dataSource) return null;
+        const start = process.hrtime.bigint();
+        const rows = await dataSource.query(query, values);
+        const end = process.hrtime.bigint();
+        if (!rows) return null;
+        return {
+          time: Number(end - start),
+          table: '',
+          rows: Array.isArray(rows) ? rows : [rows],
+        };
       },
     );
   }

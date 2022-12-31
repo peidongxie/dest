@@ -1,5 +1,5 @@
 import { readdir, rm } from 'fs/promises';
-import { join } from 'path';
+import { basename, extname, join } from 'path';
 import sqlite3 from 'sqlite3';
 import { DataSource, EntitySchema } from 'typeorm';
 import { type Adapter } from './type';
@@ -69,27 +69,42 @@ class Sqlite implements Adapter {
 
   async getSnapshot() {
     if (this.name) {
-      const result: { name: string }[] = await (
+      const rows: { name: string }[] = await (
         this.readable as DataSource
       ).query(`SELECT name FROM sqlite_master WHERE type = "table"`);
-      const names = result
+      const tables = rows
         .filter((row) => {
           return !protectedTables.includes(row.name);
         })
         .map((row) => row.name);
       return Promise.all(
-        names.map(async (name) => ({
-          name,
-          rows: await (this.readable as DataSource).query(
-            `SELECT * FROM ${name}`,
-          ),
-        })),
+        tables.map(async (table) => {
+          const start = process.hrtime.bigint();
+          const rows = await (this.readable as DataSource).query(
+            `SELECT * FROM ${table}`,
+          );
+          const end = process.hrtime.bigint();
+          return {
+            time: Number(end - start),
+            table,
+            rows,
+          };
+        }),
       );
     } else {
-      const files = await readdir(dir);
-      return files
-        .filter((file) => file.endsWith('.sqlite'))
-        .map((file) => ({ name: file.replace(/.sqlite$/, ''), rows: [] }));
+      const rows = await readdir(dir);
+      const tables = rows
+        .filter((row) => extname(row) === '.sqlite')
+        .map((row) => basename(row, '.sqlite'));
+      return Promise.all(
+        tables.map(async (table) => {
+          return {
+            time: 0,
+            table,
+            rows: [],
+          };
+        }),
+      );
     }
   }
 
