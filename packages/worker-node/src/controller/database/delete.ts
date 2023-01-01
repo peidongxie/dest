@@ -1,8 +1,8 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { DatabaseDefinition } from './proto';
-import { adapterMapper, type AdapterTypeAlias } from '../../domain';
-import { deleteDatabase } from '../../service';
+import { type AdapterType } from '../../domain';
+import { deleteDatabase, readMemo } from '../../service';
 
 const deleteDatabaseByHttp: Route = {
   method: 'DELETE',
@@ -11,8 +11,8 @@ const deleteDatabaseByHttp: Route = {
     const { url } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const adapterType = adapterMapper[Number(type) as AdapterTypeAlias];
-    if (!name || !adapterType) {
+    const baseType = readMemo<AdapterType>(['type', type || '']);
+    if (!name || !baseType) {
       return {
         code: 400,
         body: {
@@ -20,7 +20,7 @@ const deleteDatabaseByHttp: Route = {
         },
       };
     }
-    const database = await deleteDatabase(adapterType, name);
+    const database = await deleteDatabase(baseType, name);
     if (!database) {
       return {
         code: 404,
@@ -43,13 +43,13 @@ const deleteDatabaseByRpc: Plugin<DatabaseDefinition> = {
   handlers: {
     deleteDatabase: async (req) => {
       const { name, type } = req;
-      const adapterType = adapterMapper[type as AdapterTypeAlias];
-      if (!name || !adapterType) {
+      const baseType = readMemo<AdapterType>(['type', type || '']);
+      if (!name || !baseType) {
         return {
           success: false,
         };
       }
-      const database = await deleteDatabase(adapterType, name);
+      const database = await deleteDatabase(baseType, name);
       if (!database) {
         return {
           success: false,

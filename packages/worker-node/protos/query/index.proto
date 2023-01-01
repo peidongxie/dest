@@ -3,42 +3,59 @@ syntax = "proto3";
 package dest;
 
 service Query {
-  rpc PostQuery (QueryRequest) returns (ResultResponse) {}
+  rpc PostQuery (EventRequest) returns (ResultResponse) {}
 }
 
-enum QueryType {
+// Base
+
+enum BaseType {
   DEFAULT_TYPE = 0;
   SQLITE = 2049;
   MARIADB = 3306;
   MYSQL8 = 3307;
-  MYSQL = 93307;
-}
-
-enum QueryPrivilege {
-  DEFAULT_PRIVILEGE = 0;
-  READ = 1;
-  WRITE = 2;
-  ROOT = 3;
 }
 
 message BaseRequest {
-  QueryType type = 1;
+  BaseType type = 1;
   string name = 2;
-}
-
-message QueryRequest {
-  QueryType type = 1;
-  string name = 2;
-  QueryPrivilege privilege = 3;
-  string query = 4;
 }
 
 message BaseResponse {
   bool success = 1;
 }
 
+// Result
+
+message ResultItem {
+  uint32 time = 1;
+  string table = 2;
+  repeated string rows = 3;
+}
+
 message ResultResponse {
   bool success = 1;
-  uint32 time = 2;
-  string result = 3;
+  ResultItem result = 2;
+}
+
+// Event
+
+enum EventAction {
+  DEFAULT_ACTION = 0;
+  SAVE = 1;
+  REMOVE = 2;
+  READ = 3;
+  WRITE = 4;
+  ROOT = 5;
+}
+
+message EventItem {
+  EventAction action = 1;
+  string target = 2;
+  repeated string values = 3;
+}
+
+message EventRequest {
+  BaseType type = 1;
+  string name = 2;
+  EventItem event = 3;
 }

@@ -2,8 +2,8 @@ import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { type EntitySchemaOptions } from 'typeorm';
 import { DatabaseDefinition } from './proto';
-import { adapterMapper, type AdapterTypeAlias } from '../../domain';
-import { createDatabase } from '../../service';
+import { type AdapterType } from '../../domain';
+import { createDatabase, readMemo } from '../../service';
 
 const postDatabaseByHttp: Route = {
   method: 'POST',
@@ -12,9 +12,9 @@ const postDatabaseByHttp: Route = {
     const { url, body } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const adapterType = adapterMapper[Number(type) as AdapterTypeAlias];
+    const baseType = readMemo<AdapterType>(['type', type || '']);
     const schemas = await body.json<EntitySchemaOptions<unknown>[]>();
-    if (!name || !adapterType || !Array.isArray(schemas)) {
+    if (!name || !baseType || !Array.isArray(schemas)) {
       return {
         code: 400,
         body: {
@@ -22,7 +22,7 @@ const postDatabaseByHttp: Route = {
         },
       };
     }
-    const database = await createDatabase(adapterType, name, schemas);
+    const database = await createDatabase(baseType, name, schemas);
     if (!database) {
       return {
         code: 409,
@@ -45,14 +45,14 @@ const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
   handlers: {
     postDatabase: async (req) => {
       const { name, schemas, type } = req;
-      const adapterType = adapterMapper[type as AdapterTypeAlias];
-      if (!name || !adapterType) {
+      const baseType = readMemo<AdapterType>(['type', type || '']);
+      if (!name || !baseType || !Array.isArray(schemas)) {
         return {
           success: false,
         };
       }
       const database = await createDatabase(
-        adapterType,
+        baseType,
         name,
         schemas.map((schema) => JSON.parse(schema)),
       );

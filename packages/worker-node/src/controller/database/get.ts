@@ -1,8 +1,8 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { DatabaseDefinition } from './proto';
-import { adapterMapper, type AdapterTypeAlias } from '../../domain';
-import { readDatabase } from '../../service';
+import { type AdapterType } from '../../domain';
+import { readDatabase, readMemo } from '../../service';
 
 const getDatabaseByHttp: Route = {
   method: 'GET',
@@ -11,23 +11,23 @@ const getDatabaseByHttp: Route = {
     const { url } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const adapterType = adapterMapper[Number(type) as AdapterTypeAlias];
-    if (!name || !adapterType) {
+    const baseType = readMemo<AdapterType>(['type', type || '']);
+    if (!name || !baseType) {
       return {
         code: 400,
         body: {
           success: false,
-          data: [],
+          results: [],
         },
       };
     }
-    const database = readDatabase(adapterType, name);
+    const database = readDatabase(baseType, name);
     if (!database) {
       return {
         code: 404,
         body: {
           success: false,
-          data: [],
+          results: [],
         },
       };
     }
@@ -35,7 +35,7 @@ const getDatabaseByHttp: Route = {
       code: 200,
       body: {
         success: true,
-        data: await database.snapshot(),
+        results: await database.snapshot(),
       },
     };
   },
@@ -46,24 +46,25 @@ const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
   handlers: {
     getDatabase: async (req) => {
       const { name, type } = req;
-      const adapterType = adapterMapper[type as AdapterTypeAlias];
-      if (!name || !adapterType) {
+      const baseType = readMemo<AdapterType>(['type', type || '']);
+      if (!name || !baseType) {
         return {
           success: false,
-          data: [],
+          results: [],
         };
       }
-      const database = readDatabase(adapterType, name);
+      const database = readDatabase(baseType, name);
       if (!database) {
         return {
           success: false,
-          data: [],
+          results: [],
         };
       }
       return {
         success: true,
-        data: (await database.snapshot()).map(({ name, rows }) => ({
-          name,
+        results: (await database.snapshot()).map(({ time, table, rows }) => ({
+          time,
+          table,
           rows: rows.map((row) => JSON.stringify(row)),
         })),
       };
