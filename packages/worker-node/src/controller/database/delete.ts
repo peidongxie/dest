@@ -11,8 +11,8 @@ const deleteDatabaseByHttp: Route = {
     const { url } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const adapterType = adapterMapper[Number(type) as AdapterTypeAlias];
-    if (!name || !adapterType) {
+    const baseType = adapterMapper[Number(type) as AdapterTypeAlias] || null;
+    if (!name || !baseType) {
       return {
         code: 400,
         body: {
@@ -20,7 +20,7 @@ const deleteDatabaseByHttp: Route = {
         },
       };
     }
-    const database = await deleteDatabase(adapterType, name);
+    const database = await deleteDatabase(baseType, name);
     if (!database) {
       return {
         code: 404,
@@ -43,13 +43,13 @@ const deleteDatabaseByRpc: Plugin<DatabaseDefinition> = {
   handlers: {
     deleteDatabase: async (req) => {
       const { name, type } = req;
-      const adapterType = adapterMapper[type as AdapterTypeAlias];
-      if (!name || !adapterType) {
+      const baseType = adapterMapper[type as AdapterTypeAlias] || null;
+      if (!name || !baseType) {
         return {
           success: false,
         };
       }
-      const database = await deleteDatabase(adapterType, name);
+      const database = await deleteDatabase(baseType, name);
       if (!database) {
         return {
           success: false,

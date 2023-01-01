@@ -3,7 +3,7 @@ import _m0 from 'protobufjs/minimal';
 
 export const protobufPackage = 'dest';
 
-export enum DatabaseType {
+export enum BaseType {
   DEFAULT_TYPE = 0,
   SQLITE = 2049,
   MARIADB = 3306,
@@ -12,185 +12,73 @@ export enum DatabaseType {
   UNRECOGNIZED = -1,
 }
 
-export function databaseTypeFromJSON(object: any): DatabaseType {
+export function baseTypeFromJSON(object: any): BaseType {
   switch (object) {
     case 0:
     case 'DEFAULT_TYPE':
-      return DatabaseType.DEFAULT_TYPE;
+      return BaseType.DEFAULT_TYPE;
     case 2049:
     case 'SQLITE':
-      return DatabaseType.SQLITE;
+      return BaseType.SQLITE;
     case 3306:
     case 'MARIADB':
-      return DatabaseType.MARIADB;
+      return BaseType.MARIADB;
     case 3307:
     case 'MYSQL8':
-      return DatabaseType.MYSQL8;
+      return BaseType.MYSQL8;
     case 93307:
     case 'MYSQL':
-      return DatabaseType.MYSQL;
+      return BaseType.MYSQL;
     case -1:
     case 'UNRECOGNIZED':
     default:
-      return DatabaseType.UNRECOGNIZED;
+      return BaseType.UNRECOGNIZED;
   }
 }
 
-export function databaseTypeToJSON(object: DatabaseType): string {
+export function baseTypeToJSON(object: BaseType): string {
   switch (object) {
-    case DatabaseType.DEFAULT_TYPE:
+    case BaseType.DEFAULT_TYPE:
       return 'DEFAULT_TYPE';
-    case DatabaseType.SQLITE:
+    case BaseType.SQLITE:
       return 'SQLITE';
-    case DatabaseType.MARIADB:
+    case BaseType.MARIADB:
       return 'MARIADB';
-    case DatabaseType.MYSQL8:
+    case BaseType.MYSQL8:
       return 'MYSQL8';
-    case DatabaseType.MYSQL:
+    case BaseType.MYSQL:
       return 'MYSQL';
-    case DatabaseType.UNRECOGNIZED:
+    case BaseType.UNRECOGNIZED:
     default:
       return 'UNRECOGNIZED';
   }
-}
-
-export enum DatabaseAction {
-  DEFAULT_ACTION = 0,
-  SAVE = 1,
-  REMOVE = 2,
-  UNRECOGNIZED = -1,
-}
-
-export function databaseActionFromJSON(object: any): DatabaseAction {
-  switch (object) {
-    case 0:
-    case 'DEFAULT_ACTION':
-      return DatabaseAction.DEFAULT_ACTION;
-    case 1:
-    case 'SAVE':
-      return DatabaseAction.SAVE;
-    case 2:
-    case 'REMOVE':
-      return DatabaseAction.REMOVE;
-    case -1:
-    case 'UNRECOGNIZED':
-    default:
-      return DatabaseAction.UNRECOGNIZED;
-  }
-}
-
-export function databaseActionToJSON(object: DatabaseAction): string {
-  switch (object) {
-    case DatabaseAction.DEFAULT_ACTION:
-      return 'DEFAULT_ACTION';
-    case DatabaseAction.SAVE:
-      return 'SAVE';
-    case DatabaseAction.REMOVE:
-      return 'REMOVE';
-    case DatabaseAction.UNRECOGNIZED:
-    default:
-      return 'UNRECOGNIZED';
-  }
-}
-
-export interface DataItem {
-  name: string;
-  rows: string[];
 }
 
 export interface BaseRequest {
-  type: DatabaseType;
+  type: BaseType;
   name: string;
-}
-
-export interface SchemasRequest {
-  type: DatabaseType;
-  name: string;
-  schemas: string[];
-}
-
-export interface DataRequest {
-  type: DatabaseType;
-  name: string;
-  action: DatabaseAction;
-  data: DataItem[];
 }
 
 export interface BaseResponse {
   success: boolean;
 }
 
-export interface DataResponse {
+export interface ResultItem {
+  time: number;
+  table: string;
+  rows: string[];
+}
+
+export interface ResultsResponse {
   success: boolean;
-  data: DataItem[];
+  results: ResultItem[];
 }
 
-function createBaseDataItem(): DataItem {
-  return { name: '', rows: [] };
+export interface SchemasRequest {
+  type: BaseType;
+  name: string;
+  schemas: string[];
 }
-
-export const DataItem = {
-  encode(
-    message: DataItem,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.name !== '') {
-      writer.uint32(10).string(message.name);
-    }
-    for (const v of message.rows) {
-      writer.uint32(18).string(v!);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): DataItem {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseDataItem();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.name = reader.string();
-          break;
-        case 2:
-          message.rows.push(reader.string());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): DataItem {
-    return {
-      name: isSet(object.name) ? String(object.name) : '',
-      rows: Array.isArray(object?.rows)
-        ? object.rows.map((e: any) => String(e))
-        : [],
-    };
-  },
-
-  toJSON(message: DataItem): unknown {
-    const obj: any = {};
-    message.name !== undefined && (obj.name = message.name);
-    if (message.rows) {
-      obj.rows = message.rows.map((e) => e);
-    } else {
-      obj.rows = [];
-    }
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<DataItem>, I>>(object: I): DataItem {
-    const message = createBaseDataItem();
-    message.name = object.name ?? '';
-    message.rows = object.rows?.map((e) => e) || [];
-    return message;
-  },
-};
 
 function createBaseBaseRequest(): BaseRequest {
   return { type: 0, name: '' };
@@ -233,14 +121,14 @@ export const BaseRequest = {
 
   fromJSON(object: any): BaseRequest {
     return {
-      type: isSet(object.type) ? databaseTypeFromJSON(object.type) : 0,
+      type: isSet(object.type) ? baseTypeFromJSON(object.type) : 0,
       name: isSet(object.name) ? String(object.name) : '',
     };
   },
 
   toJSON(message: BaseRequest): unknown {
     const obj: any = {};
-    message.type !== undefined && (obj.type = databaseTypeToJSON(message.type));
+    message.type !== undefined && (obj.type = baseTypeToJSON(message.type));
     message.name !== undefined && (obj.name = message.name);
     return obj;
   },
@@ -251,172 +139,6 @@ export const BaseRequest = {
     const message = createBaseBaseRequest();
     message.type = object.type ?? 0;
     message.name = object.name ?? '';
-    return message;
-  },
-};
-
-function createBaseSchemasRequest(): SchemasRequest {
-  return { type: 0, name: '', schemas: [] };
-}
-
-export const SchemasRequest = {
-  encode(
-    message: SchemasRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.type !== 0) {
-      writer.uint32(8).int32(message.type);
-    }
-    if (message.name !== '') {
-      writer.uint32(18).string(message.name);
-    }
-    for (const v of message.schemas) {
-      writer.uint32(26).string(v!);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): SchemasRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSchemasRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.type = reader.int32() as any;
-          break;
-        case 2:
-          message.name = reader.string();
-          break;
-        case 3:
-          message.schemas.push(reader.string());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): SchemasRequest {
-    return {
-      type: isSet(object.type) ? databaseTypeFromJSON(object.type) : 0,
-      name: isSet(object.name) ? String(object.name) : '',
-      schemas: Array.isArray(object?.schemas)
-        ? object.schemas.map((e: any) => String(e))
-        : [],
-    };
-  },
-
-  toJSON(message: SchemasRequest): unknown {
-    const obj: any = {};
-    message.type !== undefined && (obj.type = databaseTypeToJSON(message.type));
-    message.name !== undefined && (obj.name = message.name);
-    if (message.schemas) {
-      obj.schemas = message.schemas.map((e) => e);
-    } else {
-      obj.schemas = [];
-    }
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<SchemasRequest>, I>>(
-    object: I,
-  ): SchemasRequest {
-    const message = createBaseSchemasRequest();
-    message.type = object.type ?? 0;
-    message.name = object.name ?? '';
-    message.schemas = object.schemas?.map((e) => e) || [];
-    return message;
-  },
-};
-
-function createBaseDataRequest(): DataRequest {
-  return { type: 0, name: '', action: 0, data: [] };
-}
-
-export const DataRequest = {
-  encode(
-    message: DataRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.type !== 0) {
-      writer.uint32(8).int32(message.type);
-    }
-    if (message.name !== '') {
-      writer.uint32(18).string(message.name);
-    }
-    if (message.action !== 0) {
-      writer.uint32(24).int32(message.action);
-    }
-    for (const v of message.data) {
-      DataItem.encode(v!, writer.uint32(34).fork()).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): DataRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseDataRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.type = reader.int32() as any;
-          break;
-        case 2:
-          message.name = reader.string();
-          break;
-        case 3:
-          message.action = reader.int32() as any;
-          break;
-        case 4:
-          message.data.push(DataItem.decode(reader, reader.uint32()));
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): DataRequest {
-    return {
-      type: isSet(object.type) ? databaseTypeFromJSON(object.type) : 0,
-      name: isSet(object.name) ? String(object.name) : '',
-      action: isSet(object.action) ? databaseActionFromJSON(object.action) : 0,
-      data: Array.isArray(object?.data)
-        ? object.data.map((e: any) => DataItem.fromJSON(e))
-        : [],
-    };
-  },
-
-  toJSON(message: DataRequest): unknown {
-    const obj: any = {};
-    message.type !== undefined && (obj.type = databaseTypeToJSON(message.type));
-    message.name !== undefined && (obj.name = message.name);
-    message.action !== undefined &&
-      (obj.action = databaseActionToJSON(message.action));
-    if (message.data) {
-      obj.data = message.data.map((e) => (e ? DataItem.toJSON(e) : undefined));
-    } else {
-      obj.data = [];
-    }
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<DataRequest>, I>>(
-    object: I,
-  ): DataRequest {
-    const message = createBaseDataRequest();
-    message.type = object.type ?? 0;
-    message.name = object.name ?? '';
-    message.action = object.action ?? 0;
-    message.data = object.data?.map((e) => DataItem.fromPartial(e)) || [];
     return message;
   },
 };
@@ -473,36 +195,42 @@ export const BaseResponse = {
   },
 };
 
-function createBaseDataResponse(): DataResponse {
-  return { success: false, data: [] };
+function createBaseResultItem(): ResultItem {
+  return { time: 0, table: '', rows: [] };
 }
 
-export const DataResponse = {
+export const ResultItem = {
   encode(
-    message: DataResponse,
+    message: ResultItem,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
-    if (message.success === true) {
-      writer.uint32(8).bool(message.success);
+    if (message.time !== 0) {
+      writer.uint32(8).uint32(message.time);
     }
-    for (const v of message.data) {
-      DataItem.encode(v!, writer.uint32(18).fork()).ldelim();
+    if (message.table !== '') {
+      writer.uint32(18).string(message.table);
+    }
+    for (const v of message.rows) {
+      writer.uint32(26).string(v!);
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): DataResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): ResultItem {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseDataResponse();
+    const message = createBaseResultItem();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.success = reader.bool();
+          message.time = reader.uint32();
           break;
         case 2:
-          message.data.push(DataItem.decode(reader, reader.uint32()));
+          message.table = reader.string();
+          break;
+        case 3:
+          message.rows.push(reader.string());
           break;
         default:
           reader.skipType(tag & 7);
@@ -512,32 +240,185 @@ export const DataResponse = {
     return message;
   },
 
-  fromJSON(object: any): DataResponse {
+  fromJSON(object: any): ResultItem {
     return {
-      success: isSet(object.success) ? Boolean(object.success) : false,
-      data: Array.isArray(object?.data)
-        ? object.data.map((e: any) => DataItem.fromJSON(e))
+      time: isSet(object.time) ? Number(object.time) : 0,
+      table: isSet(object.table) ? String(object.table) : '',
+      rows: Array.isArray(object?.rows)
+        ? object.rows.map((e: any) => String(e))
         : [],
     };
   },
 
-  toJSON(message: DataResponse): unknown {
+  toJSON(message: ResultItem): unknown {
     const obj: any = {};
-    message.success !== undefined && (obj.success = message.success);
-    if (message.data) {
-      obj.data = message.data.map((e) => (e ? DataItem.toJSON(e) : undefined));
+    message.time !== undefined && (obj.time = Math.round(message.time));
+    message.table !== undefined && (obj.table = message.table);
+    if (message.rows) {
+      obj.rows = message.rows.map((e) => e);
     } else {
-      obj.data = [];
+      obj.rows = [];
     }
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<DataResponse>, I>>(
+  fromPartial<I extends Exact<DeepPartial<ResultItem>, I>>(
     object: I,
-  ): DataResponse {
-    const message = createBaseDataResponse();
+  ): ResultItem {
+    const message = createBaseResultItem();
+    message.time = object.time ?? 0;
+    message.table = object.table ?? '';
+    message.rows = object.rows?.map((e) => e) || [];
+    return message;
+  },
+};
+
+function createBaseResultsResponse(): ResultsResponse {
+  return { success: false, results: [] };
+}
+
+export const ResultsResponse = {
+  encode(
+    message: ResultsResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.success === true) {
+      writer.uint32(8).bool(message.success);
+    }
+    for (const v of message.results) {
+      ResultItem.encode(v!, writer.uint32(18).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ResultsResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseResultsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.success = reader.bool();
+          break;
+        case 2:
+          message.results.push(ResultItem.decode(reader, reader.uint32()));
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ResultsResponse {
+    return {
+      success: isSet(object.success) ? Boolean(object.success) : false,
+      results: Array.isArray(object?.results)
+        ? object.results.map((e: any) => ResultItem.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: ResultsResponse): unknown {
+    const obj: any = {};
+    message.success !== undefined && (obj.success = message.success);
+    if (message.results) {
+      obj.results = message.results.map((e) =>
+        e ? ResultItem.toJSON(e) : undefined,
+      );
+    } else {
+      obj.results = [];
+    }
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<ResultsResponse>, I>>(
+    object: I,
+  ): ResultsResponse {
+    const message = createBaseResultsResponse();
     message.success = object.success ?? false;
-    message.data = object.data?.map((e) => DataItem.fromPartial(e)) || [];
+    message.results =
+      object.results?.map((e) => ResultItem.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseSchemasRequest(): SchemasRequest {
+  return { type: 0, name: '', schemas: [] };
+}
+
+export const SchemasRequest = {
+  encode(
+    message: SchemasRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.type !== 0) {
+      writer.uint32(8).int32(message.type);
+    }
+    if (message.name !== '') {
+      writer.uint32(18).string(message.name);
+    }
+    for (const v of message.schemas) {
+      writer.uint32(26).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SchemasRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSchemasRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.type = reader.int32() as any;
+          break;
+        case 2:
+          message.name = reader.string();
+          break;
+        case 3:
+          message.schemas.push(reader.string());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SchemasRequest {
+    return {
+      type: isSet(object.type) ? baseTypeFromJSON(object.type) : 0,
+      name: isSet(object.name) ? String(object.name) : '',
+      schemas: Array.isArray(object?.schemas)
+        ? object.schemas.map((e: any) => String(e))
+        : [],
+    };
+  },
+
+  toJSON(message: SchemasRequest): unknown {
+    const obj: any = {};
+    message.type !== undefined && (obj.type = baseTypeToJSON(message.type));
+    message.name !== undefined && (obj.name = message.name);
+    if (message.schemas) {
+      obj.schemas = message.schemas.map((e) => e);
+    } else {
+      obj.schemas = [];
+    }
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SchemasRequest>, I>>(
+    object: I,
+  ): SchemasRequest {
+    const message = createBaseSchemasRequest();
+    message.type = object.type ?? 0;
+    message.name = object.name ?? '';
+    message.schemas = object.schemas?.map((e) => e) || [];
     return message;
   },
 };
@@ -559,21 +440,13 @@ export const DatabaseDefinition = {
       name: 'GetDatabase',
       requestType: BaseRequest,
       requestStream: false,
-      responseType: DataResponse,
+      responseType: ResultsResponse,
       responseStream: false,
       options: {},
     },
     postDatabase: {
       name: 'PostDatabase',
       requestType: SchemasRequest,
-      requestStream: false,
-      responseType: BaseResponse,
-      responseStream: false,
-      options: {},
-    },
-    putDatabase: {
-      name: 'PutDatabase',
-      requestType: DataRequest,
       requestStream: false,
       responseType: BaseResponse,
       responseStream: false,

@@ -11,23 +11,23 @@ const getDatabaseByHttp: Route = {
     const { url } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const adapterType = adapterMapper[Number(type) as AdapterTypeAlias];
-    if (!name || !adapterType) {
+    const baseType = adapterMapper[Number(type) as AdapterTypeAlias] || null;
+    if (!name || !baseType) {
       return {
         code: 400,
         body: {
           success: false,
-          data: [],
+          results: [],
         },
       };
     }
-    const database = readDatabase(adapterType, name);
+    const database = readDatabase(baseType, name);
     if (!database) {
       return {
         code: 404,
         body: {
           success: false,
-          data: [],
+          results: [],
         },
       };
     }
@@ -35,7 +35,7 @@ const getDatabaseByHttp: Route = {
       code: 200,
       body: {
         success: true,
-        data: await database.snapshot(),
+        results: await database.snapshot(),
       },
     };
   },
@@ -46,24 +46,25 @@ const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
   handlers: {
     getDatabase: async (req) => {
       const { name, type } = req;
-      const adapterType = adapterMapper[type as AdapterTypeAlias];
-      if (!name || !adapterType) {
+      const baseType = adapterMapper[type as AdapterTypeAlias] || null;
+      if (!name || !baseType) {
         return {
           success: false,
-          data: [],
+          results: [],
         };
       }
-      const database = readDatabase(adapterType, name);
+      const database = readDatabase(baseType, name);
       if (!database) {
         return {
           success: false,
-          data: [],
+          results: [],
         };
       }
       return {
         success: true,
-        data: (await database.snapshot()).map(({ name, rows }) => ({
-          name,
+        results: (await database.snapshot()).map(({ time, table, rows }) => ({
+          time,
+          table,
           rows: rows.map((row) => JSON.stringify(row)),
         })),
       };

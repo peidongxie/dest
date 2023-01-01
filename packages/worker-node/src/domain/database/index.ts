@@ -1,17 +1,16 @@
 import { type EntitySchemaOptions } from 'typeorm';
-import { createAdapter, type Adapter, type AdapterType } from '../adapter';
+import {
+  createAdapter,
+  type Adapter,
+  type AdapterResultItem,
+  type AdapterType,
+} from '../adapter';
 import { TaskRunner } from '../task-runner';
 
 enum DatabaseState {
   INITIALIZED,
   RUNNING,
   TERMINATED,
-}
-
-interface ResultItem<T> {
-  time: number;
-  table: string;
-  rows: T[];
 }
 
 class Database extends TaskRunner {
@@ -69,7 +68,7 @@ class Database extends TaskRunner {
   async remove<T>(
     target: string,
     entities: unknown[],
-  ): Promise<ResultItem<T> | null> {
+  ): Promise<AdapterResultItem<T> | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
@@ -95,7 +94,7 @@ class Database extends TaskRunner {
   async save<T>(
     target: string,
     entities: unknown[],
-  ): Promise<ResultItem<T> | null> {
+  ): Promise<AdapterResultItem<T> | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
@@ -118,7 +117,10 @@ class Database extends TaskRunner {
     );
   }
 
-  read<T>(query: string, values: unknown[]): Promise<ResultItem<T> | null> {
+  read<T>(
+    query: string,
+    values: unknown[],
+  ): Promise<AdapterResultItem<T> | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
@@ -138,7 +140,10 @@ class Database extends TaskRunner {
     );
   }
 
-  root<T>(query: string, values: unknown[]): Promise<ResultItem<T> | null> {
+  root<T>(
+    query: string,
+    values: unknown[],
+  ): Promise<AdapterResultItem<T> | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
@@ -158,7 +163,7 @@ class Database extends TaskRunner {
     );
   }
 
-  snapshot(): Promise<ResultItem<unknown>[]> {
+  snapshot(): Promise<AdapterResultItem<unknown>[]> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
@@ -168,7 +173,10 @@ class Database extends TaskRunner {
     );
   }
 
-  write<T>(query: string, values: unknown[]): Promise<ResultItem<T> | null> {
+  write<T>(
+    query: string,
+    values: unknown[],
+  ): Promise<AdapterResultItem<T> | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,

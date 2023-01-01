@@ -4,12 +4,13 @@ package dest;
 
 service Database {
   rpc DeleteDatabase (BaseRequest) returns (BaseResponse) {}
-  rpc GetDatabase (BaseRequest) returns (DataResponse) {}
+  rpc GetDatabase (BaseRequest) returns (ResultsResponse) {}
   rpc PostDatabase (SchemasRequest) returns (BaseResponse) {}
-  rpc PutDatabase (DataRequest) returns (BaseResponse) {}
 }
 
-enum DatabaseType {
+// Base
+
+enum BaseType {
   DEFAULT_TYPE = 0;
   SQLITE = 2049;
   MARIADB = 3306;
@@ -17,40 +18,32 @@ enum DatabaseType {
   MYSQL = 93307;
 }
 
-enum DatabaseAction {
-  DEFAULT_ACTION = 0;
-  SAVE = 1;
-  REMOVE = 2;
-}
-
-message DataItem {
-  string name = 1;
-  repeated string rows = 2;
-}
-
 message BaseRequest {
-  DatabaseType type = 1;
+  BaseType type = 1;
   string name = 2;
-}
-
-message SchemasRequest {
-  DatabaseType type = 1;
-  string name = 2;
-  repeated string schemas = 3;
-}
-
-message DataRequest {
-  DatabaseType type = 1;
-  string name = 2;
-  DatabaseAction action = 3;
-  repeated DataItem data = 4;
 }
 
 message BaseResponse {
   bool success = 1;
 }
 
-message DataResponse {
+// Result
+
+message ResultItem {
+  uint32 time = 1;
+  string table = 2;
+  repeated string rows = 3;
+}
+
+message ResultsResponse {
   bool success = 1;
-  repeated DataItem data = 2;
+  repeated ResultItem results = 2;
+}
+
+// Schema
+
+message SchemasRequest {
+  BaseType type = 1;
+  string name = 2;
+  repeated string schemas = 3;
 }

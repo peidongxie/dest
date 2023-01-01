@@ -7,8 +7,6 @@ import {
   postDatabaseByRpc,
   postQueryByHttp,
   postQueryByRpc,
-  putDatabaseByHttp,
-  putDatabaseByRpc,
 } from './controller';
 import { createDatabase, createServer } from './service';
 
@@ -20,17 +18,10 @@ await createServer(
     getDatabaseByHttp,
     postDatabaseByHttp,
     postQueryByHttp,
-    putDatabaseByHttp,
   ],
   3001,
 );
 await createServer(
-  [
-    deleteDatabaseByRpc,
-    getDatabaseByRpc,
-    postDatabaseByRpc,
-    postQueryByRpc,
-    putDatabaseByRpc,
-  ],
+  [deleteDatabaseByRpc, getDatabaseByRpc, postDatabaseByRpc, postQueryByRpc],
   3002,
 );

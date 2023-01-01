@@ -12,9 +12,9 @@ const postDatabaseByHttp: Route = {
     const { url, body } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const adapterType = adapterMapper[Number(type) as AdapterTypeAlias];
+    const baseType = adapterMapper[Number(type) as AdapterTypeAlias] || null;
     const schemas = await body.json<EntitySchemaOptions<unknown>[]>();
-    if (!name || !adapterType || !Array.isArray(schemas)) {
+    if (!name || !baseType || !Array.isArray(schemas)) {
       return {
         code: 400,
         body: {
@@ -22,7 +22,7 @@ const postDatabaseByHttp: Route = {
         },
       };
     }
-    const database = await createDatabase(adapterType, name, schemas);
+    const database = await createDatabase(baseType, name, schemas);
     if (!database) {
       return {
         code: 409,
@@ -45,14 +45,14 @@ const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
   handlers: {
     postDatabase: async (req) => {
       const { name, schemas, type } = req;
-      const adapterType = adapterMapper[type as AdapterTypeAlias];
-      if (!name || !adapterType) {
+      const baseType = adapterMapper[type as AdapterTypeAlias] || null;
+      if (!name || !baseType || !Array.isArray(schemas)) {
         return {
           success: false,
         };
       }
       const database = await createDatabase(
-        adapterType,
+        baseType,
         name,
         schemas.map((schema) => JSON.parse(schema)),
       );
