@@ -1,16 +1,20 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
-import { QueryDefinition, QueryPrivilege } from './proto';
+import { EventAction, QueryDefinition } from './proto';
 import { adapterMapper, type AdapterTypeAlias } from '../../domain';
 import { createQuery } from '../../service';
 
-const privilegeMapper: Record<
-  QueryPrivilege.READ | QueryPrivilege.WRITE | QueryPrivilege.ROOT,
-  'read' | 'write' | 'root'
+const eventMapper: Record<
+  EventAction,
+  'save' | 'remove' | 'read' | 'write' | 'root' | null
 > = {
-  [QueryPrivilege.READ]: 'read',
-  [QueryPrivilege.WRITE]: 'write',
-  [QueryPrivilege.ROOT]: 'root',
+  [EventAction.DEFAULT_ACTION]: null,
+  [EventAction.SAVE]: 'save',
+  [EventAction.REMOVE]: 'remove',
+  [EventAction.READ]: 'read',
+  [EventAction.WRITE]: 'write',
+  [EventAction.ROOT]: 'root',
+  [EventAction.UNRECOGNIZED]: null,
 };
 
 const postQueryByHttp: Route = {
@@ -20,43 +24,52 @@ const postQueryByHttp: Route = {
     const { url, body } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const adapterType = adapterMapper[Number(type) as AdapterTypeAlias];
-    const privilege = Number(
-      `/${url.pathname}/`
-        .replace(/\/+/g, '/')
-        .match(/^\/query\/(1|2)\//)?.[1] || 0,
-    );
-    const query = await body.text();
+    const baseType = adapterMapper[Number(type) as AdapterTypeAlias] || null;
+    const event = await body.json<{
+      action: EventAction;
+      target: string;
+      values: unknown[];
+    }>();
+    const eventAction =
+      eventMapper[Number(event?.action) as EventAction] || null;
     if (
-      Number(!name) ^ Number(privilege === QueryPrivilege.ROOT) ||
-      !adapterType ||
-      (privilege !== QueryPrivilege.READ &&
-        privilege !== QueryPrivilege.WRITE &&
-        privilege !== QueryPrivilege.ROOT) ||
-      !query
+      Number(!name) ^ Number(event?.action === EventAction.ROOT) ||
+      !baseType ||
+      !eventAction ||
+      !event ||
+      !event.action ||
+      !event.target ||
+      !Array.isArray(event.values)
     ) {
       return {
         code: 400,
         body: {
           success: false,
-          time: 0,
-          result: '',
+          result: {
+            time: 0,
+            table: '',
+            rows: [],
+          },
         },
       };
     }
     const result = await createQuery(
-      adapterType,
+      baseType,
       name || '',
-      privilegeMapper[privilege],
-      query,
+      eventAction,
+      event.target,
+      event.values,
     );
     if (!result) {
       return {
         code: 404,
         body: {
           success: false,
-          time: 0,
-          result: '',
+          result: {
+            time: 0,
+            table: '',
+            rows: [],
+          },
         },
       };
     }
@@ -64,8 +77,7 @@ const postQueryByHttp: Route = {
       code: 201,
       body: {
         success: true,
-        time: Number(result.time),
-        result: result.result,
+        result: result,
       },
     };
   },
@@ -75,39 +87,50 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
   definition: QueryDefinition,
   handlers: {
     postQuery: async (req) => {
-      const { name, privilege, query, type } = req;
-      const adapterType = adapterMapper[type as AdapterTypeAlias];
+      const { event, name, type } = req;
+      const baseType = adapterMapper[type as AdapterTypeAlias] || null;
+      const eventAction = eventMapper[event?.action as EventAction] || null;
       if (
-        Number(!name) ^ Number(privilege === QueryPrivilege.ROOT) ||
-        !adapterType ||
-        (privilege !== QueryPrivilege.READ &&
-          privilege !== QueryPrivilege.WRITE &&
-          privilege !== QueryPrivilege.ROOT) ||
-        !query
+        Number(!name) ^ Number(event?.action === EventAction.ROOT) ||
+        !baseType ||
+        !eventAction ||
+        !event ||
+        !event.action ||
+        !event.target ||
+        !Array.isArray(event.values)
       ) {
         return {
           success: false,
-          time: 0,
-          result: '',
+          result: {
+            time: 0,
+            table: '',
+            rows: [],
+          },
         };
       }
       const result = await createQuery(
-        adapterType,
+        baseType,
         name || '',
-        privilegeMapper[privilege],
-        query,
+        eventAction,
+        event.target,
+        event.values.map((value) => JSON.parse(value)),
       );
       if (!result) {
         return {
           success: false,
-          time: 0,
-          result: '',
+          result: {
+            time: 0,
+            table: '',
+            rows: [],
+          },
         };
       }
       return {
         success: true,
-        time: Number(result.time),
-        result: JSON.stringify(result.result),
+        result: {
+          ...result,
+          rows: result.rows.map((row) => JSON.stringify(row)),
+        },
       };
     },
   },

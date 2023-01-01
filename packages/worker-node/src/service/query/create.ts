@@ -1,22 +1,18 @@
-import { type AdapterType } from '../../domain';
+import { type AdapterResultItem, type AdapterType } from '../../domain';
 import { readDatabase } from '../database';
 
 const createQuery = async <T>(
   type: AdapterType,
   name: string,
-  privilege: 'read' | 'write' | 'root',
-  query: string,
-): Promise<{ time: bigint; result: T[] } | null> => {
+  action: 'save' | 'remove' | 'read' | 'write' | 'root',
+  target: string,
+  values: unknown[],
+): Promise<AdapterResultItem<T> | null> => {
   const database = readDatabase(type, name);
   if (!database) return null;
-  const start = process.hrtime.bigint();
-  const result = await database[privilege]<T>(query);
+  const result = await database[action]<T>(target, values as T[]);
   if (!result) return null;
-  const end = process.hrtime.bigint();
-  return {
-    time: end - start,
-    result,
-  };
+  return result;
 };
 
 export { createQuery };
