@@ -8,7 +8,6 @@ export enum BaseType {
   SQLITE = 2049,
   MARIADB = 3306,
   MYSQL8 = 3307,
-  MYSQL = 93307,
   UNRECOGNIZED = -1,
 }
 
@@ -26,9 +25,6 @@ export function baseTypeFromJSON(object: any): BaseType {
     case 3307:
     case 'MYSQL8':
       return BaseType.MYSQL8;
-    case 93307:
-    case 'MYSQL':
-      return BaseType.MYSQL;
     case -1:
     case 'UNRECOGNIZED':
     default:
@@ -46,8 +42,6 @@ export function baseTypeToJSON(object: BaseType): string {
       return 'MARIADB';
     case BaseType.MYSQL8:
       return 'MYSQL8';
-    case BaseType.MYSQL:
-      return 'MYSQL';
     case BaseType.UNRECOGNIZED:
     default:
       return 'UNRECOGNIZED';

@@ -13,7 +13,6 @@ enum BaseType {
   SQLITE = 2049;
   MARIADB = 3306;
   MYSQL8 = 3307;
-  MYSQL = 93307;
 }
 
 message BaseRequest {

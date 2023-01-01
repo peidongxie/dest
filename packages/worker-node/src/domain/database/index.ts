@@ -13,7 +13,19 @@ enum DatabaseState {
   TERMINATED,
 }
 
-class Database extends TaskRunner {
+type DatabaseAction = 'save' | 'remove' | 'read' | 'write' | 'root';
+
+class Database
+  extends TaskRunner
+  implements
+    Record<
+      DatabaseAction,
+      <T>(
+        target: string,
+        values: unknown[],
+      ) => Promise<AdapterResultItem<T> | null>
+    >
+{
   adapter: Adapter;
   name: string;
   type: AdapterType;
@@ -197,4 +209,4 @@ class Database extends TaskRunner {
   }
 }
 
-export { Database };
+export { Database, type DatabaseAction };

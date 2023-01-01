@@ -2,8 +2,8 @@ import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { type EntitySchemaOptions } from 'typeorm';
 import { DatabaseDefinition } from './proto';
-import { adapterMapper, type AdapterTypeAlias } from '../../domain';
-import { createDatabase } from '../../service';
+import { type AdapterType } from '../../domain';
+import { createDatabase, readMemo } from '../../service';
 
 const postDatabaseByHttp: Route = {
   method: 'POST',
@@ -12,7 +12,7 @@ const postDatabaseByHttp: Route = {
     const { url, body } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const baseType = adapterMapper[Number(type) as AdapterTypeAlias] || null;
+    const baseType = readMemo<AdapterType>(['type', type || '']);
     const schemas = await body.json<EntitySchemaOptions<unknown>[]>();
     if (!name || !baseType || !Array.isArray(schemas)) {
       return {
@@ -45,7 +45,7 @@ const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
   handlers: {
     postDatabase: async (req) => {
       const { name, schemas, type } = req;
-      const baseType = adapterMapper[type as AdapterTypeAlias] || null;
+      const baseType = readMemo<AdapterType>(['type', type || '']);
       if (!name || !baseType || !Array.isArray(schemas)) {
         return {
           success: false,

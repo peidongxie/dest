@@ -1,21 +1,8 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { EventAction, QueryDefinition } from './proto';
-import { adapterMapper, type AdapterTypeAlias } from '../../domain';
-import { createQuery } from '../../service';
-
-const eventMapper: Record<
-  EventAction,
-  'save' | 'remove' | 'read' | 'write' | 'root' | null
-> = {
-  [EventAction.DEFAULT_ACTION]: null,
-  [EventAction.SAVE]: 'save',
-  [EventAction.REMOVE]: 'remove',
-  [EventAction.READ]: 'read',
-  [EventAction.WRITE]: 'write',
-  [EventAction.ROOT]: 'root',
-  [EventAction.UNRECOGNIZED]: null,
-};
+import { type AdapterType, type DatabaseAction } from '../../domain';
+import { createQuery, readMemo } from '../../service';
 
 const postQueryByHttp: Route = {
   method: 'POST',
@@ -24,14 +11,16 @@ const postQueryByHttp: Route = {
     const { url, body } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const baseType = adapterMapper[Number(type) as AdapterTypeAlias] || null;
+    const baseType = readMemo<AdapterType>(['type', type || '']);
     const event = await body.json<{
       action: EventAction;
       target: string;
       values: unknown[];
     }>();
-    const eventAction =
-      eventMapper[Number(event?.action) as EventAction] || null;
+    const eventAction = readMemo<DatabaseAction>([
+      'action',
+      event?.action || '',
+    ]);
     if (
       Number(!name) ^ Number(event?.action === EventAction.ROOT) ||
       !baseType ||
@@ -88,8 +77,11 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
   handlers: {
     postQuery: async (req) => {
       const { event, name, type } = req;
-      const baseType = adapterMapper[type as AdapterTypeAlias] || null;
-      const eventAction = eventMapper[event?.action as EventAction] || null;
+      const baseType = readMemo<AdapterType>(['type', type || '']);
+      const eventAction = readMemo<DatabaseAction>([
+        'action',
+        event?.action || '',
+      ]);
       if (
         Number(!name) ^ Number(event?.action === EventAction.ROOT) ||
         !baseType ||
