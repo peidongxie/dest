@@ -93,11 +93,10 @@ class Database
           .remove(entities);
         await this.adapter.postRemove?.();
         const end = process.hrtime.bigint();
-        if (!rows) return null;
         return {
           time: Number(end - start),
-          table: target,
-          rows: Array.isArray(rows) ? rows : [rows],
+          table: '',
+          rows: !rows ? [] : !Array.isArray(rows) ? [rows] : rows,
         };
       },
     );
@@ -119,11 +118,10 @@ class Database
           .save(entities);
         await this.adapter.postSave?.();
         const end = process.hrtime.bigint();
-        if (!rows) return null;
         return {
           time: Number(end - start),
-          table: target,
-          rows: Array.isArray(rows) ? rows : [rows],
+          table: '',
+          rows: !rows ? [] : !Array.isArray(rows) ? [rows] : rows,
         };
       },
     );
@@ -142,11 +140,10 @@ class Database
         const start = process.hrtime.bigint();
         const rows = await dataSource.query(query, values);
         const end = process.hrtime.bigint();
-        if (!rows) return null;
         return {
           time: Number(end - start),
           table: '',
-          rows: Array.isArray(rows) ? rows : [rows],
+          rows: !rows ? [] : !Array.isArray(rows) ? [rows] : rows,
         };
       },
     );
@@ -165,11 +162,10 @@ class Database
         const start = process.hrtime.bigint();
         const rows = await dataSource.query(query, values);
         const end = process.hrtime.bigint();
-        if (!rows) return null;
         return {
           time: Number(end - start),
           table: '',
-          rows: Array.isArray(rows) ? rows : [rows],
+          rows: !rows ? [] : !Array.isArray(rows) ? [rows] : rows,
         };
       },
     );
@@ -198,11 +194,10 @@ class Database
         const start = process.hrtime.bigint();
         const rows = await dataSource.query(query, values);
         const end = process.hrtime.bigint();
-        if (!rows) return null;
         return {
           time: Number(end - start),
           table: '',
-          rows: Array.isArray(rows) ? rows : [rows],
+          rows: !rows ? [] : !Array.isArray(rows) ? [rows] : rows,
         };
       },
     );
