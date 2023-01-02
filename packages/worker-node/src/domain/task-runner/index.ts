@@ -24,6 +24,10 @@ class TaskRunner {
           }
           resolve(result);
         } catch (e) {
+          this.tasks.shift();
+          if (this.tasks.length > 0) {
+            this.tasks[0]();
+          }
           reject(e);
         }
       });
