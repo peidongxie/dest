@@ -1,10 +1,5 @@
 import { type EntitySchemaOptions } from 'typeorm';
-import {
-  createAdapter,
-  type Adapter,
-  type AdapterResultItem,
-  type AdapterType,
-} from '../adapter';
+import { createAdapter, type Adapter, type AdapterType } from '../adapter';
 import { TaskRunner } from '../task-runner';
 
 enum DatabaseState {
@@ -15,6 +10,12 @@ enum DatabaseState {
 
 type DatabaseAction = 'save' | 'remove' | 'read' | 'write' | 'root';
 
+interface DatabaseResultItem<T> {
+  time: number;
+  table: string;
+  rows: T[];
+}
+
 class Database
   extends TaskRunner
   implements
@@ -23,7 +24,7 @@ class Database
       <T>(
         target: string,
         values: unknown[],
-      ) => Promise<AdapterResultItem<T> | null>
+      ) => Promise<DatabaseResultItem<T> | null>
     >
 {
   adapter: Adapter;
@@ -80,7 +81,7 @@ class Database
   async remove<T>(
     target: string,
     entities: unknown[],
-  ): Promise<AdapterResultItem<T> | null> {
+  ): Promise<DatabaseResultItem<T> | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
@@ -105,7 +106,7 @@ class Database
   async save<T>(
     target: string,
     entities: unknown[],
-  ): Promise<AdapterResultItem<T> | null> {
+  ): Promise<DatabaseResultItem<T> | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
@@ -130,7 +131,7 @@ class Database
   read<T>(
     query: string,
     values: unknown[],
-  ): Promise<AdapterResultItem<T> | null> {
+  ): Promise<DatabaseResultItem<T> | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
@@ -152,7 +153,7 @@ class Database
   root<T>(
     query: string,
     values: unknown[],
-  ): Promise<AdapterResultItem<T> | null> {
+  ): Promise<DatabaseResultItem<T> | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
@@ -171,12 +172,20 @@ class Database
     );
   }
 
-  snapshot(): Promise<AdapterResultItem<unknown>[]> {
+  snapshot<T>(table?: string): Promise<DatabaseResultItem<T> | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
       async () => {
-        return this.adapter.getSnapshot();
+        const start = process.hrtime.bigint();
+        const rows = await this.adapter.getSnapshot(table);
+        const end = process.hrtime.bigint();
+        if (!rows) return null;
+        return {
+          time: Number(end - start),
+          table: table || this.name,
+          rows: rows as T[],
+        };
       },
     );
   }
@@ -184,7 +193,7 @@ class Database
   write<T>(
     query: string,
     values: unknown[],
-  ): Promise<AdapterResultItem<T> | null> {
+  ): Promise<DatabaseResultItem<T> | null> {
     return this.runTask(
       (state) =>
         state === DatabaseState.RUNNING ? DatabaseState.RUNNING : null,
@@ -204,4 +213,4 @@ class Database
   }
 }
 
-export { Database, type DatabaseAction };
+export { Database, type DatabaseAction, type DatabaseResultItem };

@@ -2,7 +2,7 @@ import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { EventAction, QueryDefinition } from './proto';
 import { type AdapterType, type DatabaseAction } from '../../domain';
-import { createQuery, readMemo } from '../../service';
+import { createCommonQuery, readMemo } from '../../service';
 
 const postQueryByHttp: Route = {
   method: 'POST',
@@ -42,7 +42,7 @@ const postQueryByHttp: Route = {
         },
       };
     }
-    const result = await createQuery(
+    const result = await createCommonQuery(
       baseType,
       name || '',
       eventAction,
@@ -100,7 +100,7 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
           },
         };
       }
-      const result = await createQuery(
+      const result = await createCommonQuery(
         baseType,
         name || '',
         eventAction,

@@ -1,34 +1,10 @@
-import {
-  EntitySchema,
-  type DataSource,
-  type EntitySchemaOptions,
-} from 'typeorm';
+import { EntitySchema, type EntitySchemaOptions } from 'typeorm';
 import Mariadb from './mariadb';
 import Mysql8 from './mysql8';
 import Sqlite from './sqlite';
+import { type Adapter } from './type';
 
 type AdapterType = 'mariadb' | 'mysql:8' | 'sqlite';
-
-interface AdapterResultItem<T> {
-  time: number;
-  table: string;
-  rows: T[];
-}
-
-interface Adapter {
-  getReadableDataSource: () => DataSource | null;
-  getRootDataSource: () => DataSource | null;
-  getSnapshot: () => Promise<AdapterResultItem<unknown>[]>;
-  getWritableDataSource: () => DataSource | null;
-  postCreate?: () => Promise<void>;
-  postDestroy?: () => Promise<void>;
-  postRemove?: () => Promise<void>;
-  postSave?: () => Promise<void>;
-  preCreate?: () => Promise<void>;
-  preDestroy?: () => Promise<void>;
-  preRemove?: () => Promise<void>;
-  preSave?: () => Promise<void>;
-}
 
 const createAdapter = (
   type: AdapterType,
@@ -48,9 +24,4 @@ const createAdapter = (
   }
 };
 
-export {
-  createAdapter,
-  type Adapter,
-  type AdapterResultItem,
-  type AdapterType,
-};
+export { createAdapter, type Adapter, type AdapterType };
