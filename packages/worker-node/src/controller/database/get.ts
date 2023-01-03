@@ -2,7 +2,7 @@ import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { DatabaseDefinition } from './proto';
 import { type AdapterType } from '../../domain';
-import { readDatabase, readMemo } from '../../service';
+import { createHierarchyQuery, readDatabase, readMemo } from '../../service';
 
 const getDatabaseByHttp: Route = {
   method: 'GET',
@@ -12,7 +12,7 @@ const getDatabaseByHttp: Route = {
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
     const baseType = readMemo<AdapterType>(['type', type || '']);
-    if (!name || !baseType) {
+    if (!baseType) {
       return {
         code: 400,
         body: {
@@ -21,7 +21,7 @@ const getDatabaseByHttp: Route = {
         },
       };
     }
-    const database = readDatabase(baseType, name);
+    const database = readDatabase(baseType, name || '');
     if (!database) {
       return {
         code: 404,
@@ -31,11 +31,18 @@ const getDatabaseByHttp: Route = {
         },
       };
     }
+    const results = await createHierarchyQuery(baseType, name || '');
+    if (!results) {
+      return {
+        success: false,
+        results: [],
+      };
+    }
     return {
       code: 200,
       body: {
         success: true,
-        results: await database.snapshot(),
+        results: results,
       },
     };
   },
@@ -47,14 +54,21 @@ const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
     getDatabase: async (req) => {
       const { name, type } = req;
       const baseType = readMemo<AdapterType>(['type', type || '']);
-      if (!name || !baseType) {
+      if (!baseType) {
         return {
           success: false,
           results: [],
         };
       }
-      const database = readDatabase(baseType, name);
+      const database = readDatabase(baseType, name || '');
       if (!database) {
+        return {
+          success: false,
+          results: [],
+        };
+      }
+      const results = await createHierarchyQuery(baseType, name || '');
+      if (!results) {
         return {
           success: false,
           results: [],
@@ -62,10 +76,9 @@ const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
       }
       return {
         success: true,
-        results: (await database.snapshot()).map(({ time, table, rows }) => ({
-          time,
-          table,
-          rows: rows.map((row) => JSON.stringify(row)),
+        results: results.map((result) => ({
+          ...result,
+          rows: result.rows.map((row) => JSON.stringify(row)),
         })),
       };
     },

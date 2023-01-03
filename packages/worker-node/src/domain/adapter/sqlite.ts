@@ -67,44 +67,25 @@ class Sqlite implements Adapter {
     return null;
   }
 
-  async getSnapshot() {
+  async getSnapshot(table?: string) {
     if (this.name) {
+      if (table) {
+        return (this.readable as DataSource).query(`SELECT * FROM ${table}`);
+      }
       const rows: { name: string }[] = await (
         this.readable as DataSource
       ).query(`SELECT name FROM sqlite_master WHERE type = "table"`);
-      const tables = rows
-        .filter((row) => {
-          return !protectedTables.includes(row.name);
-        })
+      return rows
+        .filter((row) => !protectedTables.includes(row.name))
         .map((row) => row.name);
-      return Promise.all(
-        tables.map(async (table) => {
-          const start = process.hrtime.bigint();
-          const rows = await (this.readable as DataSource).query(
-            `SELECT * FROM ${table}`,
-          );
-          const end = process.hrtime.bigint();
-          return {
-            time: Number(end - start),
-            table,
-            rows,
-          };
-        }),
-      );
     } else {
+      if (table) {
+        return null;
+      }
       const rows = await readdir(dir);
-      const tables = rows
+      return rows
         .filter((row) => extname(row) === '.sqlite')
         .map((row) => basename(row, '.sqlite'));
-      return Promise.all(
-        tables.map(async (table) => {
-          return {
-            time: 0,
-            table,
-            rows: [],
-          };
-        }),
-      );
     }
   }
 
