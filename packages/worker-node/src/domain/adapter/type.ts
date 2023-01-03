@@ -15,4 +15,6 @@ interface Adapter {
   preSave?: () => Promise<void>;
 }
 
-export { type Adapter };
+type AdapterType = 'mariadb' | 'mysql:8' | 'sqlite';
+
+export { type Adapter, type AdapterType };
