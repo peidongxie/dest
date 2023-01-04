@@ -12,6 +12,7 @@ import {
 import { type RequestWrapped } from './request';
 import { type ResponseWrapped } from './response';
 import {
+  type KeysOfUnion,
   type ProtoDefinition,
   type ProtoMethod,
   type ReqMsg,
@@ -44,23 +45,40 @@ type ClientHandler<
 > = ClientHandlerMap<ReqMsg<Method>, ResMsg<Method>>[T];
 
 class Client<Definition extends ProtoDefinition> {
-  private methods: Map<string, ProtoMethod>;
+  private calls: Map<string, { service: string; method: ProtoMethod }>;
   private raw: ClientRaw;
 
-  constructor(definition: Definition, options?: ClientOptions) {
-    const serviceName = definition.fullName;
-    this.methods = new Map(Array.from(Object.entries(definition.methods)));
+  constructor(definitions: Definition[], options?: ClientOptions) {
+    this.calls = new Map(
+      definitions
+        .map((definition) =>
+          Object.entries(definition.methods).map(
+            ([callName, method]) =>
+              [
+                callName,
+                {
+                  service: definition.fullName,
+                  method,
+                },
+              ] as const,
+          ),
+        )
+        .flat(),
+    );
     const GenericClient = makeGenericClientConstructor(
       Object.fromEntries(
-        Array.from(this.methods).map(
+        Array.from(this.calls).map(
           ([
             callName,
             {
-              name: methodName,
-              requestType,
-              requestStream,
-              responseType,
-              responseStream,
+              service: serviceName,
+              method: {
+                name: methodName,
+                requestType,
+                requestStream,
+                responseType,
+                responseStream,
+              },
             },
           ]) => [
             callName,
@@ -79,7 +97,7 @@ class Client<Definition extends ProtoDefinition> {
           ],
         ),
       ),
-      serviceName,
+      definitions.map((definition) => definition.name).join(),
     );
     const hostname = options?.hostname || 'localhost';
     const port = options?.port || 50051;
@@ -90,16 +108,16 @@ class Client<Definition extends ProtoDefinition> {
     );
   }
 
-  public call<CallName extends keyof Definition['methods']>(
+  public call<CallName extends KeysOfUnion<Definition['methods']>>(
     method: CallName,
   ): (
     req: RequestWrapped<Definition['methods'][CallName]>,
   ) => Promise<ResponseWrapped<Definition['methods'][CallName]>> {
-    const callName = method as string;
-    if (this.methods.has(callName)) {
-      const { requestStream, responseStream } = this.methods.get(
-        callName,
-      ) as Definition['methods'][CallName];
+    const callName = method;
+    if (this.calls.has(callName)) {
+      const call = this.calls.get(callName);
+      const requestStream = call?.method.requestStream;
+      const responseStream = call?.method.responseStream;
       const handler: ClientHandler<Definition['methods'][CallName]> = this.raw[
         callName
       ].bind(this.raw);

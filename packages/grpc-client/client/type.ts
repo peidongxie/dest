@@ -94,6 +94,7 @@ type RpcType<Method extends ProtoMethod> = Method extends {
   : never;
 
 export {
+  type KeysOfUnion,
   type ProtoDefinition,
   type ProtoMethod,
   type ReqMsg,
