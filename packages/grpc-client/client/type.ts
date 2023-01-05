@@ -22,6 +22,12 @@ type DeepPartial<T> = T extends Builtin
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 
+type ValuesOfUnion<T, K extends KeysOfUnion<T>> = K extends K
+  ? T extends Record<K, unknown>
+    ? T[K]
+    : never
+  : never;
+
 type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
@@ -100,4 +106,5 @@ export {
   type ReqMsg,
   type ResMsg,
   type RpcType,
+  type ValuesOfUnion,
 };

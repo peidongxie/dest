@@ -1,19 +1,19 @@
 import { type ProtoDefinition } from '@dest-toolkit/grpc-client';
-import { type Route } from '@dest-toolkit/http-client';
 import { type HttpClient, type RpcClient } from '../../domain';
 import { deleteMemo } from '../memo';
 
-const deleteClient = async <T extends Route | ProtoDefinition>(
+const deleteHttpClient = async (
   port: number,
   hostname: string,
-): Promise<
-  ([T] extends [ProtoDefinition] ? RpcClient<T> : HttpClient) | null
-> => {
-  return deleteMemo<[T] extends [ProtoDefinition] ? RpcClient<T> : HttpClient>([
-    'client',
-    port,
-    hostname,
-  ]);
+): Promise<HttpClient | null> => {
+  return deleteMemo<HttpClient>(['http-client', port, hostname]);
 };
 
-export { deleteClient };
+const deleteRpcClient = async <T extends ProtoDefinition>(
+  port: number,
+  hostname: string,
+): Promise<RpcClient<T> | null> => {
+  return deleteMemo<RpcClient<T>>(['client', port, hostname]);
+};
+
+export { deleteHttpClient, deleteRpcClient };
