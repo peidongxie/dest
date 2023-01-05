@@ -7,6 +7,12 @@ import {
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 
+type ValuesOfUnion<T, K extends KeysOfUnion<T>> = K extends K
+  ? T extends Record<K, unknown>
+    ? T[K]
+    : never
+  : never;
+
 class RpcClient<Definition extends ProtoDefinition> {
   private raw: Client<Definition>;
 
@@ -20,8 +26,10 @@ class RpcClient<Definition extends ProtoDefinition> {
   public call<CallName extends KeysOfUnion<Definition['methods']>>(
     name: CallName,
   ): (
-    req: RequestWrapped<Definition['methods'][CallName]>,
-  ) => Promise<ResponseWrapped<Definition['methods'][CallName]>> {
+    req: RequestWrapped<ValuesOfUnion<Definition['methods'], CallName>>,
+  ) => Promise<
+    ResponseWrapped<ValuesOfUnion<Definition['methods'], CallName>>
+  > {
     return (req) => this.raw.call(name)(req);
   }
 }

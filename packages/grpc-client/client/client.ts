@@ -18,6 +18,7 @@ import {
   type ReqMsg,
   type ResMsg,
   type RpcType,
+  type ValuesOfUnion,
 } from './type';
 interface ClientOptions extends ChannelOptions {
   port?: number;
@@ -111,25 +112,38 @@ class Client<Definition extends ProtoDefinition> {
   public call<CallName extends KeysOfUnion<Definition['methods']>>(
     method: CallName,
   ): (
-    req: RequestWrapped<Definition['methods'][CallName]>,
-  ) => Promise<ResponseWrapped<Definition['methods'][CallName]>> {
+    req: RequestWrapped<ValuesOfUnion<Definition['methods'], CallName>>,
+  ) => Promise<
+    ResponseWrapped<ValuesOfUnion<Definition['methods'], CallName>>
+  > {
     const callName = method;
     if (this.calls.has(callName)) {
       const call = this.calls.get(callName);
       const requestStream = call?.method.requestStream;
       const responseStream = call?.method.responseStream;
-      const handler: ClientHandler<Definition['methods'][CallName]> = this.raw[
-        callName
-      ].bind(this.raw);
+      const handler: ClientHandler<
+        ValuesOfUnion<Definition['methods'], CallName>
+      > = this.raw[callName].bind(this.raw);
       if (!requestStream && !responseStream) {
-        return (req: RequestWrapped<Definition['methods'][CallName]>) => {
+        return (
+          req: RequestWrapped<ValuesOfUnion<Definition['methods'], CallName>>,
+        ) => {
           const res = new Promise<
-            ResponseWrapped<Definition['methods'][CallName], 'UNARY'>
+            ResponseWrapped<
+              ValuesOfUnion<Definition['methods'], CallName>,
+              'UNARY'
+            >
           >((resolve, reject) => {
             (
-              handler as ClientHandler<Definition['methods'][CallName], 'UNARY'>
+              handler as ClientHandler<
+                ValuesOfUnion<Definition['methods'], CallName>,
+                'UNARY'
+              >
             )(
-              req as RequestWrapped<Definition['methods'][CallName], 'UNARY'>,
+              req as RequestWrapped<
+                ValuesOfUnion<Definition['methods'], CallName>,
+                'UNARY'
+              >,
               (reason, value) => {
                 if (reason) reject(reason);
                 else resolve(value);
@@ -137,42 +151,52 @@ class Client<Definition extends ProtoDefinition> {
             );
           });
           return res as Promise<
-            ResponseWrapped<Definition['methods'][CallName]>
+            ResponseWrapped<ValuesOfUnion<Definition['methods'], CallName>>
           >;
         };
       }
       if (!requestStream && responseStream) {
-        return (req: RequestWrapped<Definition['methods'][CallName]>) => {
+        return (
+          req: RequestWrapped<ValuesOfUnion<Definition['methods'], CallName>>,
+        ) => {
           const res = new Promise<
-            ResponseWrapped<Definition['methods'][CallName], 'SERVER'>
+            ResponseWrapped<
+              ValuesOfUnion<Definition['methods'], CallName>,
+              'SERVER'
+            >
           >((resolve) => {
             resolve(
               (
                 handler as ClientHandler<
-                  Definition['methods'][CallName],
+                  ValuesOfUnion<Definition['methods'], CallName>,
                   'SERVER'
                 >
               )(
                 req as RequestWrapped<
-                  Definition['methods'][CallName],
+                  ValuesOfUnion<Definition['methods'], CallName>,
                   'SERVER'
                 >,
               ),
             );
           });
           return res as Promise<
-            ResponseWrapped<Definition['methods'][CallName]>
+            ResponseWrapped<ValuesOfUnion<Definition['methods'], CallName>>
           >;
         };
       }
       if (requestStream && !responseStream) {
-        return (req: RequestWrapped<Definition['methods'][CallName]>) => {
+        return (
+          req: RequestWrapped<ValuesOfUnion<Definition['methods'], CallName>>,
+        ) => {
           const res = new Promise<
-            ResponseWrapped<Definition['methods'][CallName], 'CLIENT'>
+            ResponseWrapped<
+              ValuesOfUnion<Definition['methods'], CallName>,
+              'CLIENT'
+            >
           >((resolve, reject) => {
             const stream = (
               handler as ClientHandler<
-                Definition['methods'][CallName],
+                ValuesOfUnion<Definition['methods'], CallName>,
                 'CLIENT'
               >
             )((reason, value) => {
@@ -181,7 +205,7 @@ class Client<Definition extends ProtoDefinition> {
             });
             (async () => {
               for await (const reqItem of req as RequestWrapped<
-                Definition['methods'][CallName],
+                ValuesOfUnion<Definition['methods'], CallName>,
                 'CLIENT'
               >) {
                 stream.write(reqItem);
@@ -190,21 +214,29 @@ class Client<Definition extends ProtoDefinition> {
             })();
           });
           return res as Promise<
-            ResponseWrapped<Definition['methods'][CallName]>
+            ResponseWrapped<ValuesOfUnion<Definition['methods'], CallName>>
           >;
         };
       }
       if (requestStream && responseStream) {
-        return (req: RequestWrapped<Definition['methods'][CallName]>) => {
+        return (
+          req: RequestWrapped<ValuesOfUnion<Definition['methods'], CallName>>,
+        ) => {
           const res = new Promise<
-            ResponseWrapped<Definition['methods'][CallName], 'BIDI'>
+            ResponseWrapped<
+              ValuesOfUnion<Definition['methods'], CallName>,
+              'BIDI'
+            >
           >((resolve) => {
             const stream = (
-              handler as ClientHandler<Definition['methods'][CallName], 'BIDI'>
+              handler as ClientHandler<
+                ValuesOfUnion<Definition['methods'], CallName>,
+                'BIDI'
+              >
             )();
             (async () => {
               for await (const reqItem of req as RequestWrapped<
-                Definition['methods'][CallName],
+                ValuesOfUnion<Definition['methods'], CallName>,
                 'BIDI'
               >) {
                 stream.write(reqItem);
@@ -214,7 +246,7 @@ class Client<Definition extends ProtoDefinition> {
             resolve(stream);
           });
           return res as Promise<
-            ResponseWrapped<Definition['methods'][CallName]>
+            ResponseWrapped<ValuesOfUnion<Definition['methods'], CallName>>
           >;
         };
       }
