@@ -96,7 +96,7 @@ const createProto = () => {
     const dir = dirname(relative('../worker-node/protos', entryPoint));
     const protoPath = join('../worker-node/protos', dir, 'index.proto');
     const sourcePath = join('../worker-node/protos', dir, 'index.ts');
-    const targetPath = join('src/service', dir, 'proto.ts');
+    const targetPath = join('src/controller', dir, 'proto.ts');
     protoc(protoPath, dirname(sourcePath));
     mv(sourcePath, targetPath);
     sed(targetPath);
