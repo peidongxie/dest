@@ -13,7 +13,7 @@ const deleteRpcClient = async <T extends ProtoDefinition>(
   port: number,
   hostname: string,
 ): Promise<RpcClient<T> | null> => {
-  return deleteMemo<RpcClient<T>>(['client', port, hostname]);
+  return deleteMemo<RpcClient<T>>(['rpc-client', port, hostname]);
 };
 
 export { deleteHttpClient, deleteRpcClient };

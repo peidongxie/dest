@@ -1,10 +1,16 @@
 import {
   BaseType,
   EventAction,
+  deleteAgentByHttp,
+  deleteAgentByRpc,
   deleteDatabaseByHttp,
   deleteDatabaseByRpc,
+  getAgentByHttp,
+  getAgentByRpc,
   getDatabaseByHttp,
   getDatabaseByRpc,
+  postAgentByHttp,
+  postAgentByRpc,
   postDatabaseByHttp,
   postDatabaseByRpc,
   postQueryByHttp,
@@ -25,14 +31,25 @@ await createMemo<DatabaseAction>(['action', EventAction.WRITE], 'write');
 await createMemo<DatabaseAction>(['action', EventAction.ROOT], 'root');
 await createServer(
   [
+    deleteAgentByHttp,
     deleteDatabaseByHttp,
+    getAgentByHttp,
     getDatabaseByHttp,
+    postAgentByHttp,
     postDatabaseByHttp,
     postQueryByHttp,
   ],
   3001,
 );
 await createServer(
-  [deleteDatabaseByRpc, getDatabaseByRpc, postDatabaseByRpc, postQueryByRpc],
+  [
+    deleteAgentByRpc,
+    deleteDatabaseByRpc,
+    getAgentByRpc,
+    getDatabaseByRpc,
+    postAgentByRpc,
+    postDatabaseByRpc,
+    postQueryByRpc,
+  ],
   3002,
 );
