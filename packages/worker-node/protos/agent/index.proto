@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package dest;
+
+service Agent {
+  rpc DeleteAgent (BaseRequest) returns (TokenResponse) {}
+  rpc GetAgent (BaseRequest) returns (TokenResponse) {}
+  rpc PostAgent (BaseRequest) returns (TokenResponse) {}
+}
+
+// Base
+
+message BaseRequest {
+  string secret = 1;
+}
+
+message BaseResponse {
+  bool success = 1;
+}
+
+// Token
+
+message TokenResponse {
+  bool success = 1;
+  string token = 2;
+}
