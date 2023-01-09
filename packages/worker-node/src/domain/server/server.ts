@@ -9,19 +9,11 @@ import {
   Server as HttpServer,
   type Route,
 } from '@dest-toolkit/http-server';
-import { TaskRunner } from '../task-runner';
 
-enum ServerState {
-  INITIALIZED,
-  RUNNING,
-  TERMINATED,
-}
-
-class Server extends TaskRunner {
+class Server {
   private raw: HttpServer | RpcServer;
 
   constructor(api: Route[] | Plugin<ProtoDefinition>[]) {
-    super(ServerState.INITIALIZED);
     const routes = api as Route[];
     const plugins = api as Plugin<ProtoDefinition>[];
     if (
@@ -56,25 +48,13 @@ class Server extends TaskRunner {
   }
 
   public async close(): Promise<this> {
-    return this.runTask(
-      (state) =>
-        state === ServerState.RUNNING ? ServerState.TERMINATED : null,
-      async () => {
-        await this.raw.close();
-        return this;
-      },
-    );
+    await this.raw.close();
+    return this;
   }
 
   public async listen(port: number, hostname?: string): Promise<this> {
-    return this.runTask(
-      (state) =>
-        state === ServerState.INITIALIZED ? ServerState.RUNNING : null,
-      async () => {
-        await this.raw.listen(port, hostname);
-        return this;
-      },
-    );
+    await this.raw.listen(port, hostname);
+    return this;
   }
 }
 
