@@ -3,39 +3,45 @@ interface TaskGroup {
   tasks: Promise<unknown>[];
 }
 
-class Scheduler {
+class Scheduler<T> {
   private groups: TaskGroup[];
-  private stakeholders: Set<Scheduler>;
+  private stakeholders: Set<Scheduler<T>>;
+  private target: T;
 
-  constructor() {
+  constructor(target: T) {
     this.groups = [];
     this.stakeholders = new Set();
+    this.target = target;
   }
 
-  public addStakeholder(scheduler: Scheduler): void {
+  public addStakeholder(scheduler: Scheduler<T>): void {
     if (scheduler === this) return;
     this.stakeholders.add(scheduler);
   }
 
-  public removeStakeholder(scheduler: Scheduler): void {
+  public getTarget(): T {
+    return this.target;
+  }
+
+  public removeStakeholder(scheduler: Scheduler<T>): void {
     if (scheduler === this) return;
     this.stakeholders.delete(scheduler);
   }
 
-  public runTask<T>(
-    task: () => T,
+  public runTask<R>(
+    task: (target: T) => R,
     parallel = false,
     standalone = false,
-  ): Promise<Awaited<T>> {
+  ): Promise<Awaited<R>> {
     if (!this.groups.at(-1)?.parallel || !parallel) {
       this.groups.push({ parallel, tasks: [] });
     }
     const tasksOfLastGroup = this.groups.at(-2)?.tasks || [];
     const tasksOfNextGroup = this.groups.at(-1)?.tasks || [];
     const newTask = Promise.allSettled(tasksOfLastGroup).then(
-      async (): Promise<Awaited<T>> => {
+      async (): Promise<Awaited<R>> => {
         try {
-          const result = await task();
+          const result = await task(this.target);
           this.groups.shift();
           return result;
         } catch (e) {

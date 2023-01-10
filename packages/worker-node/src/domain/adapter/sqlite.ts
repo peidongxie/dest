@@ -1,5 +1,5 @@
-import { readdir, rm } from 'fs/promises';
-import { basename, extname, join } from 'path';
+import { rm } from 'fs/promises';
+import { join } from 'path';
 import sqlite3 from 'sqlite3';
 import { DataSource, EntitySchema } from 'typeorm';
 import { type Adapter } from './type';
@@ -67,26 +67,19 @@ class Sqlite implements Adapter {
     return null;
   }
 
-  async getSnapshot(table?: string) {
-    if (this.name) {
-      if (table) {
-        return (this.readable as DataSource).query(`SELECT * FROM ${table}`);
-      }
-      const rows: { name: string }[] = await (
-        this.readable as DataSource
-      ).query(`SELECT name FROM sqlite_master WHERE type = "table"`);
-      return rows
-        .filter((row) => !protectedTables.includes(row.name))
-        .map((row) => row.name);
-    } else {
-      if (table) {
-        return null;
-      }
-      const rows = await readdir(dir);
-      return rows
-        .filter((row) => extname(row) === '.sqlite')
-        .map((row) => basename(row, '.sqlite'));
-    }
+  async getRows(table?: string) {
+    if (!this.name) return null;
+    return (this.readable as DataSource).query(`SELECT * FROM ${table}`);
+  }
+
+  async getTables() {
+    if (!this.name) return null;
+    const rows: { name: string }[] = await (this.readable as DataSource).query(
+      `SELECT name FROM sqlite_master WHERE type = "table"`,
+    );
+    return rows
+      .filter((row) => !protectedTables.includes(row.name))
+      .map((row) => row.name);
   }
 
   getWritableDataSource() {

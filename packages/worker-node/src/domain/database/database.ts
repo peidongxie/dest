@@ -54,12 +54,11 @@ class Database
     target: string,
     entities: unknown[],
   ): Promise<DatabaseResultItem<T> | null> {
+    const dataSource = this.adapter.getWritableDataSource();
+    if (!dataSource) return null;
     const start = process.hrtime.bigint();
     await this.adapter.preRemove?.();
-    const rows = await this.adapter
-      .getWritableDataSource()
-      ?.getRepository(target)
-      .remove(entities);
+    const rows = await dataSource.getRepository(target).remove(entities);
     await this.adapter.postRemove?.();
     const end = process.hrtime.bigint();
     return {
@@ -73,12 +72,11 @@ class Database
     target: string,
     entities: unknown[],
   ): Promise<DatabaseResultItem<T> | null> {
+    const dataSource = this.adapter.getWritableDataSource();
+    if (!dataSource) return null;
     const start = process.hrtime.bigint();
     await this.adapter.preSave?.();
-    const rows = await this.adapter
-      .getWritableDataSource()
-      ?.getRepository(target)
-      .save(entities);
+    const rows = await dataSource.getRepository(target).save(entities);
     await this.adapter.postSave?.();
     const end = process.hrtime.bigint();
     return {
@@ -120,17 +118,33 @@ class Database
     };
   }
 
-  public async snapshot<T>(
-    table?: string,
-  ): Promise<DatabaseResultItem<T> | null> {
+  public async snapshotRows(): Promise<DatabaseResultItem<unknown>[] | null> {
+    const tables = await this.adapter.getTables();
+    if (!tables) return null;
+    const results: DatabaseResultItem<unknown>[] = [];
+    for (const table of tables) {
+      const start = process.hrtime.bigint();
+      const rows = await this.adapter.getRows(table);
+      const end = process.hrtime.bigint();
+      if (!rows) return null;
+      results.push({
+        time: Number(end - start),
+        table,
+        rows,
+      });
+    }
+    return results;
+  }
+
+  public async snapshotTables(): Promise<DatabaseResultItem<string> | null> {
     const start = process.hrtime.bigint();
-    const rows = await this.adapter.getSnapshot(table);
+    const tables = await this.adapter.getTables();
     const end = process.hrtime.bigint();
-    if (!rows) return null;
+    if (!tables) return null;
     return {
       time: Number(end - start),
-      table: table || this.name,
-      rows: rows as T[],
+      table: this.name,
+      rows: tables,
     };
   }
 

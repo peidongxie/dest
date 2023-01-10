@@ -3,7 +3,8 @@ import { type DataSource } from 'typeorm';
 interface Adapter {
   getReadableDataSource: () => DataSource | null;
   getRootDataSource: () => DataSource | null;
-  getSnapshot: (table?: string) => Promise<unknown[] | null>;
+  getRows: (table: string) => Promise<unknown[] | null>;
+  getTables: () => Promise<string[] | null>;
   getWritableDataSource: () => DataSource | null;
   postCreate?: () => Promise<void>;
   postDestroy?: () => Promise<void>;
