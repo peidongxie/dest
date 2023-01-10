@@ -78,22 +78,17 @@ class Mariadb implements Adapter {
     return Mariadb.root;
   }
 
-  async getSnapshot(table?: string) {
-    if (this.name) {
-      if (table) {
-        return this.readable.query(`SELECT * FROM ${table}`);
-      }
-      const rows: { Name: string }[] = await this.readable.query(
-        `SHOW TABLE STATUS`,
-      );
-      return rows.map((row) => row.Name);
-    } else {
-      if (table) return null;
-      const rows: { Database: string }[] = await Mariadb.root.query(
-        `SHOW DATABASES`,
-      );
-      return rows.map((row) => row.Database);
-    }
+  async getRows(table: string) {
+    if (!this.name) return null;
+    return this.readable.query(`SELECT * FROM ${table}`);
+  }
+
+  async getTables() {
+    if (!this.name) return null;
+    const rows: { Name: string }[] = await this.readable.query(
+      `SHOW TABLE STATUS`,
+    );
+    return rows.map((row) => row.Name);
   }
 
   getWritableDataSource() {
