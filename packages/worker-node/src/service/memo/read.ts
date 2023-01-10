@@ -1,10 +1,25 @@
 import { store } from './constant';
 
-const readMemo = <T>(tags: (boolean | number | string)[]): T | null => {
-  const key = tags.join();
+const readMemo = <T>(tags: string[]): T | null => {
+  if (tags.some((tag) => tag.includes(' '))) {
+    throw new TypeError('Bad tags');
+  }
+  const key = tags.join(' ');
   if (!store.has(key)) return null;
-  const target = store.get(key) as T;
-  return target;
+  const value = store.get(key) as T;
+  return value;
 };
 
-export { readMemo };
+const readMemos = <T>(prefix: string[]): T[] => {
+  if (prefix.some((tag) => tag.includes(' '))) {
+    throw new TypeError('Bad tags');
+  }
+  const reg = RegExp(`^${prefix.join(' ')}([ ]|$)`);
+  const values: T[] = [];
+  for (const [key, value] of store) {
+    if (reg.test(key)) values.push(value as T);
+  }
+  return values;
+};
+
+export { readMemo, readMemos };
