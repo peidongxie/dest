@@ -1,38 +1,46 @@
 import { type AdapterType, type DatabaseResultItem } from '../../domain';
-import { readDatabase } from '../database';
+import { readDatabase, readDatabases } from '../database';
 
-const createCommonQuery = async <T>(
+const createCommonQuery = <T>(
   type: AdapterType,
   name: string,
   action: 'save' | 'remove' | 'read' | 'write' | 'root',
   target: string,
   values: unknown[],
-): Promise<DatabaseResultItem<T> | null> => {
-  const database = readDatabase(type, name);
-  if (!database) return null;
-  const result = await database[action]<T>(target, values as T[]);
-  if (!result) return null;
-  return result;
+): Promise<DatabaseResultItem<T> | null> | null => {
+  const scheduler = readDatabase(type, name);
+  if (!scheduler) return null;
+  return scheduler.runTask((database) => {
+    return database[action]<T>(target, values as T[]);
+  }, action === 'read');
 };
 
-const createHierarchyQuery = async (
+const createRowsQuery = (
   type: AdapterType,
   name: string,
-): Promise<DatabaseResultItem<unknown>[] | null> => {
-  const database = readDatabase(type, name);
-  if (!database) return null;
-  const result = await database.snapshot();
-  if (!result) return null;
-  const children = result.rows as string[];
-  const results = await Promise.all(
-    children.map(async (child) =>
-      name
-        ? database.snapshot(child)
-        : readDatabase(type, child)?.snapshot() || null,
-    ),
-  );
-  if (results.some((result) => result === null)) return null;
-  return results as DatabaseResultItem<unknown>[];
+): Promise<DatabaseResultItem<unknown>[] | null> | null => {
+  const scheduler = readDatabase(type, name);
+  if (!scheduler) return null;
+  return scheduler.runTask(async (database) => {
+    return database.snapshotRows();
+  }, true);
 };
 
-export { createCommonQuery, createHierarchyQuery };
+const createTablesQuery = (
+  type: AdapterType,
+): Promise<DatabaseResultItem<string>[] | null> | null => {
+  const schedulers = readDatabases(type);
+  if (schedulers.some((scheduler) => !scheduler)) return null;
+  const promises = schedulers.map((scheduler) => {
+    const promise = scheduler.runTask((database) => {
+      return database.snapshotTables();
+    });
+    return promise;
+  });
+  return Promise.all(promises).then((results) => {
+    if (results.some((result) => !result)) return null;
+    return results as DatabaseResultItem<string>[];
+  });
+};
+
+export { createCommonQuery, createRowsQuery, createTablesQuery };

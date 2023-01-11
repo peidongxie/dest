@@ -11,7 +11,7 @@ const postQueryByHttp: Route = {
     const { url, body } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const baseType = readMemo<AdapterType>(['type', type || '']);
+    const baseType = readMemo<AdapterType>(['type', (type || '').toString()]);
     const event = await body.json<{
       action: EventAction;
       target: string;
@@ -19,7 +19,7 @@ const postQueryByHttp: Route = {
     }>();
     const eventAction = readMemo<DatabaseAction>([
       'action',
-      event?.action || '',
+      (event?.action || '').toString(),
     ]);
     if (
       Number(!name) ^ Number(event?.action === EventAction.ROOT) ||
@@ -42,16 +42,29 @@ const postQueryByHttp: Route = {
         },
       };
     }
-    const result = await createCommonQuery(
+    const promise = createCommonQuery(
       baseType,
       name || '',
       eventAction,
       event.target,
       event.values,
     );
-    if (!result) {
+    if (!promise) {
       return {
         code: 404,
+        body: {
+          success: false,
+          result: {
+            time: 0,
+            table: '',
+            rows: [],
+          },
+        },
+      };
+    }
+    const result = await promise;
+    if (!result) {
+      return {
         body: {
           success: false,
           result: {
@@ -77,10 +90,10 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
   handlers: {
     postQuery: async (req) => {
       const { event, name, type } = req;
-      const baseType = readMemo<AdapterType>(['type', type || '']);
+      const baseType = readMemo<AdapterType>(['type', (type || '').toString()]);
       const eventAction = readMemo<DatabaseAction>([
         'action',
-        event?.action || '',
+        (event?.action || '').toString(),
       ]);
       if (
         Number(!name) ^ Number(event?.action === EventAction.ROOT) ||
@@ -100,13 +113,24 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
           },
         };
       }
-      const result = await createCommonQuery(
+      const promise = createCommonQuery(
         baseType,
         name || '',
         eventAction,
         event.target,
         event.values.map((value) => JSON.parse(value)),
       );
+      if (!promise) {
+        return {
+          success: false,
+          result: {
+            time: 0,
+            table: '',
+            rows: [],
+          },
+        };
+      }
+      const result = await promise;
       if (!result) {
         return {
           success: false,
