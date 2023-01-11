@@ -97,10 +97,10 @@ class Mariadb implements Adapter {
 
   async postCreate() {
     if (this.name) return;
-    const result: { Database: string }[] = await Mariadb.root.query(
+    const rows: { Database: string }[] = await Mariadb.root.query(
       `SHOW DATABASES`,
     );
-    const names = result
+    const names = rows
       .filter((row) => {
         return !protectedDatabases.includes(row.Database);
       })

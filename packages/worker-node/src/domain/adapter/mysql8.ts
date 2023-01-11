@@ -97,10 +97,10 @@ class Mysql8 implements Adapter {
 
   async postCreate() {
     if (this.name) return;
-    const result: { Database: string }[] = await Mysql8.root.query(
+    const rows: { Database: string }[] = await Mysql8.root.query(
       `SHOW DATABASES`,
     );
-    const names = result
+    const names = rows
       .filter((row) => {
         return !protectedDatabases.includes(row.Database);
       })

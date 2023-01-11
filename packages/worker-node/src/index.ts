@@ -21,14 +21,29 @@ import { createDatabase, createMemo, createServer } from './service';
 
 // await createDatabase('mariadb', '', []);
 await createDatabase('sqlite', '', []);
-await createMemo<AdapterType>(['type', BaseType.MARIADB], 'mariadb');
-await createMemo<AdapterType>(['type', BaseType.MYSQL8], 'mysql:8');
-await createMemo<AdapterType>(['type', BaseType.SQLITE], 'sqlite');
-await createMemo<DatabaseAction>(['action', EventAction.SAVE], 'save');
-await createMemo<DatabaseAction>(['action', EventAction.REMOVE], 'remove');
-await createMemo<DatabaseAction>(['action', EventAction.READ], 'read');
-await createMemo<DatabaseAction>(['action', EventAction.WRITE], 'write');
-await createMemo<DatabaseAction>(['action', EventAction.ROOT], 'root');
+await createMemo<AdapterType>(['type', BaseType.MARIADB.toString()], 'mariadb');
+await createMemo<AdapterType>(['type', BaseType.MYSQL8.toString()], 'mysql:8');
+await createMemo<AdapterType>(['type', BaseType.SQLITE.toString()], 'sqlite');
+await createMemo<DatabaseAction>(
+  ['action', EventAction.SAVE.toString()],
+  'save',
+);
+await createMemo<DatabaseAction>(
+  ['action', EventAction.REMOVE.toString()],
+  'remove',
+);
+await createMemo<DatabaseAction>(
+  ['action', EventAction.READ.toString()],
+  'read',
+);
+await createMemo<DatabaseAction>(
+  ['action', EventAction.WRITE.toString()],
+  'write',
+);
+await createMemo<DatabaseAction>(
+  ['action', EventAction.ROOT.toString()],
+  'root',
+);
 await createServer(
   [
     deleteAgentByHttp,
