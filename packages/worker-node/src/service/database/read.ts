@@ -1,8 +1,15 @@
-import { type AdapterType, type Database } from '../../domain';
-import { readMemo } from '../memo';
+import { type AdapterType, type Database, type Scheduler } from '../../domain';
+import { readMemo, readMemos } from '../memo';
 
-const readDatabase = (type: AdapterType, name: string): Database | null => {
-  return readMemo(['database', type, name]);
+const readDatabase = (
+  type: AdapterType,
+  name: string,
+): Scheduler<Database> | null => {
+  return readMemo<Scheduler<Database>>(['database', type, name]);
 };
 
-export { readDatabase };
+const readDatabases = (type: AdapterType): Scheduler<Database>[] => {
+  return readMemos<Scheduler<Database>>(['database', type]);
+};
+
+export { readDatabase, readDatabases };

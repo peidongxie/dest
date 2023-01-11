@@ -2,7 +2,7 @@ import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { DatabaseDefinition } from './proto';
 import { type AdapterType } from '../../domain';
-import { createHierarchyQuery, readDatabase, readMemo } from '../../service';
+import { createRowsQuery, createTablesQuery, readMemo } from '../../service';
 
 const getDatabaseByHttp: Route = {
   method: 'GET',
@@ -11,7 +11,7 @@ const getDatabaseByHttp: Route = {
     const { url } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const baseType = readMemo<AdapterType>(['type', type || '']);
+    const baseType = readMemo<AdapterType>(['type', (type || '').toString()]);
     if (!baseType) {
       return {
         code: 400,
@@ -21,8 +21,10 @@ const getDatabaseByHttp: Route = {
         },
       };
     }
-    const database = readDatabase(baseType, name || '');
-    if (!database) {
+    const promise = name
+      ? createRowsQuery(baseType, name)
+      : createTablesQuery(baseType);
+    if (!promise) {
       return {
         code: 404,
         body: {
@@ -31,11 +33,13 @@ const getDatabaseByHttp: Route = {
         },
       };
     }
-    const results = await createHierarchyQuery(baseType, name || '');
+    const results = await promise;
     if (!results) {
       return {
-        success: false,
-        results: [],
+        body: {
+          success: false,
+          results: [],
+        },
       };
     }
     return {
@@ -53,21 +57,23 @@ const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
   handlers: {
     getDatabase: async (req) => {
       const { name, type } = req;
-      const baseType = readMemo<AdapterType>(['type', type || '']);
+      const baseType = readMemo<AdapterType>(['type', (type || '').toString()]);
       if (!baseType) {
         return {
           success: false,
           results: [],
         };
       }
-      const database = readDatabase(baseType, name || '');
-      if (!database) {
+      const promise = name
+        ? createRowsQuery(baseType, name)
+        : createTablesQuery(baseType);
+      if (!promise) {
         return {
           success: false,
           results: [],
         };
       }
-      const results = await createHierarchyQuery(baseType, name || '');
+      const results = await promise;
       if (!results) {
         return {
           success: false,

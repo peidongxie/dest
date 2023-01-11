@@ -1,17 +1,26 @@
 import { type EntitySchemaOptions } from 'typeorm';
-import { Database, type AdapterType } from '../../domain';
-import { createMemo } from '../memo';
+import { Database, Scheduler, type AdapterType } from '../../domain';
+import { createMemo, readMemo } from '../memo';
 
-const createDatabase = async (
+const createDatabase = (
   type: AdapterType,
   name: string,
   schemas: EntitySchemaOptions<unknown>[],
-): Promise<Database | null> => {
-  const database = createMemo(
+): Promise<Scheduler<Database>> | null => {
+  const scheduler = createMemo(
     ['database', type, name],
-    new Database(type, name, schemas),
+    new Scheduler(new Database(type, name, schemas)),
   );
-  return database?.create() || null;
+  if (!scheduler) return null;
+  const rootScheduler = readMemo<Scheduler<Database>>(['database', type, '']);
+  if (!rootScheduler) return null;
+  scheduler.addStakeholder(rootScheduler);
+  rootScheduler.addStakeholder(scheduler);
+  const promise = scheduler.runTask(async (database) => {
+    await database.create();
+    return scheduler;
+  });
+  return promise;
 };
 
 export { createDatabase };
