@@ -1,23 +1,40 @@
-import { type AdapterType, type Database } from '../../domain';
-import { deleteMemo, readMemo } from '../memo';
-import { createHierarchyQuery } from '../';
+import { type AdapterType, type Database, type Scheduler } from '../../domain';
+import { deleteMemo, deleteMemos, readMemo } from '../memo';
 
-const deleteDatabase = async (
+const deleteDatabase = (
   type: AdapterType,
   name: string,
-): Promise<Database | null> => {
-  const database = readMemo<Database>(['database', type, name]);
-  if (!database) return null;
-  if (name) {
-    await deleteMemo<Database>(['database', type, name])?.destroy();
-  } else {
-    const results = await createHierarchyQuery(type, '');
-    if (!results) return null;
-    for (const { table } of results) {
-      await deleteMemo<Database>(['database', type, table])?.destroy();
-    }
-  }
-  return database;
+): Promise<Scheduler<Database>> | null => {
+  const scheduler = deleteMemo<Scheduler<Database>>(['database', type, name]);
+  if (!scheduler) return null;
+  const rootScheduler = readMemo<Scheduler<Database>>(['database', type, '']);
+  if (!rootScheduler) return null;
+  const result = scheduler.runTask(async (database) => {
+    await database.destroy();
+    return scheduler;
+  });
+  scheduler.removeStakeholder(rootScheduler);
+  rootScheduler.removeStakeholder(scheduler);
+  return result;
 };
 
-export { deleteDatabase };
+const deleteDatabases = (
+  type: AdapterType,
+): Promise<Scheduler<Database>[]> | null => {
+  const schedulers = deleteMemos<Scheduler<Database>>(['database', type]);
+  if (schedulers.some((scheduler) => !scheduler)) return null;
+  const rootScheduler = readMemo<Scheduler<Database>>(['database', type, '']);
+  if (!rootScheduler) return null;
+  const promises = schedulers.map((scheduler) => {
+    const promise = scheduler.runTask(async (database) => {
+      await database.destroy();
+      return scheduler;
+    });
+    scheduler.removeStakeholder(rootScheduler);
+    rootScheduler.removeStakeholder(scheduler);
+    return promise;
+  });
+  return Promise.all(promises);
+};
+
+export { deleteDatabase, deleteDatabases };
