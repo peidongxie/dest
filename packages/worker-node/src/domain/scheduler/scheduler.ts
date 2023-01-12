@@ -53,7 +53,11 @@ class Scheduler<T> {
     tasksOfNextGroup.push(newTask);
     if (!standalone) {
       for (const stakeholder of this.stakeholders) {
-        stakeholder.runTask(() => newTask, parallel, true);
+        stakeholder.runTask(
+          () => Promise.allSettled([newTask]),
+          parallel,
+          true,
+        );
       }
     }
     return newTask;
@@ -61,6 +65,3 @@ class Scheduler<T> {
 }
 
 export { Scheduler };
-
-Promise.allSettled([]).then((a) => console.log(a));
-console.log('g');

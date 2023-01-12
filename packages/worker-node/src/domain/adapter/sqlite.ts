@@ -67,7 +67,7 @@ class Sqlite implements Adapter {
     return null;
   }
 
-  async getRows(table?: string) {
+  async getRows(table: string) {
     if (!this.name) return null;
     return (this.readable as DataSource).query(`SELECT * FROM ${table}`);
   }
@@ -75,7 +75,7 @@ class Sqlite implements Adapter {
   async getTables() {
     if (!this.name) return null;
     const rows: { name: string }[] = await (this.readable as DataSource).query(
-      `SELECT name FROM sqlite_master WHERE type = "table"`,
+      `SELECT name FROM sqlite_master WHERE type = 'table'`,
     );
     return rows
       .filter((row) => !protectedTables.includes(row.name))
