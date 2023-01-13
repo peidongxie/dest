@@ -5,7 +5,7 @@ interface TaskGroup {
 
 class Scheduler<T> {
   private groups: TaskGroup[];
-  private stakeholders: Set<Scheduler<T>>;
+  private stakeholders: Set<Scheduler<unknown>>;
   private target: T;
 
   constructor(target: T) {
@@ -14,7 +14,7 @@ class Scheduler<T> {
     this.target = target;
   }
 
-  public addStakeholder(scheduler: Scheduler<T>): void {
+  public addStakeholder(scheduler: Scheduler<unknown>): void {
     if (scheduler === this) return;
     this.stakeholders.add(scheduler);
   }
@@ -23,7 +23,7 @@ class Scheduler<T> {
     return this.target;
   }
 
-  public removeStakeholder(scheduler: Scheduler<T>): void {
+  public removeStakeholder(scheduler: Scheduler<unknown>): void {
     if (scheduler === this) return;
     this.stakeholders.delete(scheduler);
   }
