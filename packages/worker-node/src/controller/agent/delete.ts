@@ -1,7 +1,7 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { AgentDefinition } from './proto';
-import { deleteMemo, readMemo } from '../../service';
+import { deleteAgent, readMemo } from '../../service';
 
 const deleteAgentByHttp: Route = {
   method: 'DELETE',
@@ -19,8 +19,8 @@ const deleteAgentByHttp: Route = {
         },
       };
     }
-    const token = await deleteMemo<string>(['token']);
-    if (!token) {
+    const agent = await deleteAgent();
+    if (!agent) {
       return {
         code: 404,
         body: {
@@ -33,7 +33,7 @@ const deleteAgentByHttp: Route = {
       code: 200,
       body: {
         success: true,
-        token,
+        token: agent.getTarget(),
       },
     };
   },
@@ -51,8 +51,8 @@ const deleteAgentByRpc: Plugin<AgentDefinition> = {
           token: '',
         };
       }
-      const token = await deleteMemo<string>(['token']);
-      if (!token) {
+      const agent = await deleteAgent();
+      if (!agent) {
         return {
           success: false,
           token: '',
@@ -60,7 +60,7 @@ const deleteAgentByRpc: Plugin<AgentDefinition> = {
       }
       return {
         success: true,
-        token,
+        token: agent.getTarget(),
       };
     },
   },

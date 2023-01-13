@@ -1,8 +1,7 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
-import { randomUUID } from 'crypto';
 import { AgentDefinition } from './proto';
-import { createMemo, readMemo } from '../../service';
+import { createAgent, readMemo } from '../../service';
 
 const postAgentByHttp: Route = {
   method: 'POST',
@@ -20,8 +19,8 @@ const postAgentByHttp: Route = {
         },
       };
     }
-    const token = await createMemo(['token'], randomUUID());
-    if (!token) {
+    const agent = await createAgent();
+    if (!agent) {
       return {
         code: 409,
         body: {
@@ -34,7 +33,7 @@ const postAgentByHttp: Route = {
       code: 200,
       body: {
         success: true,
-        token,
+        token: agent.getTarget(),
       },
     };
   },
@@ -52,8 +51,8 @@ const postAgentByRpc: Plugin<AgentDefinition> = {
           token: '',
         };
       }
-      const token = await createMemo(['token'], randomUUID());
-      if (!token) {
+      const agent = await createAgent();
+      if (!agent) {
         return {
           success: false,
           token: '',
@@ -61,7 +60,7 @@ const postAgentByRpc: Plugin<AgentDefinition> = {
       }
       return {
         success: true,
-        token,
+        token: agent.getTarget(),
       };
     },
   },
