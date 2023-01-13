@@ -19,8 +19,8 @@ import {
 import { AdapterType, DatabaseAction } from './domain';
 import { createDatabase, createMemo, createServer } from './service';
 
-createMemo<AdapterType>(['type', BaseType.MARIADB.toString()], 'mariadb');
-createMemo<AdapterType>(['type', BaseType.MYSQL8.toString()], 'mysql:8');
+// createMemo<AdapterType>(['type', BaseType.MARIADB.toString()], 'mariadb');
+// createMemo<AdapterType>(['type', BaseType.MYSQL8.toString()], 'mysql:8');
 createMemo<AdapterType>(['type', BaseType.SQLITE.toString()], 'sqlite');
 createMemo<DatabaseAction>(['action', EventAction.SAVE.toString()], 'save');
 createMemo<DatabaseAction>(['action', EventAction.REMOVE.toString()], 'remove');
