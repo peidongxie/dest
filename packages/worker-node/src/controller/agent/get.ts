@@ -1,7 +1,7 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { AgentDefinition } from './proto';
-import { readMemo } from '../../service';
+import { readAgent, readMemo } from '../../service';
 
 const getAgentByHttp: Route = {
   method: 'GET',
@@ -19,8 +19,8 @@ const getAgentByHttp: Route = {
         },
       };
     }
-    const token = await readMemo<string>(['token']);
-    if (!token) {
+    const agent = readAgent();
+    if (!agent) {
       return {
         code: 404,
         body: {
@@ -33,7 +33,7 @@ const getAgentByHttp: Route = {
       code: 200,
       body: {
         success: true,
-        token,
+        token: agent.getTarget(),
       },
     };
   },
@@ -51,8 +51,8 @@ const getAgentByRpc: Plugin<AgentDefinition> = {
           token: '',
         };
       }
-      const token = await readMemo<string>(['token']);
-      if (!token) {
+      const agent = readAgent();
+      if (!agent) {
         return {
           success: false,
           token: '',
@@ -60,7 +60,7 @@ const getAgentByRpc: Plugin<AgentDefinition> = {
       }
       return {
         success: true,
-        token,
+        token: agent.getTarget(),
       };
     },
   },
