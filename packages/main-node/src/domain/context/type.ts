@@ -1,4 +1,9 @@
 type ContextType = 'mariadb' | 'mysql:8' | 'sqlite';
-type ContextTypeAlias = 2049 | 3306 | 3307 | 93307;
 
-export { type ContextType, type ContextTypeAlias };
+interface ContextEvent {
+  action: 'save' | 'remove' | 'read' | 'write' | 'root';
+  target: string;
+  values: unknown[];
+}
+
+export { type ContextEvent, type ContextType };

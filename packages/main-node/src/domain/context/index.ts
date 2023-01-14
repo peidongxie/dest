@@ -1,28 +1,15 @@
-import { type ContextType, type ContextTypeAlias } from './type';
-
-const contextMapper: Record<ContextTypeAlias, ContextType> = {
-  2049: 'sqlite',
-  3306: 'mariadb',
-  3307: 'mysql:8',
-  93307: 'mysql:8',
-};
-
-interface ContextStep {
-  action: 'save' | 'remove' | 'query';
-  name: string;
-  data: unknown[];
-}
+import { type ContextEvent, type ContextType } from './type';
 
 class Context {
   private name: string;
-  private steps: ContextStep[];
+  private events: ContextEvent[];
   private type: ContextType;
 
-  constructor(type: ContextType, name?: string, steps?: ContextStep[]) {
+  constructor(type: ContextType, name?: string, events?: ContextEvent[]) {
     this.type = type;
     this.name = name || '';
-    this.steps = steps || [];
+    this.events = events || [];
   }
 }
 
-export { Context, contextMapper, type ContextType, type ContextTypeAlias };
+export { Context, type ContextEvent, type ContextType };
