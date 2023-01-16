@@ -1,1 +1,3 @@
-export const store = new Map<string, unknown>();
+import { Memo } from '../../domain';
+
+export const store = new Memo<boolean | number | string, unknown>();

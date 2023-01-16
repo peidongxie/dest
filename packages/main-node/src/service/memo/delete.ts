@@ -1,11 +1,16 @@
 import { store } from './constant';
 
 const deleteMemo = <T>(tags: (boolean | number | string)[]): T | null => {
-  const key = tags.join();
-  if (!store.has(key)) return null;
-  const target = store.get(key) as T;
-  store.delete(key);
-  return target;
+  if (!store.has(tags)) return null;
+  const value = store.get(tags) as T;
+  store.delete(tags);
+  return value;
 };
 
-export { deleteMemo };
+const deleteMemos = <T>(prefix: (boolean | number | string)[]): T[] => {
+  const values = store.getAll(prefix) as T[];
+  store.deleteAll(prefix);
+  return values;
+};
+
+export { deleteMemo, deleteMemos };
