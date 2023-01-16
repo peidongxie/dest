@@ -1,8 +1,7 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { type EntitySchemaOptions } from 'typeorm';
-import { DatabaseDefinition } from './proto';
-import { type AdapterType } from '../../domain';
+import { DatabaseDefinition, type AdapterType } from '../../domain';
 import { createDatabase, readMemo } from '../../service';
 
 const postDatabaseByHttp: Route = {

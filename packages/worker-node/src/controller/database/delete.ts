@@ -1,7 +1,6 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
-import { DatabaseDefinition } from './proto';
-import { type AdapterType } from '../../domain';
+import { DatabaseDefinition, type AdapterType } from '../../domain';
 import { deleteDatabase, deleteDatabases, readMemo } from '../../service';
 
 const deleteDatabaseByHttp: Route = {

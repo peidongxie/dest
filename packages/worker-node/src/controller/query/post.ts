@@ -1,7 +1,11 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
-import { EventAction, QueryDefinition } from './proto';
-import { type AdapterType, type DatabaseAction } from '../../domain';
+import {
+  EventAction,
+  QueryDefinition,
+  type AdapterType,
+  type DatabaseAction,
+} from '../../domain';
 import { createCommonQuery, readMemo } from '../../service';
 
 const postQueryByHttp: Route = {
