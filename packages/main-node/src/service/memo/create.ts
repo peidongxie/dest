@@ -2,12 +2,11 @@ import { store } from './constant';
 
 const createMemo = <T>(
   tags: (boolean | number | string)[],
-  target: T,
+  value: T,
 ): T | null => {
-  const key = tags.join();
-  if (store.has(key)) return null;
-  store.set(key, target);
-  return target;
+  if (store.has(tags)) return null;
+  store.set(tags, value);
+  return value;
 };
 
 export { createMemo };

@@ -1,7 +1,6 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
-import { DatabaseDefinition } from './proto';
-import { type AdapterType } from '../../domain';
+import { DatabaseDefinition, type AdapterType } from '../../domain';
 import { createRowsQuery, createTablesQuery, readMemo } from '../../service';
 
 const getDatabaseByHttp: Route = {
@@ -11,7 +10,7 @@ const getDatabaseByHttp: Route = {
     const { url } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const baseType = readMemo<AdapterType>(['type', (type || '').toString()]);
+    const baseType = readMemo<AdapterType>(['type', type || '']);
     if (!baseType) {
       return {
         code: 400,
@@ -57,7 +56,7 @@ const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
   handlers: {
     getDatabase: async (req) => {
       const { name, type } = req;
-      const baseType = readMemo<AdapterType>(['type', (type || '').toString()]);
+      const baseType = readMemo<AdapterType>(['type', type || '']);
       if (!baseType) {
         return {
           success: false,

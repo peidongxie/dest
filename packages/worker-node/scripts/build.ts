@@ -1,26 +1,19 @@
 import { execSync } from 'child_process';
 import { build, type BuildOptions } from 'esbuild';
 import { existsSync, readdirSync, statSync } from 'fs-extra';
-import { dirname, extname, join, relative } from 'path';
+import { basename, dirname, extname, join } from 'path';
 
 const getEntryPoints = (dir: string): string[] => {
   const files = readdirSync(dir);
   return files
     .map((file) => {
-      const path = join(dir, file);
-      const stats = statSync(path);
-      if (stats.isDirectory()) {
-        return getEntryPoints(path);
-      }
-      if (stats.isFile()) {
-        if ('.proto' === extname(file)) {
-          return path;
-        }
+      const stats = statSync(join(dir, file));
+      if (stats.isFile() && '.proto' === extname(file)) {
+        return basename(file, '.proto');
       }
       return null;
     })
-    .filter((v): v is string[] | string => v !== null)
-    .flat();
+    .filter((v): v is string => v !== null);
 };
 
 const execCommand = (command: string[]): void => {
@@ -84,10 +77,9 @@ const sed = (path: string): void => {
 
 const createProto = () => {
   for (const entryPoint of getEntryPoints('protos')) {
-    const dir = dirname(relative('protos', entryPoint));
-    const protoPath = join('protos', dir, 'index.proto');
-    const sourcePath = join('protos', dir, 'index.ts');
-    const targetPath = join('src/controller', dir, 'proto.ts');
+    const protoPath = join('protos', entryPoint + '.proto');
+    const sourcePath = join('protos', entryPoint + '.ts');
+    const targetPath = join('src', 'domain', 'proto', entryPoint + '.ts');
     protoc(protoPath, dirname(sourcePath));
     mv(sourcePath, targetPath);
     sed(targetPath);

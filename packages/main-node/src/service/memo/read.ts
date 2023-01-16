@@ -1,10 +1,12 @@
 import { store } from './constant';
 
 const readMemo = <T>(tags: (boolean | number | string)[]): T | null => {
-  const key = tags.join();
-  if (!store.has(key)) return null;
-  const target = store.get(key) as T;
-  return target;
+  if (!store.has(tags)) return null;
+  return store.get(tags) as T;
 };
 
-export { readMemo };
+const readMemos = <T>(prefix: string[]): T[] => {
+  return store.getAll(prefix) as T[];
+};
+
+export { readMemo, readMemos };

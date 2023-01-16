@@ -8,7 +8,7 @@ const createServer = (
   port: number,
   hostname?: string,
 ): Promise<Server> | null => {
-  const server = createMemo(['server', port.toString()], new Server(api));
+  const server = createMemo(['server', port], new Server(api));
   return server?.listen(port, hostname) || null;
 };
 

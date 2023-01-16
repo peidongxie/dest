@@ -1,6 +1,6 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
-import { AgentDefinition } from './proto';
+import { AgentDefinition } from '../../domain';
 import { deleteAgent, readMemo } from '../../service';
 
 const deleteAgentByHttp: Route = {
