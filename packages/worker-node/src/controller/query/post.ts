@@ -11,7 +11,7 @@ const postQueryByHttp: Route = {
     const { url, body } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const baseType = readMemo<AdapterType>(['type', (type || '').toString()]);
+    const baseType = readMemo<AdapterType>(['type', type || '']);
     const event = await body.json<{
       action: EventAction;
       target: string;
@@ -19,7 +19,7 @@ const postQueryByHttp: Route = {
     }>();
     const eventAction = readMemo<DatabaseAction>([
       'action',
-      (event?.action || '').toString(),
+      event?.action || '',
     ]);
     if (
       Number(!name) ^ Number(event?.action === EventAction.ROOT) ||
@@ -90,10 +90,10 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
   handlers: {
     postQuery: async (req) => {
       const { event, name, type } = req;
-      const baseType = readMemo<AdapterType>(['type', (type || '').toString()]);
+      const baseType = readMemo<AdapterType>(['type', type || '']);
       const eventAction = readMemo<DatabaseAction>([
         'action',
-        (event?.action || '').toString(),
+        event?.action || '',
       ]);
       if (
         Number(!name) ^ Number(event?.action === EventAction.ROOT) ||

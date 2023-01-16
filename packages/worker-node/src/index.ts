@@ -30,31 +30,31 @@ const config = {
 
 for (const type of config.database) {
   if (type === 'mariadb') {
-    createMemo(['type', BaseType.MARIADB.toString()], 'mariadb');
+    createMemo(['type', BaseType.MARIADB], 'mariadb');
   }
   if (type === 'mysql:8') {
-    createMemo(['type', BaseType.MYSQL8.toString()], 'mysql:8');
+    createMemo(['type', BaseType.MYSQL8], 'mysql:8');
   }
   if (type === 'sqlite') {
-    createMemo(['type', BaseType.SQLITE.toString()], 'sqlite');
+    createMemo(['type', BaseType.SQLITE], 'sqlite');
   }
 }
 
 for (const action of config.query) {
   if (action === 'save') {
-    createMemo(['action', EventAction.SAVE.toString()], 'save');
+    createMemo(['action', EventAction.SAVE], 'save');
   }
   if (action === 'remove') {
-    createMemo(['action', EventAction.REMOVE.toString()], 'remove');
+    createMemo(['action', EventAction.REMOVE], 'remove');
   }
   if (action === 'read') {
-    createMemo(['action', EventAction.READ.toString()], 'read');
+    createMemo(['action', EventAction.READ], 'read');
   }
   if (action === 'write') {
-    createMemo(['action', EventAction.WRITE.toString()], 'write');
+    createMemo(['action', EventAction.WRITE], 'write');
   }
   if (action === 'root') {
-    createMemo(['action', EventAction.ROOT.toString()], 'root');
+    createMemo(['action', EventAction.ROOT], 'root');
   }
 }
 

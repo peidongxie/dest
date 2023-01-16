@@ -1,12 +1,11 @@
 import { store } from './constant';
 
-const createMemo = <T>(tags: string[], value: T): T | null => {
-  if (tags.some((tag) => tag.includes(' '))) {
-    throw new TypeError('Bad tags');
-  }
-  const key = tags.join(' ');
-  if (store.has(key)) return null;
-  store.set(key, value);
+const createMemo = <T>(
+  tags: (boolean | number | string)[],
+  value: T,
+): T | null => {
+  if (store.has(tags)) return null;
+  store.set(tags, value);
   return value;
 };
 
