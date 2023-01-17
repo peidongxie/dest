@@ -1,18 +1,20 @@
-import { type AdapterType, type DatabaseResultItem } from '../../domain';
+import {
+  type AdapterType,
+  type DatabaseEventItem,
+  type DatabaseResultItem,
+} from '../../domain';
 import { readDatabase, readDatabases } from '../database';
 
 const createCommonQuery = <T>(
   type: AdapterType,
   name: string,
-  action: 'save' | 'remove' | 'read' | 'write' | 'root',
-  target: string,
-  values: unknown[],
+  event: DatabaseEventItem<unknown>,
 ): Promise<DatabaseResultItem<T> | null> | null => {
   const scheduler = readDatabase(type, name);
   if (!scheduler) return null;
   return scheduler.runTask((database) => {
-    return database[action]<T>(target, values as T[]);
-  }, action === 'read');
+    return database.emit<T>(event);
+  }, event.action === 'read');
 };
 
 const createRowsQuery = (

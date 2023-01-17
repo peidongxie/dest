@@ -22,4 +22,4 @@ const createAdapter = (
   }
 };
 
-export { createAdapter, type Adapter, type AdapterType };
+export { createAdapter };

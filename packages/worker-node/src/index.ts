@@ -1,6 +1,4 @@
 import {
-  BaseType,
-  EventAction,
   deleteAgentByHttp,
   deleteAgentByRpc,
   deleteDatabaseByHttp,
@@ -16,7 +14,7 @@ import {
   postQueryByHttp,
   postQueryByRpc,
 } from './controller';
-import { AdapterType, DatabaseAction } from './domain';
+import { AdapterType, BaseType, DatabaseAction, EventAction } from './domain';
 import { createMemo, createServer } from './service';
 
 const config = {
