@@ -1,9 +1,22 @@
 type ContextType = 'mariadb' | 'mysql:8' | 'sqlite';
 
-interface ContextEvent {
-  action: 'save' | 'remove' | 'read' | 'write' | 'root';
+type ContextAction = 'save' | 'remove' | 'read' | 'write' | 'root';
+
+interface ContextEventItem<T> {
+  action: ContextAction;
   target: string;
-  values: unknown[];
+  values: T[];
 }
 
-export { type ContextEvent, type ContextType };
+interface ContextResultItem<T> {
+  time: number;
+  table: string;
+  rows: T[];
+}
+
+export {
+  type ContextAction,
+  type ContextEventItem,
+  type ContextResultItem,
+  type ContextType,
+};

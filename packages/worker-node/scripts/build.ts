@@ -76,10 +76,10 @@ const sed = (path: string): void => {
 };
 
 const createProto = () => {
-  for (const entryPoint of getEntryPoints('protos')) {
-    const protoPath = join('protos', entryPoint + '.proto');
-    const sourcePath = join('protos', entryPoint + '.ts');
-    const targetPath = join('src', 'domain', 'proto', entryPoint + '.ts');
+  for (const service of getEntryPoints('protos')) {
+    const protoPath = join('protos', service + '.proto');
+    const sourcePath = join('protos', service + '.ts');
+    const targetPath = join('src', 'domain', 'proto', service + '.ts');
     protoc(protoPath, dirname(sourcePath));
     mv(sourcePath, targetPath);
     sed(targetPath);

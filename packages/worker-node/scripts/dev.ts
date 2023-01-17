@@ -79,16 +79,16 @@ const sed = (path: string): void => {
 };
 
 const createProto = () => {
-  for (const entryPoint of getEntryPoints('protos')) {
-    if (!entryPoints.has(entryPoint)) {
-      entryPoints.add(entryPoint);
-      watch(entryPoint, () => createProto());
+  for (const service of getEntryPoints('protos')) {
+    if (!entryPoints.has(service)) {
+      entryPoints.add(service);
+      watch(`protos/${service}.proto`, () => createProto());
     }
   }
-  for (const entryPoint of entryPoints) {
-    const protoPath = join('protos', entryPoint + '.proto');
-    const sourcePath = join('protos', entryPoint + '.ts');
-    const targetPath = join('src/controller', entryPoint, 'proto.ts');
+  for (const service of entryPoints) {
+    const protoPath = join('protos', service + '.proto');
+    const sourcePath = join('protos', service + '.ts');
+    const targetPath = join('src', 'domain', 'proto', service + '.ts');
     protoc(protoPath, dirname(sourcePath));
     mv(sourcePath, targetPath);
     sed(targetPath);

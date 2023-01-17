@@ -1,17 +1,8 @@
 import { type EntitySchemaOptions } from 'typeorm';
 import { createAdapter, type Adapter, type AdapterType } from '../adapter';
-import { type DatabaseAction, type DatabaseResultItem } from './type';
+import { type DatabaseEventItem, type DatabaseResultItem } from './type';
 
-class Database
-  implements
-    Record<
-      DatabaseAction,
-      <T>(
-        target: string,
-        values: unknown[],
-      ) => Promise<DatabaseResultItem<T> | null>
-    >
-{
+class Database {
   adapter: Adapter;
   name: string;
   type: AdapterType;
@@ -48,6 +39,12 @@ class Database
     }
     await this.adapter.postDestroy?.();
     return this;
+  }
+
+  public emit<T>(
+    event: DatabaseEventItem<unknown>,
+  ): Promise<DatabaseResultItem<T> | null> | null {
+    return this[event.action]?.(event.target, event.values) || null;
   }
 
   public async remove<T>(
