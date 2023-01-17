@@ -10,7 +10,7 @@ const getDatabaseByHttp: Route = {
     const { url } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const baseType = readMemo<AdapterType>(['type', type || '']);
+    const baseType = readMemo<AdapterType>(['type', Number(type)]);
     if (!baseType) {
       return {
         code: 400,
@@ -56,7 +56,7 @@ const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
   handlers: {
     getDatabase: async (req) => {
       const { name, type } = req;
-      const baseType = readMemo<AdapterType>(['type', type || '']);
+      const baseType = readMemo<AdapterType>(['type', type]);
       if (!baseType) {
         return {
           success: false,

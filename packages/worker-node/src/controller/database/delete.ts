@@ -10,7 +10,7 @@ const deleteDatabaseByHttp: Route = {
     const { url } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const baseType = readMemo<AdapterType>(['type', type || '']);
+    const baseType = readMemo<AdapterType>(['type', Number(type)]);
     if (!baseType) {
       return {
         code: 400,
@@ -46,7 +46,7 @@ const deleteDatabaseByRpc: Plugin<DatabaseDefinition> = {
   handlers: {
     deleteDatabase: async (req) => {
       const { name, type } = req;
-      const baseType = readMemo<AdapterType>(['type', type || '']);
+      const baseType = readMemo<AdapterType>(['type', type]);
       if (!baseType) {
         return {
           success: false,

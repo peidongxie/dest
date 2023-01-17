@@ -11,7 +11,7 @@ const postDatabaseByHttp: Route = {
     const { url, body } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const baseType = readMemo<AdapterType>(['type', type || '']);
+    const baseType = readMemo<AdapterType>(['type', Number(type)]);
     const schemas = await body.json<EntitySchemaOptions<unknown>[]>();
     if (!name || !baseType || !Array.isArray(schemas)) {
       return {
@@ -44,7 +44,7 @@ const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
   handlers: {
     postDatabase: async (req) => {
       const { name, schemas, type } = req;
-      const baseType = readMemo<AdapterType>(['type', type || '']);
+      const baseType = readMemo<AdapterType>(['type', type]);
       if (!name || !baseType || !Array.isArray(schemas)) {
         return {
           success: false,

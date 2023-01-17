@@ -15,7 +15,7 @@ const postQueryByHttp: Route = {
     const { url, body } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const baseType = readMemo<AdapterType>(['type', type || '']);
+    const baseType = readMemo<AdapterType>(['type', Number(type)]);
     const event = await body.json<{
       action: EventAction;
       target: string;
@@ -23,7 +23,7 @@ const postQueryByHttp: Route = {
     }>();
     const eventAction = readMemo<DatabaseAction>([
       'action',
-      event?.action || '',
+      Number(event?.action),
     ]);
     if (
       Number(!name) ^ Number(event?.action === EventAction.ROOT) ||
@@ -46,13 +46,10 @@ const postQueryByHttp: Route = {
         },
       };
     }
-    const promise = createCommonQuery(
-      baseType,
-      name || '',
-      eventAction,
-      event.target,
-      event.values,
-    );
+    const promise = createCommonQuery(baseType, name || '', {
+      ...event,
+      action: eventAction,
+    });
     if (!promise) {
       return {
         code: 404,
@@ -94,10 +91,10 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
   handlers: {
     postQuery: async (req) => {
       const { event, name, type } = req;
-      const baseType = readMemo<AdapterType>(['type', type || '']);
+      const baseType = readMemo<AdapterType>(['type', type]);
       const eventAction = readMemo<DatabaseAction>([
         'action',
-        event?.action || '',
+        event?.action || 0,
       ]);
       if (
         Number(!name) ^ Number(event?.action === EventAction.ROOT) ||
@@ -117,13 +114,10 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
           },
         };
       }
-      const promise = createCommonQuery(
-        baseType,
-        name || '',
-        eventAction,
-        event.target,
-        event.values.map((value) => JSON.parse(value)),
-      );
+      const promise = createCommonQuery(baseType, name || '', {
+        ...event,
+        action: eventAction,
+      });
       if (!promise) {
         return {
           success: false,
