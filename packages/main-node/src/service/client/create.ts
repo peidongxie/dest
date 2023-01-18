@@ -1,30 +1,21 @@
-import { type ProtoDefinition } from '@dest-toolkit/grpc-client';
-import { type Route } from '@dest-toolkit/http-client';
-import { HttpClient, RpcClient } from '../../domain';
+import { HttpClient, RpcClient, type Client } from '../../domain';
 import { createMemo } from '../memo';
 
-const createHttpClient = async (
-  api: Route[],
+const createClient = async (
+  api: 'http' | 'rpc',
   port: number,
   hostname: string,
-): Promise<HttpClient | null> => {
-  const client = createMemo(
-    ['http-client', port, hostname],
-    new HttpClient(api, port, hostname),
-  );
-  return client || null;
+  secret = '',
+): Promise<Client | null> => {
+  const client =
+    api === 'http'
+      ? new HttpClient(port, hostname)
+      : api === 'rpc'
+      ? new RpcClient(port, hostname)
+      : null;
+  if (!client) return null;
+  const { token } = await client.getAgent(secret);
+  return createMemo(['client', token], client);
 };
 
-const createRpcClient = async <T extends ProtoDefinition>(
-  api: T[],
-  port: number,
-  hostname: string,
-): Promise<RpcClient<T> | null> => {
-  const client = createMemo(
-    ['rpc-client', port, hostname],
-    new RpcClient(api, port, hostname),
-  );
-  return client || null;
-};
-
-export { createHttpClient, createRpcClient };
+export { createClient };

@@ -115,8 +115,9 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
         };
       }
       const promise = createCommonQuery(baseType, name || '', {
-        ...event,
         action: eventAction,
+        target: event.target,
+        values: event.values.map((value) => JSON.parse(value)),
       });
       if (!promise) {
         return {
