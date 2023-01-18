@@ -1,16 +1,12 @@
-import { type ProtoDefinition } from '@dest-toolkit/grpc-client';
-import { type HttpClient, type RpcClient } from '../../domain';
-import { readMemo } from '../memo';
+import { randomInt } from 'crypto';
+import { type Client } from '../../domain';
+import { readMemo, readMemos } from '../memo';
 
-const readHttpClient = (port: number, hostname: string): HttpClient | null => {
-  return readMemo<HttpClient>(['http-client', port, hostname]);
+const readClient = (token?: string): Client | null => {
+  if (token) return readMemo<Client>(['client', token]);
+  const clients = readMemos<Client>(['client']);
+  if (clients.length === 0) return null;
+  return clients[randomInt(clients.length)];
 };
 
-const readRpcClient = <T extends ProtoDefinition>(
-  port: number,
-  hostname: string,
-): RpcClient<T> | null => {
-  return readMemo<RpcClient<T>>(['rpc-client', port, hostname]);
-};
-
-export { readHttpClient, readRpcClient };
+export { readClient };
