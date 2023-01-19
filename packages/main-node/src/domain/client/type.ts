@@ -1,3 +1,4 @@
+import { type EntitySchemaOptions } from 'typeorm';
 import {
   type ContextEventItem,
   type ContextResultItem,
@@ -33,7 +34,7 @@ interface Client {
   postDatabase: (
     type: ContextType,
     name: string,
-    schemas: unknown[],
+    schemas: EntitySchemaOptions<unknown>[],
   ) => Promise<{
     success: boolean;
   }>;
