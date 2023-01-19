@@ -1,4 +1,5 @@
 import { Client as ClientRaw } from '@dest-toolkit/grpc-client';
+import { type EntitySchemaOptions } from 'typeorm';
 import {
   AgentDefinition,
   BaseType,
@@ -67,7 +68,11 @@ class RpcClient implements Client {
     });
   }
 
-  public postDatabase(type: ContextType, name: string, schemas: unknown[]) {
+  public postDatabase(
+    type: ContextType,
+    name: string,
+    schemas: EntitySchemaOptions<unknown>[],
+  ) {
     return this.raw.call('postDatabase')({
       type: this.getType(type),
       name,

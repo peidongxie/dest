@@ -1,4 +1,5 @@
 import { Client as ClientRaw, Router } from '@dest-toolkit/http-client';
+import { type EntitySchemaOptions } from 'typeorm';
 import { BaseType, EventAction } from '../../domain';
 import {
   type ContextAction,
@@ -86,7 +87,11 @@ class HttpClient implements Client {
     }>(`postAgent?secret=${secret}`)();
   }
 
-  public postDatabase(type: ContextType, name: string, schemas: unknown[]) {
+  public postDatabase(
+    type: ContextType,
+    name: string,
+    schemas: EntitySchemaOptions<unknown>[],
+  ) {
     return this.call<{
       success: boolean;
     }>(`postDatabase?type=${this.getType(type)}&name=${name}`)(schemas);
