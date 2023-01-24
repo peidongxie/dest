@@ -1,6 +1,6 @@
 import { type EntitySchemaOptions } from 'typeorm';
 import { createAdapter, type Adapter, type AdapterType } from '../adapter';
-import { type DatabaseEventItem, type DatabaseResultItem } from './type';
+import { type DatabaseEventItem, type DatabaseResult } from './type';
 
 class Database {
   adapter: Adapter;
@@ -15,6 +15,16 @@ class Database {
     this.type = type;
     this.name = name || '';
     this.adapter = createAdapter(this.type, this.name, schemas || []);
+  }
+
+  public check(): Promise<
+    DatabaseResult<{ name: string; values: string[] }>
+  > | null {
+    return this.getResult(async () => {
+      const tables = await this.adapter.getTables();
+      if (!tables) return null;
+      return { name: this.name, values: tables };
+    });
   }
 
   public async create(): Promise<this> {
@@ -43,122 +53,84 @@ class Database {
 
   public emit<T>(
     event: DatabaseEventItem<unknown>,
-  ): Promise<DatabaseResultItem<T> | null> | null {
-    return this[event.action]?.(event.target, event.values) || null;
+  ): Promise<DatabaseResult<T>> | null {
+    return this[event.action]?.(event.name, event.values) || null;
   }
 
-  public async remove<T>(
-    target: string,
-    entities: unknown[],
-  ): Promise<DatabaseResultItem<T> | null> {
-    const dataSource = this.adapter.getWritableDataSource();
-    if (!dataSource) return null;
-    const start = process.hrtime.bigint();
-    await this.adapter.preRemove?.();
-    const rows = await dataSource.getRepository(target).remove(entities);
-    await this.adapter.postRemove?.();
-    const end = process.hrtime.bigint();
-    return {
-      time: Number(end - start),
-      table: '',
-      rows: !rows ? [] : !Array.isArray(rows) ? [rows] : rows,
-    };
-  }
-
-  public async save<T>(
-    target: string,
-    entities: unknown[],
-  ): Promise<DatabaseResultItem<T> | null> {
-    const dataSource = this.adapter.getWritableDataSource();
-    if (!dataSource) return null;
-    const start = process.hrtime.bigint();
-    await this.adapter.preSave?.();
-    const rows = await dataSource.getRepository(target).save(entities);
-    await this.adapter.postSave?.();
-    const end = process.hrtime.bigint();
-    return {
-      time: Number(end - start),
-      table: '',
-      rows: !rows ? [] : !Array.isArray(rows) ? [rows] : rows,
-    };
-  }
-
-  public async read<T>(
+  public read<T>(
     query: string,
     values: unknown[],
-  ): Promise<DatabaseResultItem<T> | null> {
+  ): Promise<DatabaseResult<T>> | null {
     const dataSource = this.adapter.getReadableDataSource();
     if (!dataSource) return null;
-    const start = process.hrtime.bigint();
-    const rows = await dataSource.query(query, values);
-    const end = process.hrtime.bigint();
-    return {
-      time: Number(end - start),
-      table: '',
-      rows: !rows ? [] : !Array.isArray(rows) ? [rows] : rows,
-    };
+    return this.getResult<T>(() => dataSource.query(query, values));
   }
 
-  public async root<T>(
-    query: string,
-    values: unknown[],
-  ): Promise<DatabaseResultItem<T> | null> {
-    const dataSource = this.adapter.getRootDataSource();
-    if (!dataSource) return null;
-    const start = process.hrtime.bigint();
-    const rows = await dataSource.query(query, values);
-    const end = process.hrtime.bigint();
-    return {
-      time: Number(end - start),
-      table: '',
-      rows: !rows ? [] : !Array.isArray(rows) ? [rows] : rows,
-    };
-  }
-
-  public async snapshotRows(): Promise<DatabaseResultItem<unknown>[] | null> {
-    const tables = await this.adapter.getTables();
-    if (!tables) return null;
-    const results: DatabaseResultItem<unknown>[] = [];
-    for (const table of tables) {
-      const start = process.hrtime.bigint();
-      const rows = await this.adapter.getRows(table);
-      const end = process.hrtime.bigint();
-      if (!rows) return null;
-      results.push({
-        time: Number(end - start),
-        table,
-        rows,
-      });
-    }
-    return results;
-  }
-
-  public async snapshotTables(): Promise<DatabaseResultItem<string> | null> {
-    const start = process.hrtime.bigint();
-    const tables = await this.adapter.getTables();
-    const end = process.hrtime.bigint();
-    if (!tables) return null;
-    return {
-      time: Number(end - start),
-      table: this.name,
-      rows: tables,
-    };
-  }
-
-  public async write<T>(
-    query: string,
-    values: unknown[],
-  ): Promise<DatabaseResultItem<T> | null> {
+  public remove<T>(
+    target: string,
+    entities: unknown[],
+  ): Promise<DatabaseResult<T>> | null {
     const dataSource = this.adapter.getWritableDataSource();
     if (!dataSource) return null;
-    const start = process.hrtime.bigint();
-    const rows = await dataSource.query(query, values);
-    const end = process.hrtime.bigint();
-    return {
-      time: Number(end - start),
-      table: '',
-      rows: !rows ? [] : !Array.isArray(rows) ? [rows] : rows,
+    return this.getResult<T>(async () => {
+      await this.adapter.preRemove?.();
+      const rows = await dataSource.getRepository(target).remove(entities);
+      await this.adapter.postRemove?.();
+      return rows;
+    });
+  }
+
+  public root<T>(
+    query: string,
+    values: unknown[],
+  ): Promise<DatabaseResult<T>> | null {
+    const dataSource = this.adapter.getRootDataSource();
+    if (!dataSource) return null;
+    return this.getResult<T>(() => dataSource.query(query, values));
+  }
+
+  public save<T>(
+    target: string,
+    entities: unknown[],
+  ): Promise<DatabaseResult<T>> | null {
+    const dataSource = this.adapter.getWritableDataSource();
+    if (!dataSource) return null;
+    return this.getResult<T>(async () => {
+      await this.adapter.preSave?.();
+      const rows = await dataSource.getRepository(target).save(entities);
+      await this.adapter.postSave?.();
+      return rows;
+    });
+  }
+
+  public write<T>(
+    query: string,
+    values: unknown[],
+  ): Promise<DatabaseResult<T>> | null {
+    const dataSource = this.adapter.getWritableDataSource();
+    if (!dataSource) return null;
+    return this.getResult<T>(() => dataSource.query(query, values));
+  }
+
+  private async getResult<T>(
+    rowsGetter: () => unknown,
+  ): Promise<DatabaseResult<T>> {
+    const result: DatabaseResult<T> = {
+      time: 0,
+      error: '',
+      rows: [],
+      snapshots: [],
     };
+    const start = process.hrtime.bigint();
+    try {
+      const rows = (await rowsGetter()) as T[];
+      result.rows = !rows ? [] : !Array.isArray(rows) ? [rows] : rows;
+    } catch (e) {
+      result.error = String(e);
+    }
+    const end = process.hrtime.bigint();
+    result.time = Number(end - start);
+    return result;
   }
 }
 
