@@ -1,7 +1,7 @@
 import {
   type AdapterType,
   type DatabaseEventItem,
-  type DatabaseResultItem,
+  type DatabaseResult,
 } from '../../domain';
 import { readDatabase, readDatabases } from '../database';
 
@@ -9,7 +9,7 @@ const createCommonQuery = <T>(
   type: AdapterType,
   name: string,
   event: DatabaseEventItem<unknown>,
-): Promise<DatabaseResultItem<T> | null> | null => {
+): Promise<DatabaseResult<T> | null> | null => {
   const scheduler = readDatabase(type, name);
   if (!scheduler) return null;
   return scheduler.runTask((database) => {
@@ -20,28 +20,40 @@ const createCommonQuery = <T>(
 const createRowsQuery = (
   type: AdapterType,
   name: string,
-): Promise<DatabaseResultItem<unknown>[] | null> | null => {
+): Promise<DatabaseResult<string> | null> | null => {
   const scheduler = readDatabase(type, name);
   if (!scheduler) return null;
   return scheduler.runTask(async (database) => {
-    return database.snapshotRows();
+    const result = await database.check();
+    if (!result) return null;
+    return {
+      ...result,
+      rows: result.rows[0].values || [],
+    };
   }, true);
 };
 
 const createTablesQuery = (
   type: AdapterType,
-): Promise<DatabaseResultItem<string>[] | null> | null => {
+): Promise<DatabaseResult<string> | null> | null => {
   const schedulers = readDatabases(type);
   if (schedulers.some((scheduler) => !scheduler)) return null;
   const promises = schedulers.map((scheduler) => {
-    const promise = scheduler.runTask((database) => {
-      return database.snapshotTables();
+    const promise = scheduler.runTask(async (database) => {
+      const result = await database.check();
+      if (!result) return null;
+      return result.rows[0];
     });
     return promise;
   });
   return Promise.all(promises).then((results) => {
     if (results.some((result) => !result)) return null;
-    return results as DatabaseResultItem<string>[];
+    return {
+      time: 0,
+      error: '',
+      rows: results.map((result) => result?.name || ''),
+      snapshots: results as { name: string; values: string[] }[],
+    };
   });
 };
 

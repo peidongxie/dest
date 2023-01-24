@@ -2,14 +2,26 @@ type DatabaseAction = 'save' | 'remove' | 'read' | 'write' | 'root';
 
 interface DatabaseEventItem<T> {
   action: DatabaseAction;
-  target: string;
+  snapshot: boolean;
+  name: string;
   values: T[];
 }
 
-interface DatabaseResultItem<T> {
-  time: number;
-  table: string;
-  rows: T[];
+interface DatabaseSnapshotItem<T> {
+  name: string;
+  values: T[];
 }
 
-export { type DatabaseAction, type DatabaseEventItem, type DatabaseResultItem };
+interface DatabaseResult<T> {
+  time: number;
+  error: string;
+  rows: T[];
+  snapshots: DatabaseSnapshotItem<unknown>[];
+}
+
+export {
+  type DatabaseAction,
+  type DatabaseEventItem,
+  type DatabaseResult,
+  type DatabaseSnapshotItem,
+};
