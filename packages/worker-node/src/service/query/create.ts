@@ -1,11 +1,12 @@
 import {
   type AdapterType,
   type DatabaseEventItem,
+  type DatabaseHierarchy,
   type DatabaseResult,
 } from '../../domain';
 import { readDatabase, readDatabases } from '../database';
 
-const createCommonQuery = <T>(
+const createQuery = <T>(
   type: AdapterType,
   name: string,
   event: DatabaseEventItem<unknown>,
@@ -17,44 +18,39 @@ const createCommonQuery = <T>(
   }, event.action === 'read');
 };
 
-const createRowsQuery = (
+const createInspection = (
   type: AdapterType,
   name: string,
-): Promise<DatabaseResult<string> | null> | null => {
+  level: 0 | 1 | 2 | 3,
+): Promise<DatabaseHierarchy | null> | null => {
   const scheduler = readDatabase(type, name);
   if (!scheduler) return null;
-  return scheduler.runTask(async (database) => {
-    const result = await database.check();
-    if (!result) return null;
-    return {
-      ...result,
-      rows: result.rows[0].values || [],
-    };
+  return scheduler.runTask((database) => {
+    return database.introspect(level);
   }, true);
 };
 
-const createTablesQuery = (
+const createInspections = (
   type: AdapterType,
-): Promise<DatabaseResult<string> | null> | null => {
+  level: 0 | 1 | 2 | 3,
+): Promise<DatabaseHierarchy | null> | null => {
   const schedulers = readDatabases(type);
   if (schedulers.some((scheduler) => !scheduler)) return null;
   const promises = schedulers.map((scheduler) => {
-    const promise = scheduler.runTask(async (database) => {
-      const result = await database.check();
-      if (!result) return null;
-      return result.rows[0];
+    const promise = scheduler.runTask((database) => {
+      return database.introspect(level);
     });
     return promise;
   });
-  return Promise.all(promises).then((results) => {
-    if (results.some((result) => !result)) return null;
+  return Promise.all(promises).then((hierarchies) => {
+    if (hierarchies.some((hierarchy) => !hierarchy)) return null;
     return {
-      time: 0,
-      error: '',
-      rows: results.map((result) => result?.name || ''),
-      snapshots: results as { name: string; values: string[] }[],
+      type: type,
+      databases: hierarchies
+        .map((hierarchy) => hierarchy?.databases || [])
+        .flat(),
     };
   });
 };
 
-export { createCommonQuery, createRowsQuery, createTablesQuery };
+export { createInspection, createInspections, createQuery };

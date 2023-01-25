@@ -1,6 +1,10 @@
 import { type EntitySchemaOptions } from 'typeorm';
 import { createAdapter, type Adapter, type AdapterType } from '../adapter';
-import { type DatabaseEventItem, type DatabaseResult } from './type';
+import {
+  type DatabaseEventItem,
+  type DatabaseHierarchy,
+  type DatabaseResult,
+} from './type';
 
 class Database {
   adapter: Adapter;
@@ -15,16 +19,6 @@ class Database {
     this.type = type;
     this.name = name || '';
     this.adapter = createAdapter(this.type, this.name, schemas || []);
-  }
-
-  public check(): Promise<
-    DatabaseResult<{ name: string; values: string[] }>
-  > | null {
-    return this.getResult(async () => {
-      const tables = await this.adapter.getTables();
-      if (!tables) return null;
-      return { name: this.name, values: tables };
-    });
   }
 
   public async create(): Promise<this> {
@@ -54,7 +48,48 @@ class Database {
   public emit<T>(
     event: DatabaseEventItem<unknown>,
   ): Promise<DatabaseResult<T>> | null {
-    return this[event.action]?.(event.name, event.values) || null;
+    return this[event.action]?.(event.target, event.values) || null;
+  }
+
+  public async introspect(
+    level: 0 | 1 | 2 | 3,
+  ): Promise<DatabaseHierarchy | null> {
+    // level 0
+    const hierarchy: DatabaseHierarchy = {
+      type: this.type,
+      databases: [],
+    };
+    if (level === 0) return hierarchy;
+    const name = this.name;
+    if (!name) return null;
+    hierarchy.databases.push({
+      name,
+      snapshots: [],
+    });
+    if (level === 1) return hierarchy;
+    try {
+      const tables = await this.adapter.getTables();
+      if (!tables) return null;
+      for (const table of tables) {
+        hierarchy.databases[0].snapshots.push({
+          table,
+          rows: [],
+        });
+      }
+    } catch {
+      return null;
+    }
+    if (level === 2) return hierarchy;
+    try {
+      for (const snapshot of hierarchy.databases[0].snapshots) {
+        const rows = await this.adapter.getRows(snapshot.table);
+        if (!rows) return null;
+        snapshot.rows.push(...rows);
+      }
+    } catch {
+      return null;
+    }
+    return null;
   }
 
   public read<T>(
