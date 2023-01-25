@@ -4,6 +4,7 @@ import {
   type DatabaseEventItem,
   type DatabaseHierarchy,
   type DatabaseResult,
+  type DatabaseSnapshotItem,
 } from './type';
 
 class Database {
@@ -52,44 +53,29 @@ class Database {
   }
 
   public async introspect(
-    level: 0 | 1 | 2 | 3,
+    withRows: string[] | boolean,
   ): Promise<DatabaseHierarchy | null> {
-    // level 0
-    const hierarchy: DatabaseHierarchy = {
+    const tables = Array.isArray(withRows) ? withRows : await this.getTables();
+    if (!tables) return null;
+    if (!withRows) {
+      return {
+        type: this.type,
+        name: this.name,
+        snapshots: tables.map((table) => ({ table, rows: [] })),
+      };
+    }
+    const snapshots = await Promise.all(
+      tables.map(async (table) => ({
+        table,
+        rows: await this.getRows(table),
+      })),
+    );
+    if (snapshots.some((snapshot) => !snapshot.rows)) return null;
+    return {
       type: this.type,
-      databases: [],
+      name: this.name,
+      snapshots: snapshots as DatabaseSnapshotItem<unknown>[],
     };
-    if (level === 0) return hierarchy;
-    const name = this.name;
-    if (!name) return null;
-    hierarchy.databases.push({
-      name,
-      snapshots: [],
-    });
-    if (level === 1) return hierarchy;
-    try {
-      const tables = await this.adapter.getTables();
-      if (!tables) return null;
-      for (const table of tables) {
-        hierarchy.databases[0].snapshots.push({
-          table,
-          rows: [],
-        });
-      }
-    } catch {
-      return null;
-    }
-    if (level === 2) return hierarchy;
-    try {
-      for (const snapshot of hierarchy.databases[0].snapshots) {
-        const rows = await this.adapter.getRows(snapshot.table);
-        if (!rows) return null;
-        snapshot.rows.push(...rows);
-      }
-    } catch {
-      return null;
-    }
-    return null;
   }
 
   public read<T>(
@@ -166,6 +152,24 @@ class Database {
     const end = process.hrtime.bigint();
     result.time = Number(end - start);
     return result;
+  }
+
+  private async getRows<T>(table: string): Promise<T[] | null> {
+    try {
+      const rows = await this.adapter.getRows(table);
+      return rows as T[] | null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async getTables(): Promise<string[] | null> {
+    try {
+      const tables = await this.adapter.getTables();
+      return tables;
+    } catch {
+      return null;
+    }
   }
 }
 

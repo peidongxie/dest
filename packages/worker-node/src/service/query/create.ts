@@ -21,35 +21,28 @@ const createQuery = <T>(
 const createInspection = (
   type: AdapterType,
   name: string,
-  level: 0 | 1 | 2 | 3,
 ): Promise<DatabaseHierarchy | null> | null => {
   const scheduler = readDatabase(type, name);
   if (!scheduler) return null;
   return scheduler.runTask((database) => {
-    return database.introspect(level);
+    return database.introspect(true);
   }, true);
 };
 
 const createInspections = (
   type: AdapterType,
-  level: 0 | 1 | 2 | 3,
-): Promise<DatabaseHierarchy | null> | null => {
+): Promise<DatabaseHierarchy[] | null> | null => {
   const schedulers = readDatabases(type);
   if (schedulers.some((scheduler) => !scheduler)) return null;
   const promises = schedulers.map((scheduler) => {
     const promise = scheduler.runTask((database) => {
-      return database.introspect(level);
+      return database.introspect(false);
     });
     return promise;
   });
   return Promise.all(promises).then((hierarchies) => {
     if (hierarchies.some((hierarchy) => !hierarchy)) return null;
-    return {
-      type: type,
-      databases: hierarchies
-        .map((hierarchy) => hierarchy?.databases || [])
-        .flat(),
-    };
+    return hierarchies as DatabaseHierarchy[];
   });
 };
 

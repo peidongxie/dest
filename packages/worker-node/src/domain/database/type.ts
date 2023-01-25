@@ -16,10 +16,8 @@ interface DatabaseSnapshotItem<T> {
 
 interface DatabaseHierarchy {
   type: AdapterType;
-  databases: {
-    name: string;
-    snapshots: DatabaseSnapshotItem<unknown>[];
-  }[];
+  name: string;
+  snapshots: DatabaseSnapshotItem<unknown>[];
 }
 
 interface DatabaseResult<T> {
