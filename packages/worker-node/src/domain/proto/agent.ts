@@ -3,12 +3,62 @@ import _m0 from 'protobufjs/minimal';
 
 export const protobufPackage = 'dest';
 
+export enum BaseType {
+  DEFAULT_TYPE = 0,
+  SQLITE = 2049,
+  MARIADB = 3306,
+  MYSQL8 = 3307,
+  UNRECOGNIZED = -1,
+}
+
+export function baseTypeFromJSON(object: any): BaseType {
+  switch (object) {
+    case 0:
+    case 'DEFAULT_TYPE':
+      return BaseType.DEFAULT_TYPE;
+    case 2049:
+    case 'SQLITE':
+      return BaseType.SQLITE;
+    case 3306:
+    case 'MARIADB':
+      return BaseType.MARIADB;
+    case 3307:
+    case 'MYSQL8':
+      return BaseType.MYSQL8;
+    case -1:
+    case 'UNRECOGNIZED':
+    default:
+      return BaseType.UNRECOGNIZED;
+  }
+}
+
+export function baseTypeToJSON(object: BaseType): string {
+  switch (object) {
+    case BaseType.DEFAULT_TYPE:
+      return 'DEFAULT_TYPE';
+    case BaseType.SQLITE:
+      return 'SQLITE';
+    case BaseType.MARIADB:
+      return 'MARIADB';
+    case BaseType.MYSQL8:
+      return 'MYSQL8';
+    case BaseType.UNRECOGNIZED:
+    default:
+      return 'UNRECOGNIZED';
+  }
+}
+
 export interface BaseRequest {
-  secret: string;
+  type: BaseType;
+  name: string;
 }
 
 export interface BaseResponse {
   success: boolean;
+}
+
+export interface SecretRequest {
+  secret: string;
 }
 
 export interface TokenResponse {
@@ -17,7 +67,7 @@ export interface TokenResponse {
 }
 
 function createBaseBaseRequest(): BaseRequest {
-  return { secret: '' };
+  return { type: 0, name: '' };
 }
 
 export const BaseRequest = {
@@ -25,8 +75,11 @@ export const BaseRequest = {
     message: BaseRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
-    if (message.secret !== '') {
-      writer.uint32(10).string(message.secret);
+    if (message.type !== 0) {
+      writer.uint32(8).int32(message.type);
+    }
+    if (message.name !== '') {
+      writer.uint32(18).string(message.name);
     }
     return writer;
   },
@@ -39,7 +92,10 @@ export const BaseRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.secret = reader.string();
+          message.type = reader.int32() as any;
+          break;
+        case 2:
+          message.name = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -50,20 +106,29 @@ export const BaseRequest = {
   },
 
   fromJSON(object: any): BaseRequest {
-    return { secret: isSet(object.secret) ? String(object.secret) : '' };
+    return {
+      type: isSet(object.type) ? baseTypeFromJSON(object.type) : 0,
+      name: isSet(object.name) ? String(object.name) : '',
+    };
   },
 
   toJSON(message: BaseRequest): unknown {
     const obj: any = {};
-    message.secret !== undefined && (obj.secret = message.secret);
+    message.type !== undefined && (obj.type = baseTypeToJSON(message.type));
+    message.name !== undefined && (obj.name = message.name);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<BaseRequest>, I>>(base?: I): BaseRequest {
+    return BaseRequest.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<BaseRequest>, I>>(
     object: I,
   ): BaseRequest {
     const message = createBaseBaseRequest();
-    message.secret = object.secret ?? '';
+    message.type = object.type ?? 0;
+    message.name = object.name ?? '';
     return message;
   },
 };
@@ -111,11 +176,75 @@ export const BaseResponse = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<BaseResponse>, I>>(
+    base?: I,
+  ): BaseResponse {
+    return BaseResponse.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<BaseResponse>, I>>(
     object: I,
   ): BaseResponse {
     const message = createBaseBaseResponse();
     message.success = object.success ?? false;
+    return message;
+  },
+};
+
+function createBaseSecretRequest(): SecretRequest {
+  return { secret: '' };
+}
+
+export const SecretRequest = {
+  encode(
+    message: SecretRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.secret !== '') {
+      writer.uint32(10).string(message.secret);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SecretRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSecretRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.secret = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SecretRequest {
+    return { secret: isSet(object.secret) ? String(object.secret) : '' };
+  },
+
+  toJSON(message: SecretRequest): unknown {
+    const obj: any = {};
+    message.secret !== undefined && (obj.secret = message.secret);
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SecretRequest>, I>>(
+    base?: I,
+  ): SecretRequest {
+    return SecretRequest.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SecretRequest>, I>>(
+    object: I,
+  ): SecretRequest {
+    const message = createBaseSecretRequest();
+    message.secret = object.secret ?? '';
     return message;
   },
 };
@@ -173,6 +302,12 @@ export const TokenResponse = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<TokenResponse>, I>>(
+    base?: I,
+  ): TokenResponse {
+    return TokenResponse.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<TokenResponse>, I>>(
     object: I,
   ): TokenResponse {
@@ -190,7 +325,7 @@ export const AgentDefinition = {
   methods: {
     deleteAgent: {
       name: 'DeleteAgent',
-      requestType: BaseRequest,
+      requestType: SecretRequest,
       requestStream: false,
       responseType: TokenResponse,
       responseStream: false,
@@ -198,7 +333,7 @@ export const AgentDefinition = {
     },
     getAgent: {
       name: 'GetAgent',
-      requestType: BaseRequest,
+      requestType: SecretRequest,
       requestStream: false,
       responseType: TokenResponse,
       responseStream: false,
@@ -206,7 +341,7 @@ export const AgentDefinition = {
     },
     postAgent: {
       name: 'PostAgent',
-      requestType: BaseRequest,
+      requestType: SecretRequest,
       requestStream: false,
       responseType: TokenResponse,
       responseStream: false,

@@ -24,12 +24,18 @@ message BaseResponse {
   bool success = 1;
 }
 
-// Result
+// Snapshot
+
+message SnapshotItem {
+  string table = 2;
+  repeated string rows = 3;
+}
 
 message ResultItem {
   uint32 time = 1;
-  string table = 2;
+  string error = 2;
   repeated string rows = 3;
+  repeated SnapshotItem snapshots = 4;
 }
 
 message ResultResponse {

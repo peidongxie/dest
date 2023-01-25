@@ -57,15 +57,20 @@ export interface BaseResponse {
   success: boolean;
 }
 
-export interface ResultItem {
-  time: number;
+export interface SnapshotItem {
   table: string;
   rows: string[];
 }
 
-export interface ResultsResponse {
+export interface HierarchyItem {
+  type: BaseType;
+  name: string;
+  snapshots: SnapshotItem[];
+}
+
+export interface HierarchiesResponse {
   success: boolean;
-  results: ResultItem[];
+  hierarchies: HierarchyItem[];
 }
 
 export interface SchemasRequest {
@@ -127,6 +132,10 @@ export const BaseRequest = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<BaseRequest>, I>>(base?: I): BaseRequest {
+    return BaseRequest.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<BaseRequest>, I>>(
     object: I,
   ): BaseRequest {
@@ -180,6 +189,12 @@ export const BaseResponse = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<BaseResponse>, I>>(
+    base?: I,
+  ): BaseResponse {
+    return BaseResponse.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<BaseResponse>, I>>(
     object: I,
   ): BaseResponse {
@@ -189,18 +204,15 @@ export const BaseResponse = {
   },
 };
 
-function createBaseResultItem(): ResultItem {
-  return { time: 0, table: '', rows: [] };
+function createBaseSnapshotItem(): SnapshotItem {
+  return { table: '', rows: [] };
 }
 
-export const ResultItem = {
+export const SnapshotItem = {
   encode(
-    message: ResultItem,
+    message: SnapshotItem,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
-    if (message.time !== 0) {
-      writer.uint32(8).uint32(message.time);
-    }
     if (message.table !== '') {
       writer.uint32(18).string(message.table);
     }
@@ -210,16 +222,13 @@ export const ResultItem = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): ResultItem {
+  decode(input: _m0.Reader | Uint8Array, length?: number): SnapshotItem {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseResultItem();
+    const message = createBaseSnapshotItem();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
-        case 1:
-          message.time = reader.uint32();
-          break;
         case 2:
           message.table = reader.string();
           break;
@@ -234,9 +243,8 @@ export const ResultItem = {
     return message;
   },
 
-  fromJSON(object: any): ResultItem {
+  fromJSON(object: any): SnapshotItem {
     return {
-      time: isSet(object.time) ? Number(object.time) : 0,
       table: isSet(object.table) ? String(object.table) : '',
       rows: Array.isArray(object?.rows)
         ? object.rows.map((e: any) => String(e))
@@ -244,9 +252,8 @@ export const ResultItem = {
     };
   },
 
-  toJSON(message: ResultItem): unknown {
+  toJSON(message: SnapshotItem): unknown {
     const obj: any = {};
-    message.time !== undefined && (obj.time = Math.round(message.time));
     message.table !== undefined && (obj.table = message.table);
     if (message.rows) {
       obj.rows = message.rows.map((e) => e);
@@ -256,47 +263,58 @@ export const ResultItem = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<ResultItem>, I>>(
+  create<I extends Exact<DeepPartial<SnapshotItem>, I>>(
+    base?: I,
+  ): SnapshotItem {
+    return SnapshotItem.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SnapshotItem>, I>>(
     object: I,
-  ): ResultItem {
-    const message = createBaseResultItem();
-    message.time = object.time ?? 0;
+  ): SnapshotItem {
+    const message = createBaseSnapshotItem();
     message.table = object.table ?? '';
     message.rows = object.rows?.map((e) => e) || [];
     return message;
   },
 };
 
-function createBaseResultsResponse(): ResultsResponse {
-  return { success: false, results: [] };
+function createBaseHierarchyItem(): HierarchyItem {
+  return { type: 0, name: '', snapshots: [] };
 }
 
-export const ResultsResponse = {
+export const HierarchyItem = {
   encode(
-    message: ResultsResponse,
+    message: HierarchyItem,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
-    if (message.success === true) {
-      writer.uint32(8).bool(message.success);
+    if (message.type !== 0) {
+      writer.uint32(8).int32(message.type);
     }
-    for (const v of message.results) {
-      ResultItem.encode(v!, writer.uint32(18).fork()).ldelim();
+    if (message.name !== '') {
+      writer.uint32(18).string(message.name);
+    }
+    for (const v of message.snapshots) {
+      SnapshotItem.encode(v!, writer.uint32(26).fork()).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): ResultsResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): HierarchyItem {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseResultsResponse();
+    const message = createBaseHierarchyItem();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.success = reader.bool();
+          message.type = reader.int32() as any;
           break;
         case 2:
-          message.results.push(ResultItem.decode(reader, reader.uint32()));
+          message.name = reader.string();
+          break;
+        case 3:
+          message.snapshots.push(SnapshotItem.decode(reader, reader.uint32()));
           break;
         default:
           reader.skipType(tag & 7);
@@ -306,35 +324,124 @@ export const ResultsResponse = {
     return message;
   },
 
-  fromJSON(object: any): ResultsResponse {
+  fromJSON(object: any): HierarchyItem {
     return {
-      success: isSet(object.success) ? Boolean(object.success) : false,
-      results: Array.isArray(object?.results)
-        ? object.results.map((e: any) => ResultItem.fromJSON(e))
+      type: isSet(object.type) ? baseTypeFromJSON(object.type) : 0,
+      name: isSet(object.name) ? String(object.name) : '',
+      snapshots: Array.isArray(object?.snapshots)
+        ? object.snapshots.map((e: any) => SnapshotItem.fromJSON(e))
         : [],
     };
   },
 
-  toJSON(message: ResultsResponse): unknown {
+  toJSON(message: HierarchyItem): unknown {
     const obj: any = {};
-    message.success !== undefined && (obj.success = message.success);
-    if (message.results) {
-      obj.results = message.results.map((e) =>
-        e ? ResultItem.toJSON(e) : undefined,
+    message.type !== undefined && (obj.type = baseTypeToJSON(message.type));
+    message.name !== undefined && (obj.name = message.name);
+    if (message.snapshots) {
+      obj.snapshots = message.snapshots.map((e) =>
+        e ? SnapshotItem.toJSON(e) : undefined,
       );
     } else {
-      obj.results = [];
+      obj.snapshots = [];
     }
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<ResultsResponse>, I>>(
+  create<I extends Exact<DeepPartial<HierarchyItem>, I>>(
+    base?: I,
+  ): HierarchyItem {
+    return HierarchyItem.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<HierarchyItem>, I>>(
     object: I,
-  ): ResultsResponse {
-    const message = createBaseResultsResponse();
+  ): HierarchyItem {
+    const message = createBaseHierarchyItem();
+    message.type = object.type ?? 0;
+    message.name = object.name ?? '';
+    message.snapshots =
+      object.snapshots?.map((e) => SnapshotItem.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseHierarchiesResponse(): HierarchiesResponse {
+  return { success: false, hierarchies: [] };
+}
+
+export const HierarchiesResponse = {
+  encode(
+    message: HierarchiesResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.success === true) {
+      writer.uint32(8).bool(message.success);
+    }
+    for (const v of message.hierarchies) {
+      HierarchyItem.encode(v!, writer.uint32(18).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): HierarchiesResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseHierarchiesResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.success = reader.bool();
+          break;
+        case 2:
+          message.hierarchies.push(
+            HierarchyItem.decode(reader, reader.uint32()),
+          );
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): HierarchiesResponse {
+    return {
+      success: isSet(object.success) ? Boolean(object.success) : false,
+      hierarchies: Array.isArray(object?.hierarchies)
+        ? object.hierarchies.map((e: any) => HierarchyItem.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: HierarchiesResponse): unknown {
+    const obj: any = {};
+    message.success !== undefined && (obj.success = message.success);
+    if (message.hierarchies) {
+      obj.hierarchies = message.hierarchies.map((e) =>
+        e ? HierarchyItem.toJSON(e) : undefined,
+      );
+    } else {
+      obj.hierarchies = [];
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<HierarchiesResponse>, I>>(
+    base?: I,
+  ): HierarchiesResponse {
+    return HierarchiesResponse.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<HierarchiesResponse>, I>>(
+    object: I,
+  ): HierarchiesResponse {
+    const message = createBaseHierarchiesResponse();
     message.success = object.success ?? false;
-    message.results =
-      object.results?.map((e) => ResultItem.fromPartial(e)) || [];
+    message.hierarchies =
+      object.hierarchies?.map((e) => HierarchyItem.fromPartial(e)) || [];
     return message;
   },
 };
@@ -406,6 +513,12 @@ export const SchemasRequest = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<SchemasRequest>, I>>(
+    base?: I,
+  ): SchemasRequest {
+    return SchemasRequest.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<SchemasRequest>, I>>(
     object: I,
   ): SchemasRequest {
@@ -434,7 +547,7 @@ export const DatabaseDefinition = {
       name: 'GetDatabase',
       requestType: BaseRequest,
       requestStream: false,
-      responseType: ResultsResponse,
+      responseType: HierarchiesResponse,
       responseStream: false,
       options: {},
     },
