@@ -49,13 +49,17 @@ class Database {
   public emit<T>(
     event: DatabaseEventItem<unknown>,
   ): Promise<DatabaseResult<T>> | null {
-    return this[event.action]?.(event.target, event.values) || null;
+    return (
+      this[event.action]?.(event.target, event.values, event.tables) || null
+    );
   }
 
   public async introspect(
     withRows: string[] | boolean,
   ): Promise<DatabaseHierarchy | null> {
-    const tables = Array.isArray(withRows) ? withRows : await this.getTables();
+    const tables = Array.isArray(withRows)
+      ? withRows
+      : await this.adapter.getTables();
     if (!tables) return null;
     if (!withRows) {
       return {
@@ -67,7 +71,7 @@ class Database {
     const snapshots = await Promise.all(
       tables.map(async (table) => ({
         table,
-        rows: await this.getRows(table),
+        rows: await this.adapter.getRows(table),
       })),
     );
     if (snapshots.some((snapshot) => !snapshot.rows)) return null;
@@ -81,15 +85,17 @@ class Database {
   public read<T>(
     query: string,
     values: unknown[],
+    tables: string[],
   ): Promise<DatabaseResult<T>> | null {
     const dataSource = this.adapter.getReadableDataSource();
     if (!dataSource) return null;
-    return this.getResult<T>(() => dataSource.query(query, values));
+    return this.getResult<T>(() => dataSource.query(query, values), tables);
   }
 
   public remove<T>(
     target: string,
     entities: unknown[],
+    tables: string[],
   ): Promise<DatabaseResult<T>> | null {
     const dataSource = this.adapter.getWritableDataSource();
     if (!dataSource) return null;
@@ -98,21 +104,23 @@ class Database {
       const rows = await dataSource.getRepository(target).remove(entities);
       await this.adapter.postRemove?.();
       return rows;
-    });
+    }, tables);
   }
 
   public root<T>(
     query: string,
     values: unknown[],
+    tables: string[],
   ): Promise<DatabaseResult<T>> | null {
     const dataSource = this.adapter.getRootDataSource();
     if (!dataSource) return null;
-    return this.getResult<T>(() => dataSource.query(query, values));
+    return this.getResult<T>(() => dataSource.query(query, values), tables);
   }
 
   public save<T>(
     target: string,
     entities: unknown[],
+    tables: string[],
   ): Promise<DatabaseResult<T>> | null {
     const dataSource = this.adapter.getWritableDataSource();
     if (!dataSource) return null;
@@ -121,20 +129,22 @@ class Database {
       const rows = await dataSource.getRepository(target).save(entities);
       await this.adapter.postSave?.();
       return rows;
-    });
+    }, tables);
   }
 
   public write<T>(
     query: string,
     values: unknown[],
+    tables: string[],
   ): Promise<DatabaseResult<T>> | null {
     const dataSource = this.adapter.getWritableDataSource();
     if (!dataSource) return null;
-    return this.getResult<T>(() => dataSource.query(query, values));
+    return this.getResult<T>(() => dataSource.query(query, values), tables);
   }
 
   private async getResult<T>(
     rowsGetter: () => unknown,
+    tables: string[],
   ): Promise<DatabaseResult<T>> {
     const result: DatabaseResult<T> = {
       time: 0,
@@ -151,25 +161,14 @@ class Database {
     }
     const end = process.hrtime.bigint();
     result.time = Number(end - start);
+    if (result.error) return result;
+    try {
+      const hierarchy = await this.introspect(tables);
+      result.snapshots = hierarchy?.snapshots || [];
+    } catch (e) {
+      result.error = String(e);
+    }
     return result;
-  }
-
-  private async getRows<T>(table: string): Promise<T[] | null> {
-    try {
-      const rows = await this.adapter.getRows(table);
-      return rows as T[] | null;
-    } catch {
-      return null;
-    }
-  }
-
-  private async getTables(): Promise<string[] | null> {
-    try {
-      const tables = await this.adapter.getTables();
-      return tables;
-    } catch {
-      return null;
-    }
   }
 }
 

@@ -25,7 +25,11 @@ const createInspection = (
   const scheduler = readDatabase(type, name);
   if (!scheduler) return null;
   return scheduler.runTask((database) => {
-    return database.introspect(true);
+    try {
+      return database.introspect(true);
+    } catch {
+      return null;
+    }
   }, true);
 };
 
@@ -36,7 +40,11 @@ const createInspections = (
   if (schedulers.some((scheduler) => !scheduler)) return null;
   const promises = schedulers.map((scheduler) => {
     const promise = scheduler.runTask((database) => {
-      return database.introspect(false);
+      try {
+        return database.introspect(false);
+      } catch {
+        return null;
+      }
     });
     return promise;
   });
