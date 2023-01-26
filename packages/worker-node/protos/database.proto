@@ -4,7 +4,7 @@ package dest;
 
 service Database {
   rpc DeleteDatabase (BaseRequest) returns (BaseResponse) {}
-  rpc GetDatabase (BaseRequest) returns (HierarchiesResponse) {}
+  rpc GetDatabase (BaseRequest) returns (BaseResponse) {}
   rpc PostDatabase (SchemasRequest) returns (BaseResponse) {}
 }
 
@@ -24,26 +24,6 @@ message BaseRequest {
 
 message BaseResponse {
   bool success = 1;
-}
-
-// Snapshot
-
-message SnapshotItem {
-  string table = 2;
-  repeated string rows = 3;
-}
-
-// Hierarchy
-
-message HierarchyItem {
-  string type = 1;
-  string name = 2;
-  repeated SnapshotItem snapshots = 3;
-}
-
-message HierarchiesResponse {
-  bool success = 1;
-  repeated HierarchyItem hierarchies = 2;
 }
 
 // Schema
