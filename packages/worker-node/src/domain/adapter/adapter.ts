@@ -1,15 +1,16 @@
 import { EntitySchema, type EntitySchemaOptions } from 'typeorm';
 import Mariadb from './mariadb';
 import Mysql8 from './mysql8';
+import Default from './default';
 import Sqlite from './sqlite';
 import { type Adapter, type AdapterType } from './type';
 
 const createAdapter = (
-  type: AdapterType,
-  name: string,
-  schemas: EntitySchemaOptions<unknown>[],
+  type?: AdapterType,
+  name?: string,
+  schemas?: EntitySchemaOptions<unknown>[],
 ): Adapter => {
-  const entities = (schemas || []).map((schema) => new EntitySchema(schema));
+  const entities = schemas?.map((schema) => new EntitySchema(schema));
   switch (type) {
     case 'mariadb':
       return new Mariadb(name, entities);
@@ -18,7 +19,7 @@ const createAdapter = (
     case 'sqlite':
       return new Sqlite(name, entities);
     default:
-      throw new TypeError('Invalid adapter type');
+      return new Default();
   }
 };
 

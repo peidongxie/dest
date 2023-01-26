@@ -2,7 +2,7 @@ import { type DataSource } from 'typeorm';
 
 interface Adapter {
   getReadableDataSource: () => DataSource | null;
-  getRootDataSource: () => DataSource | null;
+  getRootDataSource?: () => DataSource | null;
   getRows: (table: string) => Promise<unknown[] | null>;
   getTables: () => Promise<string[] | null>;
   getWritableDataSource: () => DataSource | null;
