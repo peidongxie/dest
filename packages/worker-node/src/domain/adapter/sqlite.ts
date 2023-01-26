@@ -37,8 +37,8 @@ class Sqlite implements Adapter {
   readable: DataSource | null;
   writable: DataSource | null;
 
-  constructor(name: string, entities: EntitySchema[]) {
-    this.name = name;
+  constructor(name?: string, entities?: EntitySchema[]) {
+    this.name = name || '';
     const file = this.name + '.sqlite';
     if (name) {
       this.readable = new DataSource({
@@ -49,7 +49,7 @@ class Sqlite implements Adapter {
       this.writable = new DataSource({
         type: 'sqlite',
         database: join(dir, file),
-        entities: entities,
+        entities: entities || [],
         synchronize: true,
         driver: writeDriver,
       });
@@ -59,20 +59,16 @@ class Sqlite implements Adapter {
     }
   }
 
-  getReadableDataSource() {
+  public getReadableDataSource() {
     return this.readable;
   }
 
-  getRootDataSource() {
-    return null;
-  }
-
-  async getRows(table: string) {
+  public async getRows(table: string) {
     if (!this.name) return null;
     return (this.readable as DataSource).query(`SELECT * FROM ${table}`);
   }
 
-  async getTables() {
+  public async getTables() {
     if (!this.name) return null;
     const rows: { name: string }[] = await (this.readable as DataSource).query(
       `SELECT name FROM sqlite_master WHERE type = 'table'`,
@@ -82,17 +78,17 @@ class Sqlite implements Adapter {
       .map((row) => row.name);
   }
 
-  getWritableDataSource() {
+  public getWritableDataSource() {
     return this.writable;
   }
 
-  async postDestroy() {
+  public async postDestroy() {
     if (!this.name) return;
     const file = this.name + '.sqlite';
     await rm(join(dir, file), { force: true });
   }
 
-  async preCreate() {
+  public async preCreate() {
     if (!this.name) return;
     const file = this.name + '.sqlite';
     rm(join(dir, file), { force: true });

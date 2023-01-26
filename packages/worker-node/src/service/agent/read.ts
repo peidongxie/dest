@@ -1,8 +1,7 @@
-import { type Scheduler } from '../../domain';
 import { readMemo } from '../memo';
 
-const readAgent = (): Scheduler<string> | null => {
-  return readMemo<Scheduler<string>>(['agent']);
+const readAgent = (): string | null => {
+  return readMemo<string>(['agent']);
 };
 
 export { readAgent };

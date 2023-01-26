@@ -31,6 +31,8 @@ message SnapshotItem {
   repeated string rows = 3;
 }
 
+// Result
+
 message ResultItem {
   uint32 time = 1;
   string error = 2;
@@ -58,6 +60,7 @@ message EventItem {
   EventAction action = 1;
   string target = 2;
   repeated string values = 3;
+  repeated string tables = 4;
 }
 
 message EventRequest {

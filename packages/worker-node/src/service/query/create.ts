@@ -21,31 +21,33 @@ const createQuery = <T>(
 const createInspection = (
   type: AdapterType,
   name: string,
+  withRows: string[] | boolean,
 ): Promise<DatabaseHierarchy | null> | null => {
   const scheduler = readDatabase(type, name);
   if (!scheduler) return null;
-  return scheduler.runTask((database) => {
+  const promise = scheduler.runTask((database) => {
     try {
-      return database.introspect(true);
+      return database.introspect(withRows);
     } catch {
       return null;
     }
   }, true);
+  return promise;
 };
 
 const createInspections = (
   type: AdapterType,
-): Promise<DatabaseHierarchy[] | null> | null => {
+  withRows: string[] | boolean,
+): Promise<DatabaseHierarchy[] | null> => {
   const schedulers = readDatabases(type);
-  if (schedulers.some((scheduler) => !scheduler)) return null;
   const promises = schedulers.map((scheduler) => {
     const promise = scheduler.runTask((database) => {
       try {
-        return database.introspect(false);
+        return database.introspect(withRows);
       } catch {
         return null;
       }
-    });
+    }, true);
     return promise;
   });
   return Promise.all(promises).then((hierarchies) => {

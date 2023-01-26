@@ -8,18 +8,18 @@ import {
 } from './type';
 
 class Database {
-  adapter: Adapter;
-  name: string;
-  type: AdapterType;
+  private adapter: Adapter;
+  private name: string;
+  private type: AdapterType | '';
 
   constructor(
-    type: AdapterType,
+    type?: AdapterType,
     name?: string,
     schemas?: EntitySchemaOptions<unknown>[],
   ) {
-    this.type = type;
+    this.adapter = createAdapter(type, name, schemas);
     this.name = name || '';
-    this.adapter = createAdapter(this.type, this.name, schemas || []);
+    this.type = type || '';
   }
 
   public async create(): Promise<this> {
@@ -28,7 +28,7 @@ class Database {
       await this.adapter.getWritableDataSource()?.initialize();
       await this.adapter.getReadableDataSource()?.initialize();
     } else {
-      await this.adapter.getRootDataSource()?.initialize();
+      await this.adapter.getRootDataSource?.()?.initialize();
     }
     await this.adapter.postCreate?.();
     return this;
@@ -40,7 +40,7 @@ class Database {
       await this.adapter.getReadableDataSource()?.destroy();
       await this.adapter.getWritableDataSource()?.destroy();
     } else {
-      await this.adapter.getRootDataSource()?.destroy();
+      await this.adapter.getRootDataSource?.()?.destroy();
     }
     await this.adapter.postDestroy?.();
     return this;
@@ -57,6 +57,8 @@ class Database {
   public async introspect(
     withRows: string[] | boolean,
   ): Promise<DatabaseHierarchy | null> {
+    if (!this.type) return null;
+    if (!this.name) return null;
     const tables = Array.isArray(withRows)
       ? withRows
       : await this.adapter.getTables();
@@ -112,7 +114,7 @@ class Database {
     values: unknown[],
     tables: string[],
   ): Promise<DatabaseResult<T>> | null {
-    const dataSource = this.adapter.getRootDataSource();
+    const dataSource = this.adapter.getRootDataSource?.();
     if (!dataSource) return null;
     return this.getResult<T>(() => dataSource.query(query, values), tables);
   }
@@ -157,7 +159,7 @@ class Database {
       const rows = (await rowsGetter()) as T[];
       result.rows = !rows ? [] : !Array.isArray(rows) ? [rows] : rows;
     } catch (e) {
-      result.error = String(e);
+      result.error = String(e) || 'Unknown error';
     }
     const end = process.hrtime.bigint();
     result.time = Number(end - start);
@@ -166,7 +168,7 @@ class Database {
       const hierarchy = await this.introspect(tables);
       result.snapshots = hierarchy?.snapshots || [];
     } catch (e) {
-      result.error = String(e);
+      result.error = String(e) || 'Unknown error';
     }
     return result;
   }

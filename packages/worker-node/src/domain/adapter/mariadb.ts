@@ -28,14 +28,14 @@ const writePrivileges = [
 ];
 
 class Mariadb implements Adapter {
-  static root: DataSource;
+  public static root: DataSource;
 
-  name: string;
-  readable: DataSource;
-  writable: DataSource;
+  public name: string;
+  public readable: DataSource;
+  public writable: DataSource;
 
-  constructor(name: string, entities: EntitySchema[]) {
-    this.name = name;
+  constructor(name?: string, entities?: EntitySchema[]) {
+    this.name = name || '';
     if (name) {
       this.readable = new DataSource({
         type: 'mariadb',
@@ -52,7 +52,7 @@ class Mariadb implements Adapter {
         database: name,
         username: 'write',
         password: 'dest-toolkit',
-        entities: entities,
+        entities: entities || [],
         synchronize: true,
       });
     } else {
@@ -70,20 +70,20 @@ class Mariadb implements Adapter {
     }
   }
 
-  getReadableDataSource() {
+  public getReadableDataSource() {
     return this.readable;
   }
 
-  getRootDataSource() {
+  public getRootDataSource() {
     return Mariadb.root;
   }
 
-  async getRows(table: string) {
+  public async getRows(table: string) {
     if (!this.name) return null;
     return this.readable.query(`SELECT * FROM ${table}`);
   }
 
-  async getTables() {
+  public async getTables() {
     if (!this.name) return null;
     const rows: { Name: string }[] = await this.readable.query(
       `SHOW TABLE STATUS`,
@@ -91,11 +91,11 @@ class Mariadb implements Adapter {
     return rows.map((row) => row.Name);
   }
 
-  getWritableDataSource() {
+  public getWritableDataSource() {
     return this.writable;
   }
 
-  async postCreate() {
+  public async postCreate() {
     if (this.name) return;
     const rows: { Database: string }[] = await Mariadb.root.query(
       `SHOW DATABASES`,
@@ -125,12 +125,12 @@ class Mariadb implements Adapter {
     await Mariadb.root.query(`FLUSH PRIVILEGES`);
   }
 
-  async postDestroy() {
+  public async postDestroy() {
     if (!this.name) return;
     await Mariadb.root.query(`DROP DATABASE \`${this.name}\``);
   }
 
-  async preCreate() {
+  public async preCreate() {
     if (!this.name) return;
     await Mariadb.root.query(`DROP DATABASE IF EXISTS \`${this.name}\``);
     await Mariadb.root.query(`CREATE DATABASE \`${this.name}\``);

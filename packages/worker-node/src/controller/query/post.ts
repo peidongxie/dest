@@ -6,7 +6,7 @@ import {
   type AdapterType,
   type DatabaseAction,
 } from '../../domain';
-import { createCommonQuery, readMemo } from '../../service';
+import { createQuery, readMemo } from '../../service';
 
 const postQueryByHttp: Route = {
   method: 'POST',
@@ -20,6 +20,7 @@ const postQueryByHttp: Route = {
       action: EventAction;
       target: string;
       values: unknown[];
+      tables: string[];
     }>();
     const eventAction = readMemo<DatabaseAction>([
       'action',
@@ -32,7 +33,8 @@ const postQueryByHttp: Route = {
       !event ||
       !event.action ||
       !event.target ||
-      !Array.isArray(event.values)
+      !Array.isArray(event.values) ||
+      !Array.isArray(event.tables)
     ) {
       return {
         code: 400,
@@ -40,13 +42,14 @@ const postQueryByHttp: Route = {
           success: false,
           result: {
             time: 0,
-            table: '',
+            error: '',
             rows: [],
+            snapshots: [],
           },
         },
       };
     }
-    const promise = createCommonQuery(baseType, name || '', {
+    const promise = createQuery(baseType, name || '', {
       ...event,
       action: eventAction,
     });
@@ -57,8 +60,9 @@ const postQueryByHttp: Route = {
           success: false,
           result: {
             time: 0,
-            table: '',
+            error: '',
             rows: [],
+            snapshots: [],
           },
         },
       };
@@ -70,8 +74,9 @@ const postQueryByHttp: Route = {
           success: false,
           result: {
             time: 0,
-            table: '',
+            error: '',
             rows: [],
+            snapshots: [],
           },
         },
       };
@@ -103,20 +108,22 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
         !event ||
         !event.action ||
         !event.target ||
-        !Array.isArray(event.values)
+        !Array.isArray(event.values) ||
+        !Array.isArray(event.tables)
       ) {
         return {
           success: false,
           result: {
             time: 0,
-            table: '',
+            error: '',
             rows: [],
+            snapshots: [],
           },
         };
       }
-      const promise = createCommonQuery(baseType, name || '', {
+      const promise = createQuery(baseType, name || '', {
+        ...event,
         action: eventAction,
-        target: event.target,
         values: event.values.map((value) => JSON.parse(value)),
       });
       if (!promise) {
@@ -124,8 +131,9 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
           success: false,
           result: {
             time: 0,
-            table: '',
+            error: '',
             rows: [],
+            snapshots: [],
           },
         };
       }
@@ -135,8 +143,9 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
           success: false,
           result: {
             time: 0,
-            table: '',
+            error: '',
             rows: [],
+            snapshots: [],
           },
         };
       }
@@ -145,6 +154,10 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
         result: {
           ...result,
           rows: result.rows.map((row) => JSON.stringify(row)),
+          snapshots: result.snapshots.map((snapshot) => ({
+            ...snapshot,
+            rows: snapshot.rows.map((row) => JSON.stringify(row)),
+          })),
         },
       };
     },

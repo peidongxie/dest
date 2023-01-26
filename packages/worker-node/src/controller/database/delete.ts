@@ -1,7 +1,7 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { DatabaseDefinition, type AdapterType } from '../../domain';
-import { deleteDatabase, deleteDatabases, readMemo } from '../../service';
+import { deleteDatabase, readMemo } from '../../service';
 
 const deleteDatabaseByHttp: Route = {
   method: 'DELETE',
@@ -11,7 +11,7 @@ const deleteDatabaseByHttp: Route = {
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
     const baseType = readMemo<AdapterType>(['type', Number(type)]);
-    if (!baseType) {
+    if (!name || !baseType) {
       return {
         code: 400,
         body: {
@@ -19,18 +19,14 @@ const deleteDatabaseByHttp: Route = {
         },
       };
     }
-    if (name) {
-      await deleteDatabases(baseType);
-    } else {
-      const database = await deleteDatabase(baseType, name || '');
-      if (!database) {
-        return {
-          code: 404,
-          body: {
-            success: false,
-          },
-        };
-      }
+    const scheduler = await deleteDatabase(baseType, name);
+    if (!scheduler) {
+      return {
+        code: 404,
+        body: {
+          success: false,
+        },
+      };
     }
     return {
       code: 200,
@@ -47,20 +43,16 @@ const deleteDatabaseByRpc: Plugin<DatabaseDefinition> = {
     deleteDatabase: async (req) => {
       const { name, type } = req;
       const baseType = readMemo<AdapterType>(['type', type]);
-      if (!baseType) {
+      if (!name || !baseType) {
         return {
           success: false,
         };
       }
-      if (name) {
-        await deleteDatabases(baseType);
-      } else {
-        const database = await deleteDatabase(baseType, name || '');
-        if (!database) {
-          return {
-            success: false,
-          };
-        }
+      const scheduler = await deleteDatabase(baseType, name);
+      if (!scheduler) {
+        return {
+          success: false,
+        };
       }
       return {
         success: true,
