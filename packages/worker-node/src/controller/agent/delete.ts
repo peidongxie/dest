@@ -33,7 +33,7 @@ const deleteAgentByHttp: Route = {
       code: 200,
       body: {
         success: true,
-        token: agent.getTarget(),
+        token: agent,
       },
     };
   },
@@ -60,7 +60,7 @@ const deleteAgentByRpc: Plugin<AgentDefinition> = {
       }
       return {
         success: true,
-        token: agent.getTarget(),
+        token: agent,
       };
     },
   },
