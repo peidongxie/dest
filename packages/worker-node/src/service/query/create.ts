@@ -24,13 +24,14 @@ const createInspection = (
 ): Promise<DatabaseHierarchy | null> | null => {
   const scheduler = readDatabase(type, name);
   if (!scheduler) return null;
-  return scheduler.runTask((database) => {
+  const promise = scheduler.runTask((database) => {
     try {
       return database.introspect(true);
     } catch {
       return null;
     }
   }, true);
+  return promise;
 };
 
 const createInspections = (

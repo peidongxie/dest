@@ -157,7 +157,7 @@ class Database {
       const rows = (await rowsGetter()) as T[];
       result.rows = !rows ? [] : !Array.isArray(rows) ? [rows] : rows;
     } catch (e) {
-      result.error = String(e);
+      result.error = String(e) || 'Unknown error';
     }
     const end = process.hrtime.bigint();
     result.time = Number(end - start);
@@ -166,7 +166,7 @@ class Database {
       const hierarchy = await this.introspect(tables);
       result.snapshots = hierarchy?.snapshots || [];
     } catch (e) {
-      result.error = String(e);
+      result.error = String(e) || 'Unknown error';
     }
     return result;
   }
