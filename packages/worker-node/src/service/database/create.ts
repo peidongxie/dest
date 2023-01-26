@@ -1,25 +1,25 @@
 import { type EntitySchemaOptions } from 'typeorm';
 import { Database, Scheduler, type AdapterType } from '../../domain';
-import { createMemo, readMemo } from '../memo';
+import { createMemo, readMemo, readMemos } from '../memo';
 
 const createDatabase = (
   type: AdapterType,
   name: string,
   schemas: EntitySchemaOptions<unknown>[],
 ): Promise<Scheduler<Database>> | null => {
-  const agentScheduler = readMemo<Scheduler<string>>(['agent']);
-  if (!agentScheduler) return null;
-  const rootScheduler = readMemo<Scheduler<Database>>(['database', type]);
+  const rootScheduler = readMemo<Scheduler<Database>>(['database']);
   if (!rootScheduler) return null;
+  const typeScheduler = readMemo<Scheduler<Database>>(['database', type]);
+  if (!typeScheduler) return null;
   const scheduler = createMemo(
     ['database', type, name],
     new Scheduler(new Database(type, name, schemas)),
   );
   if (!scheduler) return null;
-  agentScheduler.addStakeholder(scheduler);
   rootScheduler.addStakeholder(scheduler);
-  scheduler.addStakeholder(agentScheduler);
+  typeScheduler.addStakeholder(scheduler);
   scheduler.addStakeholder(rootScheduler);
+  scheduler.addStakeholder(typeScheduler);
   const promise = scheduler.runTask(async (database) => {
     await database.create();
     return scheduler;
@@ -27,4 +27,51 @@ const createDatabase = (
   return promise;
 };
 
-export { createDatabase };
+const createDatabases = (): Promise<Scheduler<Database>[]> | null => {
+  const promises = [];
+  const rootScheduler = createMemo(['database'], new Scheduler(new Database()));
+  const types = readMemos<AdapterType>(['type']);
+  for (const type of types) {
+    const typeScheduler = createMemo(
+      ['database', type],
+      new Scheduler(new Database(type)),
+    );
+    const schedulers = readMemos<Scheduler<Database>>(['database', type]);
+    for (const scheduler of schedulers) {
+      if (rootScheduler) {
+        rootScheduler.addStakeholder(scheduler);
+        scheduler.addStakeholder(rootScheduler);
+      }
+      if (typeScheduler) {
+        typeScheduler.addStakeholder(scheduler);
+        scheduler.addStakeholder(typeScheduler);
+      }
+      const promise = scheduler.runTask(async (database) => {
+        await database.create();
+        return scheduler;
+      });
+      promises.push(promise);
+    }
+    if (typeScheduler) {
+      if (rootScheduler) {
+        typeScheduler.addStakeholder(rootScheduler);
+        rootScheduler.addStakeholder(typeScheduler);
+      }
+      const promise = typeScheduler.runTask(async (database) => {
+        await database.create();
+        return typeScheduler;
+      });
+      promises.push(promise);
+    }
+  }
+  if (rootScheduler) {
+    const promise = rootScheduler.runTask(async (database) => {
+      await database.create();
+      return rootScheduler;
+    });
+    promises.push(promise);
+  }
+  return Promise.all(promises);
+};
+
+export { createDatabase, createDatabases };

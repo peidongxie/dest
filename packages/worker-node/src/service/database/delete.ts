@@ -1,47 +1,68 @@
 import { type AdapterType, type Database, type Scheduler } from '../../domain';
-import { deleteMemo, deleteMemos, readMemo } from '../memo';
+import { deleteMemo, deleteMemos, readMemo, readMemos } from '../memo';
 
 const deleteDatabase = (
   type: AdapterType,
   name: string,
 ): Promise<Scheduler<Database>> | null => {
-  const agentScheduler = readMemo<Scheduler<string>>(['agent']);
-  if (!agentScheduler) return null;
-  const rootScheduler = readMemo<Scheduler<Database>>(['database', type]);
+  const rootScheduler = readMemo<Scheduler<Database>>(['database']);
   if (!rootScheduler) return null;
+  const typeScheduler = readMemo<Scheduler<Database>>(['database', type]);
+  if (!typeScheduler) return null;
   const scheduler = deleteMemo<Scheduler<Database>>(['database', type, name]);
   if (!scheduler) return null;
-  const result = scheduler.runTask(async (database) => {
+  const promise = scheduler.runTask(async (database) => {
     await database.destroy();
     return scheduler;
   });
-  agentScheduler.removeStakeholder(scheduler);
   rootScheduler.removeStakeholder(scheduler);
-  scheduler.removeStakeholder(agentScheduler);
+  typeScheduler.removeStakeholder(scheduler);
   scheduler.removeStakeholder(rootScheduler);
-  return result;
+  scheduler.removeStakeholder(typeScheduler);
+  return promise;
 };
 
-const deleteDatabases = (
-  type: AdapterType,
-): Promise<Scheduler<Database>[]> | null => {
-  const agentScheduler = readMemo<Scheduler<string>>(['agent']);
-  if (!agentScheduler) return null;
-  const rootScheduler = readMemo<Scheduler<Database>>(['database', type]);
-  if (!rootScheduler) return null;
-  const schedulers = deleteMemos<Scheduler<Database>>(['database', type]);
-  if (schedulers.some((scheduler) => !scheduler)) return null;
-  const promises = schedulers.map((scheduler) => {
-    const promise = scheduler.runTask(async (database) => {
+const deleteDatabases = (): Promise<Scheduler<Database>[]> | null => {
+  const promises = [];
+  const rootScheduler = deleteMemo<Scheduler<Database>>(['database']);
+  const types = readMemos<AdapterType>(['type']);
+  for (const type of types) {
+    const typeScheduler = deleteMemo<Scheduler<Database>>(['database', type]);
+    const schedulers = deleteMemos<Scheduler<Database>>(['database', type]);
+    for (const scheduler of schedulers) {
+      const promise = scheduler.runTask(async (database) => {
+        await database.destroy();
+        return scheduler;
+      });
+      if (rootScheduler) {
+        rootScheduler.removeStakeholder(scheduler);
+        scheduler.removeStakeholder(rootScheduler);
+      }
+      if (typeScheduler) {
+        typeScheduler.removeStakeholder(scheduler);
+        scheduler.removeStakeholder(typeScheduler);
+      }
+      promises.push(promise);
+    }
+    if (typeScheduler) {
+      const promise = typeScheduler.runTask(async (database) => {
+        await database.destroy();
+        return typeScheduler;
+      });
+      if (rootScheduler) {
+        typeScheduler.removeStakeholder(rootScheduler);
+        rootScheduler.removeStakeholder(typeScheduler);
+      }
+      promises.push(promise);
+    }
+  }
+  if (rootScheduler) {
+    const promise = rootScheduler.runTask(async (database) => {
       await database.destroy();
-      return scheduler;
+      return rootScheduler;
     });
-    agentScheduler.removeStakeholder(scheduler);
-    rootScheduler.removeStakeholder(scheduler);
-    scheduler.removeStakeholder(agentScheduler);
-    scheduler.removeStakeholder(rootScheduler);
-    return promise;
-  });
+    promises.push(promise);
+  }
   return Promise.all(promises);
 };
 
