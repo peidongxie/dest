@@ -63,7 +63,7 @@ export interface SnapshotItem {
 }
 
 export interface HierarchyItem {
-  type: BaseType;
+  type: string;
   name: string;
   snapshots: SnapshotItem[];
 }
@@ -280,7 +280,7 @@ export const SnapshotItem = {
 };
 
 function createBaseHierarchyItem(): HierarchyItem {
-  return { type: 0, name: '', snapshots: [] };
+  return { type: '', name: '', snapshots: [] };
 }
 
 export const HierarchyItem = {
@@ -288,8 +288,8 @@ export const HierarchyItem = {
     message: HierarchyItem,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
-    if (message.type !== 0) {
-      writer.uint32(8).int32(message.type);
+    if (message.type !== '') {
+      writer.uint32(10).string(message.type);
     }
     if (message.name !== '') {
       writer.uint32(18).string(message.name);
@@ -308,7 +308,7 @@ export const HierarchyItem = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.type = reader.int32() as any;
+          message.type = reader.string();
           break;
         case 2:
           message.name = reader.string();
@@ -326,7 +326,7 @@ export const HierarchyItem = {
 
   fromJSON(object: any): HierarchyItem {
     return {
-      type: isSet(object.type) ? baseTypeFromJSON(object.type) : 0,
+      type: isSet(object.type) ? String(object.type) : '',
       name: isSet(object.name) ? String(object.name) : '',
       snapshots: Array.isArray(object?.snapshots)
         ? object.snapshots.map((e: any) => SnapshotItem.fromJSON(e))
@@ -336,7 +336,7 @@ export const HierarchyItem = {
 
   toJSON(message: HierarchyItem): unknown {
     const obj: any = {};
-    message.type !== undefined && (obj.type = baseTypeToJSON(message.type));
+    message.type !== undefined && (obj.type = message.type);
     message.name !== undefined && (obj.name = message.name);
     if (message.snapshots) {
       obj.snapshots = message.snapshots.map((e) =>
@@ -358,7 +358,7 @@ export const HierarchyItem = {
     object: I,
   ): HierarchyItem {
     const message = createBaseHierarchyItem();
-    message.type = object.type ?? 0;
+    message.type = object.type ?? '';
     message.name = object.name ?? '';
     message.snapshots =
       object.snapshots?.map((e) => SnapshotItem.fromPartial(e)) || [];

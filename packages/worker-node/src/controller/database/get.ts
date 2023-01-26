@@ -1,7 +1,7 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { DatabaseDefinition, type AdapterType } from '../../domain';
-import { createRowsQuery, createTablesQuery, readMemo } from '../../service';
+import { createInspection, createInspections, readMemo } from '../../service';
 
 const getDatabaseByHttp: Route = {
   method: 'GET',
@@ -16,36 +16,37 @@ const getDatabaseByHttp: Route = {
         code: 400,
         body: {
           success: false,
-          results: [],
+          hierarchies: [],
         },
       };
     }
     const promise = name
-      ? createRowsQuery(baseType, name)
-      : createTablesQuery(baseType);
+      ? createInspection(baseType, name)
+      : createInspections(baseType);
     if (!promise) {
       return {
         code: 404,
         body: {
           success: false,
-          results: [],
+          hierarchies: [],
         },
       };
     }
-    const results = await promise;
-    if (!results) {
+    const hierarchy = await promise;
+    if (!hierarchy) {
       return {
         body: {
           success: false,
-          results: [],
+          hierarchies: [],
         },
       };
     }
+    const hierarchies = Array.isArray(hierarchy) ? hierarchy : [hierarchy];
     return {
       code: 200,
       body: {
         success: true,
-        results: results,
+        hierarchies,
       },
     };
   },
@@ -60,30 +61,34 @@ const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
       if (!baseType) {
         return {
           success: false,
-          results: [],
+          hierarchies: [],
         };
       }
       const promise = name
-        ? createRowsQuery(baseType, name)
-        : createTablesQuery(baseType);
+        ? createInspection(baseType, name)
+        : createInspections(baseType);
       if (!promise) {
         return {
           success: false,
-          results: [],
+          hierarchies: [],
         };
       }
-      const results = await promise;
-      if (!results) {
+      const hierarchy = await promise;
+      if (!hierarchy) {
         return {
           success: false,
-          results: [],
+          hierarchies: [],
         };
       }
+      const hierarchies = Array.isArray(hierarchy) ? hierarchy : [hierarchy];
       return {
         success: true,
-        results: results.map((result) => ({
-          ...result,
-          rows: result.rows.map((row) => JSON.stringify(row)),
+        hierarchies: hierarchies.map((hierarchy) => ({
+          ...hierarchy,
+          snapshots: hierarchy.snapshots.map((snapshot) => ({
+            ...snapshot,
+            rows: snapshot.rows.map((row) => JSON.stringify(row)),
+          })),
         })),
       };
     },

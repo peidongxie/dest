@@ -33,8 +33,10 @@ message SnapshotItem {
   repeated string rows = 3;
 }
 
+// Hierarchy
+
 message HierarchyItem {
-  BaseType type = 1;
+  string type = 1;
   string name = 2;
   repeated SnapshotItem snapshots = 3;
 }
