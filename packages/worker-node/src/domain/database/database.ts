@@ -1,11 +1,6 @@
 import { type EntitySchemaOptions } from 'typeorm';
 import { createAdapter, type Adapter, type AdapterType } from '../adapter';
-import {
-  type DatabaseEventItem,
-  type DatabaseHierarchy,
-  type DatabaseResult,
-  type DatabaseSnapshotItem,
-} from './type';
+import { type DatabaseEventItem, type DatabaseResult } from './type';
 
 class Database {
   private adapter: Adapter;
@@ -49,55 +44,52 @@ class Database {
   public emit<T>(
     event: DatabaseEventItem<unknown>,
   ): Promise<DatabaseResult<T>> | null {
-    return (
-      this[event.action]?.(event.target, event.values, event.tables) || null
-    );
+    return this[event.action]?.(event.target, event.values) || null;
   }
 
-  public async introspect(
-    withRows: string[] | boolean,
-  ): Promise<DatabaseHierarchy | null> {
-    if (!this.type) return null;
-    if (!this.name) return null;
-    const tables = Array.isArray(withRows)
-      ? withRows
-      : await this.adapter.getTables();
-    if (!tables) return null;
-    if (!withRows) {
-      return {
-        type: this.type,
-        name: this.name,
-        snapshots: tables.map((table) => ({ table, rows: [] })),
-      };
+  public getName(): string {
+    return this.name;
+  }
+
+  public introspect<T>(
+    level: string,
+    tables: unknown[],
+  ): Promise<DatabaseResult<T>> | null {
+    if (level !== 'table' && level !== 'row') return null;
+    if (tables.some((table) => typeof table !== 'string')) return null;
+    if (level === 'table') {
+      return this.getResult<T>(async () => {
+        const rows = (await this.adapter.getTables())?.map((table) => ({
+          table,
+        }));
+        if (!rows) throw 'Unknown error';
+        return rows;
+      });
     }
-    const snapshots = await Promise.all(
-      tables.map(async (table) => ({
-        table,
-        rows: await this.adapter.getRows(table),
-      })),
-    );
-    if (snapshots.some((snapshot) => !snapshot.rows)) return null;
-    return {
-      type: this.type,
-      name: this.name,
-      snapshots: snapshots as DatabaseSnapshotItem<unknown>[],
-    };
+    return this.getResult<T>(async () => {
+      const rows = await Promise.all(
+        tables.map(async (table) => ({
+          table,
+          rows: await this.adapter.getRows(table as string),
+        })),
+      );
+      if (rows.some((row) => !row.rows)) throw 'Unknown error';
+      return rows;
+    });
   }
 
   public read<T>(
     query: string,
     values: unknown[],
-    tables: string[],
   ): Promise<DatabaseResult<T>> | null {
     const dataSource = this.adapter.getReadableDataSource();
     if (!dataSource) return null;
-    return this.getResult<T>(() => dataSource.query(query, values), tables);
+    return this.getResult<T>(() => dataSource.query(query, values));
   }
 
   public remove<T>(
     target: string,
     entities: unknown[],
-    tables: string[],
   ): Promise<DatabaseResult<T>> | null {
     const dataSource = this.adapter.getWritableDataSource();
     if (!dataSource) return null;
@@ -106,23 +98,21 @@ class Database {
       const rows = await dataSource.getRepository(target).remove(entities);
       await this.adapter.postRemove?.();
       return rows;
-    }, tables);
+    });
   }
 
   public root<T>(
     query: string,
     values: unknown[],
-    tables: string[],
   ): Promise<DatabaseResult<T>> | null {
     const dataSource = this.adapter.getRootDataSource?.();
     if (!dataSource) return null;
-    return this.getResult<T>(() => dataSource.query(query, values), tables);
+    return this.getResult<T>(() => dataSource.query(query, values));
   }
 
   public save<T>(
     target: string,
     entities: unknown[],
-    tables: string[],
   ): Promise<DatabaseResult<T>> | null {
     const dataSource = this.adapter.getWritableDataSource();
     if (!dataSource) return null;
@@ -131,28 +121,25 @@ class Database {
       const rows = await dataSource.getRepository(target).save(entities);
       await this.adapter.postSave?.();
       return rows;
-    }, tables);
+    });
   }
 
   public write<T>(
     query: string,
     values: unknown[],
-    tables: string[],
   ): Promise<DatabaseResult<T>> | null {
     const dataSource = this.adapter.getWritableDataSource();
     if (!dataSource) return null;
-    return this.getResult<T>(() => dataSource.query(query, values), tables);
+    return this.getResult<T>(() => dataSource.query(query, values));
   }
 
   private async getResult<T>(
     rowsGetter: () => unknown,
-    tables: string[],
   ): Promise<DatabaseResult<T>> {
     const result: DatabaseResult<T> = {
       time: 0,
       error: '',
       rows: [],
-      snapshots: [],
     };
     const start = process.hrtime.bigint();
     try {
@@ -164,12 +151,6 @@ class Database {
     const end = process.hrtime.bigint();
     result.time = Number(end - start);
     if (result.error) return result;
-    try {
-      const hierarchy = await this.introspect(tables);
-      result.snapshots = hierarchy?.snapshots || [];
-    } catch (e) {
-      result.error = String(e) || 'Unknown error';
-    }
     return result;
   }
 }

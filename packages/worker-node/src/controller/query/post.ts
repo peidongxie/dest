@@ -44,7 +44,6 @@ const postQueryByHttp: Route = {
             time: 0,
             error: '',
             rows: [],
-            snapshots: [],
           },
         },
       };
@@ -62,7 +61,6 @@ const postQueryByHttp: Route = {
             time: 0,
             error: '',
             rows: [],
-            snapshots: [],
           },
         },
       };
@@ -76,7 +74,6 @@ const postQueryByHttp: Route = {
             time: 0,
             error: '',
             rows: [],
-            snapshots: [],
           },
         },
       };
@@ -85,7 +82,7 @@ const postQueryByHttp: Route = {
       code: 201,
       body: {
         success: true,
-        result: result,
+        result,
       },
     };
   },
@@ -117,7 +114,6 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
             time: 0,
             error: '',
             rows: [],
-            snapshots: [],
           },
         };
       }
@@ -133,7 +129,6 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
             time: 0,
             error: '',
             rows: [],
-            snapshots: [],
           },
         };
       }
@@ -145,7 +140,6 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
             time: 0,
             error: '',
             rows: [],
-            snapshots: [],
           },
         };
       }
@@ -154,10 +148,6 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
         result: {
           ...result,
           rows: result.rows.map((row) => JSON.stringify(row)),
-          snapshots: result.snapshots.map((snapshot) => ({
-            ...snapshot,
-            rows: snapshot.rows.map((row) => JSON.stringify(row)),
-          })),
         },
       };
     },

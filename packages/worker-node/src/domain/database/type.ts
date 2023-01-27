@@ -1,6 +1,10 @@
-import { AdapterType } from '../adapter';
-
-type DatabaseAction = 'save' | 'remove' | 'read' | 'write' | 'root';
+type DatabaseAction =
+  | 'save'
+  | 'remove'
+  | 'read'
+  | 'write'
+  | 'root'
+  | 'introspect';
 
 interface DatabaseEventItem<T> {
   action: DatabaseAction;
@@ -9,28 +13,10 @@ interface DatabaseEventItem<T> {
   tables: string[];
 }
 
-interface DatabaseSnapshotItem<T> {
-  table: string;
-  rows: T[];
-}
-
-interface DatabaseHierarchy {
-  type: AdapterType;
-  name: string;
-  snapshots: DatabaseSnapshotItem<unknown>[];
-}
-
 interface DatabaseResult<T> {
   time: number;
   error: string;
   rows: T[];
-  snapshots: DatabaseSnapshotItem<unknown>[];
 }
 
-export {
-  type DatabaseAction,
-  type DatabaseEventItem,
-  type DatabaseHierarchy,
-  type DatabaseResult,
-  type DatabaseSnapshotItem,
-};
+export { type DatabaseAction, type DatabaseEventItem, type DatabaseResult };

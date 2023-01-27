@@ -19,7 +19,14 @@ import { createMemo, createServer } from './service';
 
 const config = {
   database: ['sqlite'] as AdapterType[],
-  query: ['save', 'remove', 'read', 'write', 'root'] as DatabaseAction[],
+  query: [
+    'save',
+    'remove',
+    'read',
+    'write',
+    'root',
+    'introspect',
+  ] as DatabaseAction[],
   server: {
     3001: 'http',
     3002: 'rpc',
@@ -53,6 +60,9 @@ for (const action of config.query) {
   }
   if (action === 'root') {
     createMemo(['action', EventAction.ROOT], 'root');
+  }
+  if (action === 'introspect') {
+    createMemo(['action', EventAction.INTROSPECT], 'introspect');
   }
 }
 
