@@ -47,6 +47,10 @@ class Database {
     return this[event.action]?.(event.target, event.values) || null;
   }
 
+  public getName(): string {
+    return this.name;
+  }
+
   public introspect<T>(
     level: string,
     tables: unknown[],
