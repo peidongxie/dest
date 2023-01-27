@@ -55,6 +55,7 @@ export enum EventAction {
   READ = 3,
   WRITE = 4,
   ROOT = 5,
+  INTROSPECT = 6,
   UNRECOGNIZED = -1,
 }
 
@@ -78,6 +79,9 @@ export function eventActionFromJSON(object: any): EventAction {
     case 5:
     case 'ROOT':
       return EventAction.ROOT;
+    case 6:
+    case 'INTROSPECT':
+      return EventAction.INTROSPECT;
     case -1:
     case 'UNRECOGNIZED':
     default:
@@ -99,6 +103,8 @@ export function eventActionToJSON(object: EventAction): string {
       return 'WRITE';
     case EventAction.ROOT:
       return 'ROOT';
+    case EventAction.INTROSPECT:
+      return 'INTROSPECT';
     case EventAction.UNRECOGNIZED:
     default:
       return 'UNRECOGNIZED';
@@ -114,16 +120,10 @@ export interface BaseResponse {
   success: boolean;
 }
 
-export interface SnapshotItem {
-  table: string;
-  rows: string[];
-}
-
 export interface ResultItem {
   time: number;
   error: string;
   rows: string[];
-  snapshots: SnapshotItem[];
 }
 
 export interface ResultResponse {
@@ -269,83 +269,8 @@ export const BaseResponse = {
   },
 };
 
-function createBaseSnapshotItem(): SnapshotItem {
-  return { table: '', rows: [] };
-}
-
-export const SnapshotItem = {
-  encode(
-    message: SnapshotItem,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.table !== '') {
-      writer.uint32(18).string(message.table);
-    }
-    for (const v of message.rows) {
-      writer.uint32(26).string(v!);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): SnapshotItem {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSnapshotItem();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 2:
-          message.table = reader.string();
-          break;
-        case 3:
-          message.rows.push(reader.string());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): SnapshotItem {
-    return {
-      table: isSet(object.table) ? String(object.table) : '',
-      rows: Array.isArray(object?.rows)
-        ? object.rows.map((e: any) => String(e))
-        : [],
-    };
-  },
-
-  toJSON(message: SnapshotItem): unknown {
-    const obj: any = {};
-    message.table !== undefined && (obj.table = message.table);
-    if (message.rows) {
-      obj.rows = message.rows.map((e) => e);
-    } else {
-      obj.rows = [];
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<SnapshotItem>, I>>(
-    base?: I,
-  ): SnapshotItem {
-    return SnapshotItem.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<SnapshotItem>, I>>(
-    object: I,
-  ): SnapshotItem {
-    const message = createBaseSnapshotItem();
-    message.table = object.table ?? '';
-    message.rows = object.rows?.map((e) => e) || [];
-    return message;
-  },
-};
-
 function createBaseResultItem(): ResultItem {
-  return { time: 0, error: '', rows: [], snapshots: [] };
+  return { time: 0, error: '', rows: [] };
 }
 
 export const ResultItem = {
@@ -361,9 +286,6 @@ export const ResultItem = {
     }
     for (const v of message.rows) {
       writer.uint32(26).string(v!);
-    }
-    for (const v of message.snapshots) {
-      SnapshotItem.encode(v!, writer.uint32(34).fork()).ldelim();
     }
     return writer;
   },
@@ -384,9 +306,6 @@ export const ResultItem = {
         case 3:
           message.rows.push(reader.string());
           break;
-        case 4:
-          message.snapshots.push(SnapshotItem.decode(reader, reader.uint32()));
-          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -402,9 +321,6 @@ export const ResultItem = {
       rows: Array.isArray(object?.rows)
         ? object.rows.map((e: any) => String(e))
         : [],
-      snapshots: Array.isArray(object?.snapshots)
-        ? object.snapshots.map((e: any) => SnapshotItem.fromJSON(e))
-        : [],
     };
   },
 
@@ -416,13 +332,6 @@ export const ResultItem = {
       obj.rows = message.rows.map((e) => e);
     } else {
       obj.rows = [];
-    }
-    if (message.snapshots) {
-      obj.snapshots = message.snapshots.map((e) =>
-        e ? SnapshotItem.toJSON(e) : undefined,
-      );
-    } else {
-      obj.snapshots = [];
     }
     return obj;
   },
@@ -438,8 +347,6 @@ export const ResultItem = {
     message.time = object.time ?? 0;
     message.error = object.error ?? '';
     message.rows = object.rows?.map((e) => e) || [];
-    message.snapshots =
-      object.snapshots?.map((e) => SnapshotItem.fromPartial(e)) || [];
     return message;
   },
 };

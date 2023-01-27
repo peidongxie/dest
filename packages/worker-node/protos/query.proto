@@ -24,20 +24,12 @@ message BaseResponse {
   bool success = 1;
 }
 
-// Snapshot
-
-message SnapshotItem {
-  string table = 2;
-  repeated string rows = 3;
-}
-
 // Result
 
 message ResultItem {
   uint32 time = 1;
   string error = 2;
   repeated string rows = 3;
-  repeated SnapshotItem snapshots = 4;
 }
 
 message ResultResponse {
@@ -54,6 +46,7 @@ enum EventAction {
   READ = 3;
   WRITE = 4;
   ROOT = 5;
+  INTROSPECT = 6;
 }
 
 message EventItem {

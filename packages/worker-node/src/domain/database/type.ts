@@ -1,6 +1,12 @@
 import { AdapterType } from '../adapter';
 
-type DatabaseAction = 'save' | 'remove' | 'read' | 'write' | 'root';
+type DatabaseAction =
+  | 'save'
+  | 'remove'
+  | 'read'
+  | 'write'
+  | 'root'
+  | 'introspect';
 
 interface DatabaseEventItem<T> {
   action: DatabaseAction;
@@ -24,7 +30,6 @@ interface DatabaseResult<T> {
   time: number;
   error: string;
   rows: T[];
-  snapshots: DatabaseSnapshotItem<unknown>[];
 }
 
 export {
