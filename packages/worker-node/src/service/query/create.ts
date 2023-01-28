@@ -1,10 +1,9 @@
 import {
   type AdapterType,
   type DatabaseEventItem,
-  type DatabaseHierarchy,
   type DatabaseResult,
 } from '../../domain';
-import { readDatabase, readDatabases } from '../database';
+import { readDatabase } from '../database';
 
 const createQuery = <T>(
   type: AdapterType,
@@ -18,42 +17,4 @@ const createQuery = <T>(
   }, event.action === 'read');
 };
 
-const createInspection = (
-  type: AdapterType,
-  name: string,
-  withRows: string[] | boolean,
-): Promise<DatabaseHierarchy | null> | null => {
-  const scheduler = readDatabase(type, name);
-  if (!scheduler) return null;
-  const promise = scheduler.runTask((database) => {
-    try {
-      return database.introspect(withRows);
-    } catch {
-      return null;
-    }
-  }, true);
-  return promise;
-};
-
-const createInspections = (
-  type: AdapterType,
-  withRows: string[] | boolean,
-): Promise<DatabaseHierarchy[] | null> => {
-  const schedulers = readDatabases(type);
-  const promises = schedulers.map((scheduler) => {
-    const promise = scheduler.runTask((database) => {
-      try {
-        return database.introspect(withRows);
-      } catch {
-        return null;
-      }
-    }, true);
-    return promise;
-  });
-  return Promise.all(promises).then((hierarchies) => {
-    if (hierarchies.some((hierarchy) => !hierarchy)) return null;
-    return hierarchies as DatabaseHierarchy[];
-  });
-};
-
-export { createInspection, createInspections, createQuery };
+export { createQuery };
