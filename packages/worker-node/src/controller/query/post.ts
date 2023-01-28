@@ -33,8 +33,7 @@ const postQueryByHttp: Route = {
       !event ||
       !databaseAction ||
       !event.target ||
-      !Array.isArray(event.values) ||
-      !Array.isArray(event.tables)
+      !Array.isArray(event.values)
     ) {
       return {
         code: 400,
@@ -105,8 +104,7 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
         !event ||
         !databaseAction ||
         !event.target ||
-        !Array.isArray(event.values) ||
-        !Array.isArray(event.tables)
+        !Array.isArray(event.values)
       ) {
         return {
           success: false,
