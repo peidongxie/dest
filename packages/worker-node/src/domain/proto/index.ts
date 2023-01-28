@@ -1,3 +1,4 @@
 export { AgentDefinition } from './agent';
-export { BaseType, DatabaseDefinition } from './database';
-export { EventAction, QueryDefinition } from './query';
+export { DatabaseDefinition, TypeEnum } from './database';
+export { HierarchyDefinition, LevelEnum } from './hierarchy';
+export { ActionEnum, QueryDefinition } from './query';

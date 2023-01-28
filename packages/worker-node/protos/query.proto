@@ -6,21 +6,54 @@ service Query {
   rpc PostQuery (EventRequest) returns (ResultResponse) {}
 }
 
-// Base
+// Type
 
-enum BaseType {
+enum TypeEnum {
   DEFAULT_TYPE = 0;
   SQLITE = 2049;
   MARIADB = 3306;
   MYSQL8 = 3307;
 }
 
-message BaseRequest {
-  BaseType type = 1;
+message TypeRequest {
+  TypeEnum type = 1;
+}
+
+// Name
+
+message NameRequest {
+  TypeEnum type = 1;
   string name = 2;
 }
 
-message BaseResponse {
+// Event
+
+enum ActionEnum {
+  DEFAULT_ACTION = 0;
+  SAVE = 1;
+  REMOVE = 2;
+  READ = 3;
+  WRITE = 4;
+  ROOT = 5;
+  INTROSPECT = 6;
+}
+
+message EventItem {
+  ActionEnum action = 1;
+  string target = 2;
+  repeated string values = 3;
+  repeated string tables = 4;
+}
+
+message EventRequest {
+  TypeEnum type = 1;
+  string name = 2;
+  EventItem event = 3;
+}
+
+// Success
+
+message SuccessResponse {
   bool success = 1;
 }
 
@@ -35,29 +68,4 @@ message ResultItem {
 message ResultResponse {
   bool success = 1;
   ResultItem result = 2;
-}
-
-// Event
-
-enum EventAction {
-  DEFAULT_ACTION = 0;
-  SAVE = 1;
-  REMOVE = 2;
-  READ = 3;
-  WRITE = 4;
-  ROOT = 5;
-  INTROSPECT = 6;
-}
-
-message EventItem {
-  EventAction action = 1;
-  string target = 2;
-  repeated string values = 3;
-  repeated string tables = 4;
-}
-
-message EventRequest {
-  BaseType type = 1;
-  string name = 2;
-  EventItem event = 3;
 }

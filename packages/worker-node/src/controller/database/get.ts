@@ -10,8 +10,8 @@ const getDatabaseByHttp: Route = {
     const { url } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const baseType = readMemo<AdapterType>(['type', Number(type)]);
-    if (!name || !baseType) {
+    const adapterType = readMemo<AdapterType>(['type', Number(type)]);
+    if (!adapterType || !name) {
       return {
         code: 400,
         body: {
@@ -19,7 +19,7 @@ const getDatabaseByHttp: Route = {
         },
       };
     }
-    const scheduler = readDatabase(baseType, name);
+    const scheduler = readDatabase(adapterType, name);
     if (!scheduler) {
       return {
         code: 404,
@@ -42,13 +42,13 @@ const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
   handlers: {
     getDatabase: async (req) => {
       const { name, type } = req;
-      const baseType = readMemo<AdapterType>(['type', type]);
-      if (!name || !baseType) {
+      const adapterType = readMemo<AdapterType>(['type', type]);
+      if (!adapterType || !name) {
         return {
           success: false,
         };
       }
-      const scheduler = readDatabase(baseType, name);
+      const scheduler = readDatabase(adapterType, name);
       if (!scheduler) {
         return {
           success: false,

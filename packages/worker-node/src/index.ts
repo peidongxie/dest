@@ -14,11 +14,19 @@ import {
   postQueryByHttp,
   postQueryByRpc,
 } from './controller';
-import { AdapterType, BaseType, DatabaseAction, EventAction } from './domain';
+import {
+  ActionEnum,
+  LevelEnum,
+  TypeEnum,
+  type AdapterType,
+  type DatabaseAction,
+  type HierarchyLevel,
+} from './domain';
 import { createMemo, createServer } from './service';
 
 const config = {
   database: ['sqlite'] as AdapterType[],
+  hierarchy: ['environment', 'database', 'table', 'row'] as HierarchyLevel[],
   query: [
     'save',
     'remove',
@@ -35,34 +43,49 @@ const config = {
 
 for (const type of config.database) {
   if (type === 'mariadb') {
-    createMemo(['type', BaseType.MARIADB], 'mariadb');
+    createMemo(['type', TypeEnum.MARIADB], 'mariadb');
   }
   if (type === 'mysql:8') {
-    createMemo(['type', BaseType.MYSQL8], 'mysql:8');
+    createMemo(['type', TypeEnum.MYSQL8], 'mysql:8');
   }
   if (type === 'sqlite') {
-    createMemo(['type', BaseType.SQLITE], 'sqlite');
+    createMemo(['type', TypeEnum.SQLITE], 'sqlite');
+  }
+}
+
+for (const level of config.hierarchy) {
+  if (level === 'environment') {
+    createMemo(['level', LevelEnum.ENVIRONMENT], 'environment');
+  }
+  if (level === 'database') {
+    createMemo(['level', LevelEnum.DATABASE], 'database');
+  }
+  if (level === 'table') {
+    createMemo(['level', LevelEnum.TABLE], 'table');
+  }
+  if (level === 'row') {
+    createMemo(['level', LevelEnum.ROW], 'row');
   }
 }
 
 for (const action of config.query) {
   if (action === 'save') {
-    createMemo(['action', EventAction.SAVE], 'save');
+    createMemo(['action', ActionEnum.SAVE], 'save');
   }
   if (action === 'remove') {
-    createMemo(['action', EventAction.REMOVE], 'remove');
+    createMemo(['action', ActionEnum.REMOVE], 'remove');
   }
   if (action === 'read') {
-    createMemo(['action', EventAction.READ], 'read');
+    createMemo(['action', ActionEnum.READ], 'read');
   }
   if (action === 'write') {
-    createMemo(['action', EventAction.WRITE], 'write');
+    createMemo(['action', ActionEnum.WRITE], 'write');
   }
   if (action === 'root') {
-    createMemo(['action', EventAction.ROOT], 'root');
+    createMemo(['action', ActionEnum.ROOT], 'root');
   }
   if (action === 'introspect') {
-    createMemo(['action', EventAction.INTROSPECT], 'introspect');
+    createMemo(['action', ActionEnum.INTROSPECT], 'introspect');
   }
 }
 

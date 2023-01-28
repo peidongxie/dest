@@ -3,7 +3,7 @@ import _m0 from 'protobufjs/minimal';
 
 export const protobufPackage = 'dest';
 
-export enum BaseType {
+export enum TypeEnum {
   DEFAULT_TYPE = 0,
   SQLITE = 2049,
   MARIADB = 3306,
@@ -11,44 +11,44 @@ export enum BaseType {
   UNRECOGNIZED = -1,
 }
 
-export function baseTypeFromJSON(object: any): BaseType {
+export function typeEnumFromJSON(object: any): TypeEnum {
   switch (object) {
     case 0:
     case 'DEFAULT_TYPE':
-      return BaseType.DEFAULT_TYPE;
+      return TypeEnum.DEFAULT_TYPE;
     case 2049:
     case 'SQLITE':
-      return BaseType.SQLITE;
+      return TypeEnum.SQLITE;
     case 3306:
     case 'MARIADB':
-      return BaseType.MARIADB;
+      return TypeEnum.MARIADB;
     case 3307:
     case 'MYSQL8':
-      return BaseType.MYSQL8;
+      return TypeEnum.MYSQL8;
     case -1:
     case 'UNRECOGNIZED':
     default:
-      return BaseType.UNRECOGNIZED;
+      return TypeEnum.UNRECOGNIZED;
   }
 }
 
-export function baseTypeToJSON(object: BaseType): string {
+export function typeEnumToJSON(object: TypeEnum): string {
   switch (object) {
-    case BaseType.DEFAULT_TYPE:
+    case TypeEnum.DEFAULT_TYPE:
       return 'DEFAULT_TYPE';
-    case BaseType.SQLITE:
+    case TypeEnum.SQLITE:
       return 'SQLITE';
-    case BaseType.MARIADB:
+    case TypeEnum.MARIADB:
       return 'MARIADB';
-    case BaseType.MYSQL8:
+    case TypeEnum.MYSQL8:
       return 'MYSQL8';
-    case BaseType.UNRECOGNIZED:
+    case TypeEnum.UNRECOGNIZED:
     default:
       return 'UNRECOGNIZED';
   }
 }
 
-export enum HierarchyLevel {
+export enum LevelEnum {
   DEFAULT_LEVEL = 0,
   ENVIRONMENT = 1,
   DATABASE = 2,
@@ -57,61 +57,72 @@ export enum HierarchyLevel {
   UNRECOGNIZED = -1,
 }
 
-export function hierarchyLevelFromJSON(object: any): HierarchyLevel {
+export function levelEnumFromJSON(object: any): LevelEnum {
   switch (object) {
     case 0:
     case 'DEFAULT_LEVEL':
-      return HierarchyLevel.DEFAULT_LEVEL;
+      return LevelEnum.DEFAULT_LEVEL;
     case 1:
     case 'ENVIRONMENT':
-      return HierarchyLevel.ENVIRONMENT;
+      return LevelEnum.ENVIRONMENT;
     case 2:
     case 'DATABASE':
-      return HierarchyLevel.DATABASE;
+      return LevelEnum.DATABASE;
     case 3:
     case 'TABLE':
-      return HierarchyLevel.TABLE;
+      return LevelEnum.TABLE;
     case 4:
     case 'ROW':
-      return HierarchyLevel.ROW;
+      return LevelEnum.ROW;
     case -1:
     case 'UNRECOGNIZED':
     default:
-      return HierarchyLevel.UNRECOGNIZED;
+      return LevelEnum.UNRECOGNIZED;
   }
 }
 
-export function hierarchyLevelToJSON(object: HierarchyLevel): string {
+export function levelEnumToJSON(object: LevelEnum): string {
   switch (object) {
-    case HierarchyLevel.DEFAULT_LEVEL:
+    case LevelEnum.DEFAULT_LEVEL:
       return 'DEFAULT_LEVEL';
-    case HierarchyLevel.ENVIRONMENT:
+    case LevelEnum.ENVIRONMENT:
       return 'ENVIRONMENT';
-    case HierarchyLevel.DATABASE:
+    case LevelEnum.DATABASE:
       return 'DATABASE';
-    case HierarchyLevel.TABLE:
+    case LevelEnum.TABLE:
       return 'TABLE';
-    case HierarchyLevel.ROW:
+    case LevelEnum.ROW:
       return 'ROW';
-    case HierarchyLevel.UNRECOGNIZED:
+    case LevelEnum.UNRECOGNIZED:
     default:
       return 'UNRECOGNIZED';
   }
 }
 
-export interface BaseRequest {
-  type: BaseType;
+export interface TypeRequest {
+  type: TypeEnum;
+}
+
+export interface NameRequest {
+  type: TypeEnum;
   name: string;
 }
 
-export interface BaseResponse {
-  success: boolean;
+export interface TableRequest {
+  type: TypeEnum;
+  name: string;
+  table: string;
 }
 
 export interface LevelRequest {
-  type: BaseType;
+  type: TypeEnum;
   name: string;
-  level: HierarchyLevel;
+  table: string;
+  level: LevelEnum;
+}
+
+export interface SuccessResponse {
+  success: boolean;
 }
 
 export interface SnapshotItem {
@@ -125,7 +136,7 @@ export interface DatabaseItem {
 }
 
 export interface EnvironmentItem {
-  type: string;
+  type: TypeEnum;
   databases: DatabaseItem[];
 }
 
@@ -134,13 +145,69 @@ export interface EnvironmentsResponse {
   environments: EnvironmentItem[];
 }
 
-function createBaseBaseRequest(): BaseRequest {
+function createBaseTypeRequest(): TypeRequest {
+  return { type: 0 };
+}
+
+export const TypeRequest = {
+  encode(
+    message: TypeRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.type !== 0) {
+      writer.uint32(8).int32(message.type);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): TypeRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTypeRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.type = reader.int32() as any;
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TypeRequest {
+    return { type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0 };
+  },
+
+  toJSON(message: TypeRequest): unknown {
+    const obj: any = {};
+    message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<TypeRequest>, I>>(base?: I): TypeRequest {
+    return TypeRequest.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<TypeRequest>, I>>(
+    object: I,
+  ): TypeRequest {
+    const message = createBaseTypeRequest();
+    message.type = object.type ?? 0;
+    return message;
+  },
+};
+
+function createBaseNameRequest(): NameRequest {
   return { type: 0, name: '' };
 }
 
-export const BaseRequest = {
+export const NameRequest = {
   encode(
-    message: BaseRequest,
+    message: NameRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.type !== 0) {
@@ -152,10 +219,10 @@ export const BaseRequest = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): BaseRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): NameRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseBaseRequest();
+    const message = createBaseNameRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -173,58 +240,70 @@ export const BaseRequest = {
     return message;
   },
 
-  fromJSON(object: any): BaseRequest {
+  fromJSON(object: any): NameRequest {
     return {
-      type: isSet(object.type) ? baseTypeFromJSON(object.type) : 0,
+      type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0,
       name: isSet(object.name) ? String(object.name) : '',
     };
   },
 
-  toJSON(message: BaseRequest): unknown {
+  toJSON(message: NameRequest): unknown {
     const obj: any = {};
-    message.type !== undefined && (obj.type = baseTypeToJSON(message.type));
+    message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
     message.name !== undefined && (obj.name = message.name);
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<BaseRequest>, I>>(base?: I): BaseRequest {
-    return BaseRequest.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<NameRequest>, I>>(base?: I): NameRequest {
+    return NameRequest.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<BaseRequest>, I>>(
+  fromPartial<I extends Exact<DeepPartial<NameRequest>, I>>(
     object: I,
-  ): BaseRequest {
-    const message = createBaseBaseRequest();
+  ): NameRequest {
+    const message = createBaseNameRequest();
     message.type = object.type ?? 0;
     message.name = object.name ?? '';
     return message;
   },
 };
 
-function createBaseBaseResponse(): BaseResponse {
-  return { success: false };
+function createBaseTableRequest(): TableRequest {
+  return { type: 0, name: '', table: '' };
 }
 
-export const BaseResponse = {
+export const TableRequest = {
   encode(
-    message: BaseResponse,
+    message: TableRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
-    if (message.success === true) {
-      writer.uint32(8).bool(message.success);
+    if (message.type !== 0) {
+      writer.uint32(8).int32(message.type);
+    }
+    if (message.name !== '') {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.table !== '') {
+      writer.uint32(26).string(message.table);
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): BaseResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): TableRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseBaseResponse();
+    const message = createBaseTableRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.success = reader.bool();
+          message.type = reader.int32() as any;
+          break;
+        case 2:
+          message.name = reader.string();
+          break;
+        case 3:
+          message.table = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -234,33 +313,41 @@ export const BaseResponse = {
     return message;
   },
 
-  fromJSON(object: any): BaseResponse {
-    return { success: isSet(object.success) ? Boolean(object.success) : false };
+  fromJSON(object: any): TableRequest {
+    return {
+      type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0,
+      name: isSet(object.name) ? String(object.name) : '',
+      table: isSet(object.table) ? String(object.table) : '',
+    };
   },
 
-  toJSON(message: BaseResponse): unknown {
+  toJSON(message: TableRequest): unknown {
     const obj: any = {};
-    message.success !== undefined && (obj.success = message.success);
+    message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
+    message.name !== undefined && (obj.name = message.name);
+    message.table !== undefined && (obj.table = message.table);
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<BaseResponse>, I>>(
+  create<I extends Exact<DeepPartial<TableRequest>, I>>(
     base?: I,
-  ): BaseResponse {
-    return BaseResponse.fromPartial(base ?? {});
+  ): TableRequest {
+    return TableRequest.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<BaseResponse>, I>>(
+  fromPartial<I extends Exact<DeepPartial<TableRequest>, I>>(
     object: I,
-  ): BaseResponse {
-    const message = createBaseBaseResponse();
-    message.success = object.success ?? false;
+  ): TableRequest {
+    const message = createBaseTableRequest();
+    message.type = object.type ?? 0;
+    message.name = object.name ?? '';
+    message.table = object.table ?? '';
     return message;
   },
 };
 
 function createBaseLevelRequest(): LevelRequest {
-  return { type: 0, name: '', level: 0 };
+  return { type: 0, name: '', table: '', level: 0 };
 }
 
 export const LevelRequest = {
@@ -274,8 +361,11 @@ export const LevelRequest = {
     if (message.name !== '') {
       writer.uint32(18).string(message.name);
     }
+    if (message.table !== '') {
+      writer.uint32(26).string(message.table);
+    }
     if (message.level !== 0) {
-      writer.uint32(24).int32(message.level);
+      writer.uint32(32).int32(message.level);
     }
     return writer;
   },
@@ -294,6 +384,9 @@ export const LevelRequest = {
           message.name = reader.string();
           break;
         case 3:
+          message.table = reader.string();
+          break;
+        case 4:
           message.level = reader.int32() as any;
           break;
         default:
@@ -306,18 +399,19 @@ export const LevelRequest = {
 
   fromJSON(object: any): LevelRequest {
     return {
-      type: isSet(object.type) ? baseTypeFromJSON(object.type) : 0,
+      type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0,
       name: isSet(object.name) ? String(object.name) : '',
-      level: isSet(object.level) ? hierarchyLevelFromJSON(object.level) : 0,
+      table: isSet(object.table) ? String(object.table) : '',
+      level: isSet(object.level) ? levelEnumFromJSON(object.level) : 0,
     };
   },
 
   toJSON(message: LevelRequest): unknown {
     const obj: any = {};
-    message.type !== undefined && (obj.type = baseTypeToJSON(message.type));
+    message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
     message.name !== undefined && (obj.name = message.name);
-    message.level !== undefined &&
-      (obj.level = hierarchyLevelToJSON(message.level));
+    message.table !== undefined && (obj.table = message.table);
+    message.level !== undefined && (obj.level = levelEnumToJSON(message.level));
     return obj;
   },
 
@@ -333,7 +427,66 @@ export const LevelRequest = {
     const message = createBaseLevelRequest();
     message.type = object.type ?? 0;
     message.name = object.name ?? '';
+    message.table = object.table ?? '';
     message.level = object.level ?? 0;
+    return message;
+  },
+};
+
+function createBaseSuccessResponse(): SuccessResponse {
+  return { success: false };
+}
+
+export const SuccessResponse = {
+  encode(
+    message: SuccessResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.success === true) {
+      writer.uint32(8).bool(message.success);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SuccessResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSuccessResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.success = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SuccessResponse {
+    return { success: isSet(object.success) ? Boolean(object.success) : false };
+  },
+
+  toJSON(message: SuccessResponse): unknown {
+    const obj: any = {};
+    message.success !== undefined && (obj.success = message.success);
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SuccessResponse>, I>>(
+    base?: I,
+  ): SuccessResponse {
+    return SuccessResponse.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SuccessResponse>, I>>(
+    object: I,
+  ): SuccessResponse {
+    const message = createBaseSuccessResponse();
+    message.success = object.success ?? false;
     return message;
   },
 };
@@ -492,7 +645,7 @@ export const DatabaseItem = {
 };
 
 function createBaseEnvironmentItem(): EnvironmentItem {
-  return { type: '', databases: [] };
+  return { type: 0, databases: [] };
 }
 
 export const EnvironmentItem = {
@@ -500,8 +653,8 @@ export const EnvironmentItem = {
     message: EnvironmentItem,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
-    if (message.type !== '') {
-      writer.uint32(10).string(message.type);
+    if (message.type !== 0) {
+      writer.uint32(8).int32(message.type);
     }
     for (const v of message.databases) {
       DatabaseItem.encode(v!, writer.uint32(18).fork()).ldelim();
@@ -517,7 +670,7 @@ export const EnvironmentItem = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.type = reader.string();
+          message.type = reader.int32() as any;
           break;
         case 2:
           message.databases.push(DatabaseItem.decode(reader, reader.uint32()));
@@ -532,7 +685,7 @@ export const EnvironmentItem = {
 
   fromJSON(object: any): EnvironmentItem {
     return {
-      type: isSet(object.type) ? String(object.type) : '',
+      type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0,
       databases: Array.isArray(object?.databases)
         ? object.databases.map((e: any) => DatabaseItem.fromJSON(e))
         : [],
@@ -541,7 +694,7 @@ export const EnvironmentItem = {
 
   toJSON(message: EnvironmentItem): unknown {
     const obj: any = {};
-    message.type !== undefined && (obj.type = message.type);
+    message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
     if (message.databases) {
       obj.databases = message.databases.map((e) =>
         e ? DatabaseItem.toJSON(e) : undefined,
@@ -562,7 +715,7 @@ export const EnvironmentItem = {
     object: I,
   ): EnvironmentItem {
     const message = createBaseEnvironmentItem();
-    message.type = object.type ?? '';
+    message.type = object.type ?? 0;
     message.databases =
       object.databases?.map((e) => DatabaseItem.fromPartial(e)) || [];
     return message;
