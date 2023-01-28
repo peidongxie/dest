@@ -37,7 +37,7 @@ const readHierarchyTable = (
   const environments = (type ? [type] : types).map((type) => {
     const schedulers = readDatabases(type);
     const scheduler = name && readDatabase(type, name);
-    const databases = (scheduler ? [scheduler] : schedulers).map(
+    const databases = (scheduler ? [scheduler] : name ? [] : schedulers).map(
       (scheduler) => {
         const promise = scheduler.runTask(async (database) => {
           const snapshots =
@@ -69,7 +69,7 @@ const readHierarchyRow = (
   const environments = (type ? [type] : types).map((type) => {
     const schedulers = readDatabases(type);
     const scheduler = name && readDatabase(type, name);
-    const databases = (scheduler ? [scheduler] : schedulers).map(
+    const databases = (scheduler ? [scheduler] : name ? [] : schedulers).map(
       (scheduler) => {
         const promise = scheduler.runTask(async (database) => {
           const snapshots =
@@ -82,7 +82,9 @@ const readHierarchyRow = (
             (
               await database.introspect<{ table: string; rows: unknown[] }>(
                 'row',
-                (snapshot ? [snapshot] : snapshots).map(({ table }) => table),
+                (snapshot ? [snapshot] : table ? [] : snapshots).map(
+                  ({ table }) => table,
+                ),
               )
             )?.rows || snapshots
           );

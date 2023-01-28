@@ -26,10 +26,11 @@ const getHierarchyByHttp: Route = {
     const adapterType = readMemo<AdapterType>(['type', Number(type)]);
     const hierarchyLevel = readMemo<HierarchyLevel>(['level', Number(level)]);
     if (
-      (!adapterType && !name && table) ||
-      (!adapterType && name && !table) ||
-      (!adapterType && name && table) ||
-      (adapterType && !name && table) ||
+      (!type && !name && table) ||
+      (!type && name && !table) ||
+      (!type && name && table) ||
+      (type && !name && table) ||
+      (type && !adapterType) ||
       !hierarchyLevel
     ) {
       return {
@@ -70,10 +71,11 @@ const getHierarchyByRpc: Plugin<HierarchyDefinition> = {
       const adapterType = readMemo<AdapterType>(['type', Number(type)]);
       const hierarchyLevel = readMemo<HierarchyLevel>(['level', Number(level)]);
       if (
-        (!adapterType && !name && table) ||
-        (!adapterType && name && !table) ||
-        (!adapterType && name && table) ||
-        (adapterType && !name && table) ||
+        (!type && !name && table) ||
+        (!type && name && !table) ||
+        (!type && name && table) ||
+        (type && !name && table) ||
+        (type && !adapterType) ||
         !hierarchyLevel
       ) {
         return {
