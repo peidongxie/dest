@@ -3,33 +3,41 @@ syntax = "proto3";
 package dest;
 
 service Database {
-  rpc DeleteDatabase (BaseRequest) returns (BaseResponse) {}
-  rpc GetDatabase (BaseRequest) returns (BaseResponse) {}
-  rpc PostDatabase (SchemasRequest) returns (BaseResponse) {}
+  rpc DeleteDatabase (NameRequest) returns (SuccessResponse) {}
+  rpc GetDatabase (NameRequest) returns (SuccessResponse) {}
+  rpc PostDatabase (SchemasRequest) returns (SuccessResponse) {}
 }
 
-// Base
+// Type
 
-enum BaseType {
+enum TypeEnum {
   DEFAULT_TYPE = 0;
   SQLITE = 2049;
   MARIADB = 3306;
   MYSQL8 = 3307;
 }
 
-message BaseRequest {
-  BaseType type = 1;
-  string name = 2;
+message TypeRequest {
+  TypeEnum type = 1;
 }
 
-message BaseResponse {
-  bool success = 1;
+// Name
+
+message NameRequest {
+  TypeEnum type = 1;
+  string name = 2;
 }
 
 // Schema
 
 message SchemasRequest {
-  BaseType type = 1;
+  TypeEnum type = 1;
   string name = 2;
   repeated string schemas = 3;
+}
+
+// Success
+
+message SuccessResponse {
+  bool success = 1;
 }

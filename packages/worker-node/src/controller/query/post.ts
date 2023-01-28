@@ -1,8 +1,8 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import {
-  EventAction,
   QueryDefinition,
+  type ActionEnum,
   type AdapterType,
   type DatabaseAction,
 } from '../../domain';
@@ -15,26 +15,25 @@ const postQueryByHttp: Route = {
     const { url, body } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const baseType = readMemo<AdapterType>(['type', Number(type)]);
     const event = await body.json<{
-      action: EventAction;
+      action: ActionEnum;
       target: string;
       values: unknown[];
       tables: string[];
     }>();
-    const eventAction = readMemo<DatabaseAction>([
+    const adapterType = readMemo<AdapterType>(['type', Number(type)]);
+    const databaseAction = readMemo<DatabaseAction>([
       'action',
       Number(event?.action),
     ]);
     if (
-      Number(!name) ^ Number(event?.action === EventAction.ROOT) ||
-      !baseType ||
-      !eventAction ||
+      !adapterType ||
+      (!name && databaseAction !== 'root') ||
+      (name && databaseAction === 'root') ||
       !event ||
-      !event.action ||
+      !databaseAction ||
       !event.target ||
-      !Array.isArray(event.values) ||
-      !Array.isArray(event.tables)
+      !Array.isArray(event.values)
     ) {
       return {
         code: 400,
@@ -48,9 +47,9 @@ const postQueryByHttp: Route = {
         },
       };
     }
-    const promise = createQuery(baseType, name || '', {
+    const promise = createQuery(adapterType, name || '', {
       ...event,
-      action: eventAction,
+      action: databaseAction,
     });
     if (!promise) {
       return {
@@ -93,20 +92,19 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
   handlers: {
     postQuery: async (req) => {
       const { event, name, type } = req;
-      const baseType = readMemo<AdapterType>(['type', type]);
-      const eventAction = readMemo<DatabaseAction>([
+      const adapterType = readMemo<AdapterType>(['type', type]);
+      const databaseAction = readMemo<DatabaseAction>([
         'action',
         event?.action || 0,
       ]);
       if (
-        Number(!name) ^ Number(event?.action === EventAction.ROOT) ||
-        !baseType ||
-        !eventAction ||
+        !adapterType ||
+        (!name && databaseAction !== 'root') ||
+        (name && databaseAction === 'root') ||
         !event ||
-        !event.action ||
+        !databaseAction ||
         !event.target ||
-        !Array.isArray(event.values) ||
-        !Array.isArray(event.tables)
+        !Array.isArray(event.values)
       ) {
         return {
           success: false,
@@ -117,9 +115,9 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
           },
         };
       }
-      const promise = createQuery(baseType, name || '', {
+      const promise = createQuery(adapterType, name || '', {
         ...event,
-        action: eventAction,
+        action: databaseAction,
         values: event.values.map((value) => JSON.parse(value)),
       });
       if (!promise) {

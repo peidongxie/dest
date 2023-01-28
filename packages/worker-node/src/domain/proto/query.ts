@@ -3,7 +3,7 @@ import _m0 from 'protobufjs/minimal';
 
 export const protobufPackage = 'dest';
 
-export enum BaseType {
+export enum TypeEnum {
   DEFAULT_TYPE = 0,
   SQLITE = 2049,
   MARIADB = 3306,
@@ -11,44 +11,44 @@ export enum BaseType {
   UNRECOGNIZED = -1,
 }
 
-export function baseTypeFromJSON(object: any): BaseType {
+export function typeEnumFromJSON(object: any): TypeEnum {
   switch (object) {
     case 0:
     case 'DEFAULT_TYPE':
-      return BaseType.DEFAULT_TYPE;
+      return TypeEnum.DEFAULT_TYPE;
     case 2049:
     case 'SQLITE':
-      return BaseType.SQLITE;
+      return TypeEnum.SQLITE;
     case 3306:
     case 'MARIADB':
-      return BaseType.MARIADB;
+      return TypeEnum.MARIADB;
     case 3307:
     case 'MYSQL8':
-      return BaseType.MYSQL8;
+      return TypeEnum.MYSQL8;
     case -1:
     case 'UNRECOGNIZED':
     default:
-      return BaseType.UNRECOGNIZED;
+      return TypeEnum.UNRECOGNIZED;
   }
 }
 
-export function baseTypeToJSON(object: BaseType): string {
+export function typeEnumToJSON(object: TypeEnum): string {
   switch (object) {
-    case BaseType.DEFAULT_TYPE:
+    case TypeEnum.DEFAULT_TYPE:
       return 'DEFAULT_TYPE';
-    case BaseType.SQLITE:
+    case TypeEnum.SQLITE:
       return 'SQLITE';
-    case BaseType.MARIADB:
+    case TypeEnum.MARIADB:
       return 'MARIADB';
-    case BaseType.MYSQL8:
+    case TypeEnum.MYSQL8:
       return 'MYSQL8';
-    case BaseType.UNRECOGNIZED:
+    case TypeEnum.UNRECOGNIZED:
     default:
       return 'UNRECOGNIZED';
   }
 }
 
-export enum EventAction {
+export enum ActionEnum {
   DEFAULT_ACTION = 0,
   SAVE = 1,
   REMOVE = 2,
@@ -59,64 +59,81 @@ export enum EventAction {
   UNRECOGNIZED = -1,
 }
 
-export function eventActionFromJSON(object: any): EventAction {
+export function actionEnumFromJSON(object: any): ActionEnum {
   switch (object) {
     case 0:
     case 'DEFAULT_ACTION':
-      return EventAction.DEFAULT_ACTION;
+      return ActionEnum.DEFAULT_ACTION;
     case 1:
     case 'SAVE':
-      return EventAction.SAVE;
+      return ActionEnum.SAVE;
     case 2:
     case 'REMOVE':
-      return EventAction.REMOVE;
+      return ActionEnum.REMOVE;
     case 3:
     case 'READ':
-      return EventAction.READ;
+      return ActionEnum.READ;
     case 4:
     case 'WRITE':
-      return EventAction.WRITE;
+      return ActionEnum.WRITE;
     case 5:
     case 'ROOT':
-      return EventAction.ROOT;
+      return ActionEnum.ROOT;
     case 6:
     case 'INTROSPECT':
-      return EventAction.INTROSPECT;
+      return ActionEnum.INTROSPECT;
     case -1:
     case 'UNRECOGNIZED':
     default:
-      return EventAction.UNRECOGNIZED;
+      return ActionEnum.UNRECOGNIZED;
   }
 }
 
-export function eventActionToJSON(object: EventAction): string {
+export function actionEnumToJSON(object: ActionEnum): string {
   switch (object) {
-    case EventAction.DEFAULT_ACTION:
+    case ActionEnum.DEFAULT_ACTION:
       return 'DEFAULT_ACTION';
-    case EventAction.SAVE:
+    case ActionEnum.SAVE:
       return 'SAVE';
-    case EventAction.REMOVE:
+    case ActionEnum.REMOVE:
       return 'REMOVE';
-    case EventAction.READ:
+    case ActionEnum.READ:
       return 'READ';
-    case EventAction.WRITE:
+    case ActionEnum.WRITE:
       return 'WRITE';
-    case EventAction.ROOT:
+    case ActionEnum.ROOT:
       return 'ROOT';
-    case EventAction.INTROSPECT:
+    case ActionEnum.INTROSPECT:
       return 'INTROSPECT';
-    case EventAction.UNRECOGNIZED:
+    case ActionEnum.UNRECOGNIZED:
     default:
       return 'UNRECOGNIZED';
   }
 }
 
-export interface BaseRequest {
-  type: BaseType;
+export interface TypeRequest {
+  type: TypeEnum;
+}
+
+export interface NameRequest {
+  type: TypeEnum;
   name: string;
 }
 
-export interface BaseResponse {
+export interface EventItem {
+  action: ActionEnum;
+  target: string;
+  values: string[];
+  tables: string[];
+}
+
+export interface EventRequest {
+  type: TypeEnum;
+  name: string;
+  event: EventItem | undefined;
+}
+
+export interface SuccessResponse {
   success: boolean;
 }
 
@@ -131,26 +148,69 @@ export interface ResultResponse {
   result: ResultItem | undefined;
 }
 
-export interface EventItem {
-  action: EventAction;
-  target: string;
-  values: string[];
-  tables: string[];
+function createBaseTypeRequest(): TypeRequest {
+  return { type: 0 };
 }
 
-export interface EventRequest {
-  type: BaseType;
-  name: string;
-  event: EventItem | undefined;
-}
+export const TypeRequest = {
+  encode(
+    message: TypeRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.type !== 0) {
+      writer.uint32(8).int32(message.type);
+    }
+    return writer;
+  },
 
-function createBaseBaseRequest(): BaseRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): TypeRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTypeRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.type = reader.int32() as any;
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TypeRequest {
+    return { type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0 };
+  },
+
+  toJSON(message: TypeRequest): unknown {
+    const obj: any = {};
+    message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<TypeRequest>, I>>(base?: I): TypeRequest {
+    return TypeRequest.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<TypeRequest>, I>>(
+    object: I,
+  ): TypeRequest {
+    const message = createBaseTypeRequest();
+    message.type = object.type ?? 0;
+    return message;
+  },
+};
+
+function createBaseNameRequest(): NameRequest {
   return { type: 0, name: '' };
 }
 
-export const BaseRequest = {
+export const NameRequest = {
   encode(
-    message: BaseRequest,
+    message: NameRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.type !== 0) {
@@ -162,10 +222,10 @@ export const BaseRequest = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): BaseRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): NameRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseBaseRequest();
+    const message = createBaseNameRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -183,41 +243,221 @@ export const BaseRequest = {
     return message;
   },
 
-  fromJSON(object: any): BaseRequest {
+  fromJSON(object: any): NameRequest {
     return {
-      type: isSet(object.type) ? baseTypeFromJSON(object.type) : 0,
+      type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0,
       name: isSet(object.name) ? String(object.name) : '',
     };
   },
 
-  toJSON(message: BaseRequest): unknown {
+  toJSON(message: NameRequest): unknown {
     const obj: any = {};
-    message.type !== undefined && (obj.type = baseTypeToJSON(message.type));
+    message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
     message.name !== undefined && (obj.name = message.name);
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<BaseRequest>, I>>(base?: I): BaseRequest {
-    return BaseRequest.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<NameRequest>, I>>(base?: I): NameRequest {
+    return NameRequest.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<BaseRequest>, I>>(
+  fromPartial<I extends Exact<DeepPartial<NameRequest>, I>>(
     object: I,
-  ): BaseRequest {
-    const message = createBaseBaseRequest();
+  ): NameRequest {
+    const message = createBaseNameRequest();
     message.type = object.type ?? 0;
     message.name = object.name ?? '';
     return message;
   },
 };
 
-function createBaseBaseResponse(): BaseResponse {
+function createBaseEventItem(): EventItem {
+  return { action: 0, target: '', values: [], tables: [] };
+}
+
+export const EventItem = {
+  encode(
+    message: EventItem,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.action !== 0) {
+      writer.uint32(8).int32(message.action);
+    }
+    if (message.target !== '') {
+      writer.uint32(18).string(message.target);
+    }
+    for (const v of message.values) {
+      writer.uint32(26).string(v!);
+    }
+    for (const v of message.tables) {
+      writer.uint32(34).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): EventItem {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseEventItem();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.action = reader.int32() as any;
+          break;
+        case 2:
+          message.target = reader.string();
+          break;
+        case 3:
+          message.values.push(reader.string());
+          break;
+        case 4:
+          message.tables.push(reader.string());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): EventItem {
+    return {
+      action: isSet(object.action) ? actionEnumFromJSON(object.action) : 0,
+      target: isSet(object.target) ? String(object.target) : '',
+      values: Array.isArray(object?.values)
+        ? object.values.map((e: any) => String(e))
+        : [],
+      tables: Array.isArray(object?.tables)
+        ? object.tables.map((e: any) => String(e))
+        : [],
+    };
+  },
+
+  toJSON(message: EventItem): unknown {
+    const obj: any = {};
+    message.action !== undefined &&
+      (obj.action = actionEnumToJSON(message.action));
+    message.target !== undefined && (obj.target = message.target);
+    if (message.values) {
+      obj.values = message.values.map((e) => e);
+    } else {
+      obj.values = [];
+    }
+    if (message.tables) {
+      obj.tables = message.tables.map((e) => e);
+    } else {
+      obj.tables = [];
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<EventItem>, I>>(base?: I): EventItem {
+    return EventItem.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<EventItem>, I>>(
+    object: I,
+  ): EventItem {
+    const message = createBaseEventItem();
+    message.action = object.action ?? 0;
+    message.target = object.target ?? '';
+    message.values = object.values?.map((e) => e) || [];
+    message.tables = object.tables?.map((e) => e) || [];
+    return message;
+  },
+};
+
+function createBaseEventRequest(): EventRequest {
+  return { type: 0, name: '', event: undefined };
+}
+
+export const EventRequest = {
+  encode(
+    message: EventRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.type !== 0) {
+      writer.uint32(8).int32(message.type);
+    }
+    if (message.name !== '') {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.event !== undefined) {
+      EventItem.encode(message.event, writer.uint32(26).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): EventRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseEventRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.type = reader.int32() as any;
+          break;
+        case 2:
+          message.name = reader.string();
+          break;
+        case 3:
+          message.event = EventItem.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): EventRequest {
+    return {
+      type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0,
+      name: isSet(object.name) ? String(object.name) : '',
+      event: isSet(object.event) ? EventItem.fromJSON(object.event) : undefined,
+    };
+  },
+
+  toJSON(message: EventRequest): unknown {
+    const obj: any = {};
+    message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
+    message.name !== undefined && (obj.name = message.name);
+    message.event !== undefined &&
+      (obj.event = message.event ? EventItem.toJSON(message.event) : undefined);
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<EventRequest>, I>>(
+    base?: I,
+  ): EventRequest {
+    return EventRequest.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<EventRequest>, I>>(
+    object: I,
+  ): EventRequest {
+    const message = createBaseEventRequest();
+    message.type = object.type ?? 0;
+    message.name = object.name ?? '';
+    message.event =
+      object.event !== undefined && object.event !== null
+        ? EventItem.fromPartial(object.event)
+        : undefined;
+    return message;
+  },
+};
+
+function createBaseSuccessResponse(): SuccessResponse {
   return { success: false };
 }
 
-export const BaseResponse = {
+export const SuccessResponse = {
   encode(
-    message: BaseResponse,
+    message: SuccessResponse,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.success === true) {
@@ -226,10 +466,10 @@ export const BaseResponse = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): BaseResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): SuccessResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseBaseResponse();
+    const message = createBaseSuccessResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -244,26 +484,26 @@ export const BaseResponse = {
     return message;
   },
 
-  fromJSON(object: any): BaseResponse {
+  fromJSON(object: any): SuccessResponse {
     return { success: isSet(object.success) ? Boolean(object.success) : false };
   },
 
-  toJSON(message: BaseResponse): unknown {
+  toJSON(message: SuccessResponse): unknown {
     const obj: any = {};
     message.success !== undefined && (obj.success = message.success);
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<BaseResponse>, I>>(
+  create<I extends Exact<DeepPartial<SuccessResponse>, I>>(
     base?: I,
-  ): BaseResponse {
-    return BaseResponse.fromPartial(base ?? {});
+  ): SuccessResponse {
+    return SuccessResponse.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<BaseResponse>, I>>(
+  fromPartial<I extends Exact<DeepPartial<SuccessResponse>, I>>(
     object: I,
-  ): BaseResponse {
-    const message = createBaseBaseResponse();
+  ): SuccessResponse {
+    const message = createBaseSuccessResponse();
     message.success = object.success ?? false;
     return message;
   },
@@ -423,186 +663,6 @@ export const ResultResponse = {
     message.result =
       object.result !== undefined && object.result !== null
         ? ResultItem.fromPartial(object.result)
-        : undefined;
-    return message;
-  },
-};
-
-function createBaseEventItem(): EventItem {
-  return { action: 0, target: '', values: [], tables: [] };
-}
-
-export const EventItem = {
-  encode(
-    message: EventItem,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.action !== 0) {
-      writer.uint32(8).int32(message.action);
-    }
-    if (message.target !== '') {
-      writer.uint32(18).string(message.target);
-    }
-    for (const v of message.values) {
-      writer.uint32(26).string(v!);
-    }
-    for (const v of message.tables) {
-      writer.uint32(34).string(v!);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): EventItem {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseEventItem();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.action = reader.int32() as any;
-          break;
-        case 2:
-          message.target = reader.string();
-          break;
-        case 3:
-          message.values.push(reader.string());
-          break;
-        case 4:
-          message.tables.push(reader.string());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): EventItem {
-    return {
-      action: isSet(object.action) ? eventActionFromJSON(object.action) : 0,
-      target: isSet(object.target) ? String(object.target) : '',
-      values: Array.isArray(object?.values)
-        ? object.values.map((e: any) => String(e))
-        : [],
-      tables: Array.isArray(object?.tables)
-        ? object.tables.map((e: any) => String(e))
-        : [],
-    };
-  },
-
-  toJSON(message: EventItem): unknown {
-    const obj: any = {};
-    message.action !== undefined &&
-      (obj.action = eventActionToJSON(message.action));
-    message.target !== undefined && (obj.target = message.target);
-    if (message.values) {
-      obj.values = message.values.map((e) => e);
-    } else {
-      obj.values = [];
-    }
-    if (message.tables) {
-      obj.tables = message.tables.map((e) => e);
-    } else {
-      obj.tables = [];
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<EventItem>, I>>(base?: I): EventItem {
-    return EventItem.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<EventItem>, I>>(
-    object: I,
-  ): EventItem {
-    const message = createBaseEventItem();
-    message.action = object.action ?? 0;
-    message.target = object.target ?? '';
-    message.values = object.values?.map((e) => e) || [];
-    message.tables = object.tables?.map((e) => e) || [];
-    return message;
-  },
-};
-
-function createBaseEventRequest(): EventRequest {
-  return { type: 0, name: '', event: undefined };
-}
-
-export const EventRequest = {
-  encode(
-    message: EventRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.type !== 0) {
-      writer.uint32(8).int32(message.type);
-    }
-    if (message.name !== '') {
-      writer.uint32(18).string(message.name);
-    }
-    if (message.event !== undefined) {
-      EventItem.encode(message.event, writer.uint32(26).fork()).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): EventRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseEventRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.type = reader.int32() as any;
-          break;
-        case 2:
-          message.name = reader.string();
-          break;
-        case 3:
-          message.event = EventItem.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): EventRequest {
-    return {
-      type: isSet(object.type) ? baseTypeFromJSON(object.type) : 0,
-      name: isSet(object.name) ? String(object.name) : '',
-      event: isSet(object.event) ? EventItem.fromJSON(object.event) : undefined,
-    };
-  },
-
-  toJSON(message: EventRequest): unknown {
-    const obj: any = {};
-    message.type !== undefined && (obj.type = baseTypeToJSON(message.type));
-    message.name !== undefined && (obj.name = message.name);
-    message.event !== undefined &&
-      (obj.event = message.event ? EventItem.toJSON(message.event) : undefined);
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<EventRequest>, I>>(
-    base?: I,
-  ): EventRequest {
-    return EventRequest.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<EventRequest>, I>>(
-    object: I,
-  ): EventRequest {
-    const message = createBaseEventRequest();
-    message.type = object.type ?? 0;
-    message.name = object.name ?? '';
-    message.event =
-      object.event !== undefined && object.event !== null
-        ? EventItem.fromPartial(object.event)
         : undefined;
     return message;
   },

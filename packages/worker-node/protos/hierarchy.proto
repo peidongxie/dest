@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package dest;
+
+service Hierarchy {
+  rpc GetHierarchy (LevelRequest) returns (EnvironmentsResponse) {}
+}
+
+// Type
+
+enum TypeEnum {
+  DEFAULT_TYPE = 0;
+  SQLITE = 2049;
+  MARIADB = 3306;
+  MYSQL8 = 3307;
+}
+
+message TypeRequest {
+  TypeEnum type = 1;
+}
+
+// Name
+
+message NameRequest {
+  TypeEnum type = 1;
+  string name = 2;
+}
+
+// Table
+
+message TableRequest {
+  TypeEnum type = 1;
+  string name = 2;
+  string table = 3;
+}
+
+// Level
+
+enum LevelEnum {
+  DEFAULT_LEVEL = 0;
+  ENVIRONMENT = 1;
+  DATABASE = 2;
+  TABLE = 3;
+  ROW = 4;
+}
+
+message LevelRequest {
+  TypeEnum type = 1;
+  string name = 2;
+  string table = 3;
+  LevelEnum level = 4;
+}
+
+// Success
+
+message SuccessResponse {
+  bool success = 1;
+}
+
+// Environment
+
+message SnapshotItem {
+  string table = 1;
+  repeated string rows = 2;
+}
+
+message DatabaseItem {
+  string name = 1;
+  repeated SnapshotItem snapshots = 2;
+}
+
+message EnvironmentItem {
+  TypeEnum type = 1;
+  repeated DatabaseItem databases = 2;
+}
+
+message EnvironmentsResponse {
+  bool success = 1;
+  repeated EnvironmentItem environments = 2;
+}

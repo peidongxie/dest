@@ -8,28 +8,16 @@ service Agent {
   rpc PostAgent (SecretRequest) returns (TokenResponse) {}
 }
 
-// Base
-
-enum BaseType {
-  DEFAULT_TYPE = 0;
-  SQLITE = 2049;
-  MARIADB = 3306;
-  MYSQL8 = 3307;
-}
-
-message BaseRequest {
-  BaseType type = 1;
-  string name = 2;
-}
-
-message BaseResponse {
-  bool success = 1;
-}
-
 // Secret
 
 message SecretRequest {
   string secret = 1;
+}
+
+// Success
+
+message SuccessResponse {
+  bool success = 1;
 }
 
 // Token

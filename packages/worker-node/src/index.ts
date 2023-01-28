@@ -7,6 +7,8 @@ import {
   getAgentByRpc,
   getDatabaseByHttp,
   getDatabaseByRpc,
+  getHierarchyByHttp,
+  getHierarchyByRpc,
   postAgentByHttp,
   postAgentByRpc,
   postDatabaseByHttp,
@@ -14,11 +16,19 @@ import {
   postQueryByHttp,
   postQueryByRpc,
 } from './controller';
-import { AdapterType, BaseType, DatabaseAction, EventAction } from './domain';
+import {
+  ActionEnum,
+  LevelEnum,
+  TypeEnum,
+  type AdapterType,
+  type DatabaseAction,
+  type HierarchyLevel,
+} from './domain';
 import { createMemo, createServer } from './service';
 
 const config = {
   database: ['sqlite'] as AdapterType[],
+  hierarchy: ['environment', 'database', 'table', 'row'] as HierarchyLevel[],
   query: [
     'save',
     'remove',
@@ -35,34 +45,62 @@ const config = {
 
 for (const type of config.database) {
   if (type === 'mariadb') {
-    createMemo(['type', BaseType.MARIADB], 'mariadb');
+    createMemo(['type', TypeEnum.MARIADB], 'mariadb');
+    createMemo(['enum', 'mariadb'], TypeEnum.MARIADB);
   }
   if (type === 'mysql:8') {
-    createMemo(['type', BaseType.MYSQL8], 'mysql:8');
+    createMemo(['type', TypeEnum.MYSQL8], 'mysql:8');
+    createMemo(['enum', 'mysql:8'], TypeEnum.MYSQL8);
   }
   if (type === 'sqlite') {
-    createMemo(['type', BaseType.SQLITE], 'sqlite');
+    createMemo(['type', TypeEnum.SQLITE], 'sqlite');
+    createMemo(['enum', 'sqlite'], TypeEnum.SQLITE);
+  }
+}
+
+for (const level of config.hierarchy) {
+  if (level === 'environment') {
+    createMemo(['level', LevelEnum.ENVIRONMENT], 'environment');
+    createMemo(['enum', 'environment'], LevelEnum.ENVIRONMENT);
+  }
+  if (level === 'database') {
+    createMemo(['level', LevelEnum.DATABASE], 'database');
+    createMemo(['enum', 'database'], LevelEnum.DATABASE);
+  }
+  if (level === 'table') {
+    createMemo(['level', LevelEnum.TABLE], 'table');
+    createMemo(['enum', 'table'], LevelEnum.TABLE);
+  }
+  if (level === 'row') {
+    createMemo(['level', LevelEnum.ROW], 'row');
+    createMemo(['enum', 'row'], LevelEnum.ROW);
   }
 }
 
 for (const action of config.query) {
   if (action === 'save') {
-    createMemo(['action', EventAction.SAVE], 'save');
+    createMemo(['action', ActionEnum.SAVE], 'save');
+    createMemo(['enum', 'save'], ActionEnum.SAVE);
   }
   if (action === 'remove') {
-    createMemo(['action', EventAction.REMOVE], 'remove');
+    createMemo(['action', ActionEnum.REMOVE], 'remove');
+    createMemo(['enum', 'remove'], ActionEnum.REMOVE);
   }
   if (action === 'read') {
-    createMemo(['action', EventAction.READ], 'read');
+    createMemo(['action', ActionEnum.READ], 'read');
+    createMemo(['enum', 'read'], ActionEnum.READ);
   }
   if (action === 'write') {
-    createMemo(['action', EventAction.WRITE], 'write');
+    createMemo(['action', ActionEnum.WRITE], 'write');
+    createMemo(['enum', 'write'], ActionEnum.WRITE);
   }
   if (action === 'root') {
-    createMemo(['action', EventAction.ROOT], 'root');
+    createMemo(['action', ActionEnum.ROOT], 'root');
+    createMemo(['enum', 'root'], ActionEnum.ROOT);
   }
   if (action === 'introspect') {
-    createMemo(['action', EventAction.INTROSPECT], 'introspect');
+    createMemo(['action', ActionEnum.INTROSPECT], 'introspect');
+    createMemo(['enum', 'introspect'], ActionEnum.INTROSPECT);
   }
 }
 
@@ -74,6 +112,7 @@ for (const [port, call] of Object.entries(config.server)) {
         deleteDatabaseByHttp,
         getAgentByHttp,
         getDatabaseByHttp,
+        getHierarchyByHttp,
         postAgentByHttp,
         postDatabaseByHttp,
         postQueryByHttp,
@@ -88,6 +127,7 @@ for (const [port, call] of Object.entries(config.server)) {
         deleteDatabaseByRpc,
         getAgentByRpc,
         getDatabaseByRpc,
+        getHierarchyByRpc,
         postAgentByRpc,
         postDatabaseByRpc,
         postQueryByRpc,
