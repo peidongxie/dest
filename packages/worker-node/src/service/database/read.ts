@@ -9,7 +9,9 @@ const readDatabase = (
 };
 
 const readDatabases = (type?: AdapterType): Scheduler<Database>[] => {
-  if (type) readMemos<Scheduler<Database>>(['database', type]);
+  if (type) {
+    return readMemos<Scheduler<Database>>(['database', type]);
+  }
   const scheduler = readMemo<Scheduler<Database>>(['database']);
   return scheduler
     ? [scheduler, ...readMemos<Scheduler<Database>>(['database'])]
