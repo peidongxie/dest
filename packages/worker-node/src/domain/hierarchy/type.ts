@@ -1,3 +1,5 @@
+import { type AdapterType } from '../adapter';
+
 type HierarchyLevel = 'environment' | 'database' | 'table' | 'row';
 
 interface HierarchySnapshot {
@@ -11,7 +13,7 @@ interface HierarchyDatabase {
 }
 
 interface HierarchyEnvironment {
-  type: string;
+  type: AdapterType | '';
   databases: HierarchyDatabase[];
 }
 
