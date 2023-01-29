@@ -3,11 +3,11 @@ import _m0 from 'protobufjs/minimal';
 
 export const protobufPackage = 'dest';
 
-export interface BaseRequest {
+export interface SecretRequest {
   secret: string;
 }
 
-export interface BaseResponse {
+export interface SuccessResponse {
   success: boolean;
 }
 
@@ -16,13 +16,13 @@ export interface TokenResponse {
   token: string;
 }
 
-function createBaseBaseRequest(): BaseRequest {
+function createBaseSecretRequest(): SecretRequest {
   return { secret: '' };
 }
 
-export const BaseRequest = {
+export const SecretRequest = {
   encode(
-    message: BaseRequest,
+    message: SecretRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.secret !== '') {
@@ -31,10 +31,10 @@ export const BaseRequest = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): BaseRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): SecretRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseBaseRequest();
+    const message = createBaseSecretRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -49,32 +49,38 @@ export const BaseRequest = {
     return message;
   },
 
-  fromJSON(object: any): BaseRequest {
+  fromJSON(object: any): SecretRequest {
     return { secret: isSet(object.secret) ? String(object.secret) : '' };
   },
 
-  toJSON(message: BaseRequest): unknown {
+  toJSON(message: SecretRequest): unknown {
     const obj: any = {};
     message.secret !== undefined && (obj.secret = message.secret);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<BaseRequest>, I>>(
+  create<I extends Exact<DeepPartial<SecretRequest>, I>>(
+    base?: I,
+  ): SecretRequest {
+    return SecretRequest.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SecretRequest>, I>>(
     object: I,
-  ): BaseRequest {
-    const message = createBaseBaseRequest();
+  ): SecretRequest {
+    const message = createBaseSecretRequest();
     message.secret = object.secret ?? '';
     return message;
   },
 };
 
-function createBaseBaseResponse(): BaseResponse {
+function createBaseSuccessResponse(): SuccessResponse {
   return { success: false };
 }
 
-export const BaseResponse = {
+export const SuccessResponse = {
   encode(
-    message: BaseResponse,
+    message: SuccessResponse,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.success === true) {
@@ -83,10 +89,10 @@ export const BaseResponse = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): BaseResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): SuccessResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseBaseResponse();
+    const message = createBaseSuccessResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -101,20 +107,26 @@ export const BaseResponse = {
     return message;
   },
 
-  fromJSON(object: any): BaseResponse {
+  fromJSON(object: any): SuccessResponse {
     return { success: isSet(object.success) ? Boolean(object.success) : false };
   },
 
-  toJSON(message: BaseResponse): unknown {
+  toJSON(message: SuccessResponse): unknown {
     const obj: any = {};
     message.success !== undefined && (obj.success = message.success);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<BaseResponse>, I>>(
+  create<I extends Exact<DeepPartial<SuccessResponse>, I>>(
+    base?: I,
+  ): SuccessResponse {
+    return SuccessResponse.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SuccessResponse>, I>>(
     object: I,
-  ): BaseResponse {
-    const message = createBaseBaseResponse();
+  ): SuccessResponse {
+    const message = createBaseSuccessResponse();
     message.success = object.success ?? false;
     return message;
   },
@@ -173,6 +185,12 @@ export const TokenResponse = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<TokenResponse>, I>>(
+    base?: I,
+  ): TokenResponse {
+    return TokenResponse.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<TokenResponse>, I>>(
     object: I,
   ): TokenResponse {
@@ -190,7 +208,7 @@ export const AgentDefinition = {
   methods: {
     deleteAgent: {
       name: 'DeleteAgent',
-      requestType: BaseRequest,
+      requestType: SecretRequest,
       requestStream: false,
       responseType: TokenResponse,
       responseStream: false,
@@ -198,7 +216,7 @@ export const AgentDefinition = {
     },
     getAgent: {
       name: 'GetAgent',
-      requestType: BaseRequest,
+      requestType: SecretRequest,
       requestStream: false,
       responseType: TokenResponse,
       responseStream: false,
@@ -206,7 +224,7 @@ export const AgentDefinition = {
     },
     postAgent: {
       name: 'PostAgent',
-      requestType: BaseRequest,
+      requestType: SecretRequest,
       requestStream: false,
       responseType: TokenResponse,
       responseStream: false,

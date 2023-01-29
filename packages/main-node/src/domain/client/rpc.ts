@@ -1,27 +1,35 @@
 import { Client as ClientRaw } from '@dest-toolkit/grpc-client';
 import { type EntitySchemaOptions } from 'typeorm';
 import {
+  ActionEnum,
   AgentDefinition,
-  BaseType,
   DatabaseDefinition,
-  EventAction,
+  HierarchyDefinition,
+  LevelEnum,
+  TypeEnum,
   QueryDefinition,
 } from '../../domain';
 import {
   type ContextAction,
-  type ContextEventItem,
+  type ContextEvent,
+  type ContextLevel,
   type ContextType,
 } from '../context';
 import { type Client } from './type';
 
 class RpcClient implements Client {
   private raw: ClientRaw<
-    AgentDefinition | DatabaseDefinition | QueryDefinition
+    AgentDefinition | DatabaseDefinition | HierarchyDefinition | QueryDefinition
   >;
 
   constructor(port: number, hostname: string) {
     this.raw = new ClientRaw(
-      [AgentDefinition, DatabaseDefinition, QueryDefinition],
+      [
+        AgentDefinition,
+        DatabaseDefinition,
+        HierarchyDefinition,
+        QueryDefinition,
+      ],
       {
         port,
         hostname,
@@ -37,7 +45,7 @@ class RpcClient implements Client {
 
   public deleteDatabase(type: ContextType, name: string) {
     return this.raw.call('deleteDatabase')({
-      type: this.getType(type),
+      type: this.getTypeEnum(type),
       name,
     });
   }
@@ -48,16 +56,36 @@ class RpcClient implements Client {
     });
   }
 
-  public async getDatabase(type: ContextType, name: string) {
-    const { success, results } = await this.raw.call('getDatabase')({
-      type: this.getType(type),
+  public getDatabase(type: ContextType, name: string) {
+    return this.raw.call('getDatabase')({
+      type: this.getTypeEnum(type),
       name,
+    });
+  }
+
+  public async getHierarchy(
+    type: ContextType | '',
+    name: string,
+    table: string,
+    level: ContextLevel,
+  ) {
+    const { success, environments } = await this.raw.call('getHierarchy')({
+      type: this.getTypeEnum(type),
+      name,
+      table,
+      level: this.getLevelEnum(level),
     });
     return {
       success,
-      results: results.map((result) => ({
-        ...result,
-        rows: result.rows.map((row) => JSON.parse(row)),
+      environments: environments.map((environment) => ({
+        type: this.getType(environment.type),
+        databases: environment.databases.map((database) => ({
+          ...database,
+          snapshots: database.snapshots.map((snapshot) => ({
+            ...snapshot,
+            rows: snapshot.rows.map((row) => JSON.parse(row)),
+          })),
+        })),
       })),
     };
   }
@@ -74,7 +102,7 @@ class RpcClient implements Client {
     schemas: EntitySchemaOptions<unknown>[],
   ) {
     return this.raw.call('postDatabase')({
-      type: this.getType(type),
+      type: this.getTypeEnum(type),
       name,
       schemas: schemas.map((schema) => JSON.stringify(schema)),
     });
@@ -83,13 +111,13 @@ class RpcClient implements Client {
   public async postQuery(
     type: ContextType,
     name: string,
-    event: ContextEventItem<unknown>,
+    event: ContextEvent<unknown>,
   ) {
     const { success, result } = await this.raw.call('postQuery')({
-      type: this.getType(type),
+      type: this.getTypeEnum(type),
       name,
       event: {
-        action: this.getAction(event.action),
+        action: this.getActionEnum(event.action),
         target: event.target,
         values: event.values.map((value) => JSON.stringify(value)),
       },
@@ -98,26 +126,42 @@ class RpcClient implements Client {
       success,
       result: {
         time: result?.time || 0,
-        table: result?.table || '',
+        error: result?.error || '',
         rows: result?.rows.map((row) => JSON.parse(row)) || [],
       },
     };
   }
 
-  private getAction(action: ContextAction): EventAction {
-    if (action === 'save') return EventAction.SAVE;
-    if (action === 'remove') return EventAction.REMOVE;
-    if (action === 'read') return EventAction.READ;
-    if (action === 'write') return EventAction.WRITE;
-    if (action === 'root') return EventAction.ROOT;
-    return EventAction.DEFAULT_ACTION;
+  private getActionEnum(action: ContextAction): ActionEnum {
+    if (action === 'save') return ActionEnum.SAVE;
+    if (action === 'remove') return ActionEnum.REMOVE;
+    if (action === 'read') return ActionEnum.READ;
+    if (action === 'write') return ActionEnum.WRITE;
+    if (action === 'root') return ActionEnum.ROOT;
+    if (action === 'introspect') return ActionEnum.INTROSPECT;
+    return ActionEnum.DEFAULT_ACTION;
   }
 
-  private getType(type: ContextType): BaseType {
-    if (type === 'mariadb') return BaseType.MARIADB;
-    if (type === 'mysql:8') return BaseType.MYSQL8;
-    if (type === 'sqlite') return BaseType.SQLITE;
-    return BaseType.DEFAULT_TYPE;
+  private getLevelEnum(level: ContextLevel): LevelEnum {
+    if (level === 'environment') return LevelEnum.DATABASE;
+    if (level === 'database') return LevelEnum.DATABASE;
+    if (level === 'table') return LevelEnum.TABLE;
+    if (level === 'row') return LevelEnum.ROW;
+    return LevelEnum.DEFAULT_LEVEL;
+  }
+
+  private getType(type: TypeEnum): ContextType | '' {
+    if (type === TypeEnum.MARIADB) return 'mariadb';
+    if (type === TypeEnum.MYSQL8) return 'mysql:8';
+    if (type === TypeEnum.SQLITE) return 'sqlite';
+    return '';
+  }
+
+  private getTypeEnum(type: ContextType | ''): TypeEnum {
+    if (type === 'mariadb') return TypeEnum.MARIADB;
+    if (type === 'mysql:8') return TypeEnum.MYSQL8;
+    if (type === 'sqlite') return TypeEnum.SQLITE;
+    return TypeEnum.DEFAULT_TYPE;
   }
 }
 

@@ -1,18 +1,14 @@
-import {
-  type ContextAction,
-  type ContextEventItem,
-  type ContextType,
-} from './type';
+import { type ContextEvent, type ContextType } from './type';
 
 class Context {
   private name: string;
-  private events: ContextEventItem<unknown>[];
+  private events: ContextEvent<unknown>[];
   private type: ContextType;
 
   constructor(
     type: ContextType,
     name?: string,
-    events?: ContextEventItem<unknown>[],
+    events?: ContextEvent<unknown>[],
   ) {
     this.type = type;
     this.name = name || '';
@@ -20,4 +16,4 @@ class Context {
   }
 }
 
-export { Context, type ContextAction, type ContextEventItem, type ContextType };
+export { Context };

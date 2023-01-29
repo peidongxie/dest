@@ -1,7 +1,9 @@
 import { type EntitySchemaOptions } from 'typeorm';
 import {
-  type ContextEventItem,
-  type ContextResultItem,
+  type ContextEnvironment,
+  type ContextEvent,
+  type ContextLevel,
+  type ContextResult,
   type ContextType,
 } from '../context';
 
@@ -25,7 +27,15 @@ interface Client {
     name: string,
   ) => Promise<{
     success: boolean;
-    results: ContextResultItem<unknown>[];
+  }>;
+  getHierarchy: (
+    type: ContextType | '',
+    name: string,
+    table: string,
+    level: ContextLevel,
+  ) => Promise<{
+    success: boolean;
+    environments: ContextEnvironment[];
   }>;
   postAgent: (secret: string) => Promise<{
     success: boolean;
@@ -41,10 +51,10 @@ interface Client {
   postQuery: <T>(
     type: ContextType,
     name: string,
-    event: ContextEventItem<unknown>,
+    event: ContextEvent<unknown>,
   ) => Promise<{
     success: boolean;
-    result: ContextResultItem<T>;
+    result: ContextResult<T>;
   }>;
 }
 

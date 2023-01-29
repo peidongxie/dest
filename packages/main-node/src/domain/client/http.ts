@@ -1,10 +1,12 @@
 import { Client as ClientRaw, Router } from '@dest-toolkit/http-client';
 import { type EntitySchemaOptions } from 'typeorm';
-import { BaseType, EventAction } from '../../domain';
+import { ActionEnum, LevelEnum, TypeEnum } from '../../domain';
 import {
   type ContextAction,
-  type ContextEventItem,
-  type ContextResultItem,
+  type ContextDatabase,
+  type ContextEvent,
+  type ContextLevel,
+  type ContextResult,
   type ContextType,
 } from '../context';
 import { type Client } from './type';
@@ -32,6 +34,11 @@ class HttpClient implements Client {
     router.setRoute({
       pathname: 'getDatabase',
       redirect: `${hostname}:${port}/database`,
+      method: 'GET',
+    });
+    router.setRoute({
+      pathname: 'getHierarchy',
+      redirect: `${hostname}:${port}/hierarchy`,
       method: 'GET',
     });
     router.setRoute({
@@ -63,7 +70,7 @@ class HttpClient implements Client {
   public deleteDatabase(type: ContextType, name: string) {
     return this.call<{
       success: boolean;
-    }>(`deleteDatabase?type=${this.getType(type)}&name=${name}`)();
+    }>(`deleteDatabase?type=${this.getTypeEnum(type)}&name=${name}`)();
   }
 
   public getAgent(secret: string) {
@@ -76,8 +83,7 @@ class HttpClient implements Client {
   public getDatabase(type: ContextType, name: string) {
     return this.call<{
       success: boolean;
-      results: ContextResultItem<unknown>[];
-    }>(`getDatabase?type=${this.getType(type)}&name=${name}`)();
+    }>(`getDatabase?type=${this.getTypeEnum(type)}&name=${name}`)();
   }
 
   public postAgent(secret: string) {
@@ -87,6 +93,29 @@ class HttpClient implements Client {
     }>(`postAgent?secret=${secret}`)();
   }
 
+  public async getHierarchy(
+    type: ContextType | '',
+    name: string,
+    table: string,
+    level: ContextLevel,
+  ) {
+    const { success, environments } = await this.call<{
+      success: boolean;
+      environments: { type: TypeEnum; databases: ContextDatabase[] }[];
+    }>(
+      `getHierarchy?type=${
+        this.getTypeEnum(type) || ''
+      }&name=${name}&table=${table}&level=${this.getLevelEnum(level)}`,
+    )();
+    return {
+      success,
+      environments: environments.map((environment) => ({
+        type: this.getType(environment.type),
+        databases: environment.databases,
+      })),
+    };
+  }
+
   public postDatabase(
     type: ContextType,
     name: string,
@@ -94,20 +123,20 @@ class HttpClient implements Client {
   ) {
     return this.call<{
       success: boolean;
-    }>(`postDatabase?type=${this.getType(type)}&name=${name}`)(schemas);
+    }>(`postDatabase?type=${this.getTypeEnum(type)}&name=${name}`)(schemas);
   }
 
   public postQuery<T>(
     type: ContextType,
     name: string,
-    event: ContextEventItem<unknown>,
+    event: ContextEvent<unknown>,
   ) {
     return this.call<{
       success: boolean;
-      result: ContextResultItem<T>;
-    }>(`postQuery?type=${this.getType(type)}&name=${name}`)({
+      result: ContextResult<T>;
+    }>(`postQuery?type=${this.getTypeEnum(type)}&name=${name}`)({
       ...event,
-      action: this.getAction(event.action),
+      action: this.getActionEnum(event.action),
     });
   }
 
@@ -124,20 +153,36 @@ class HttpClient implements Client {
     };
   }
 
-  private getAction(action: ContextAction): EventAction {
-    if (action === 'save') return EventAction.SAVE;
-    if (action === 'remove') return EventAction.REMOVE;
-    if (action === 'read') return EventAction.READ;
-    if (action === 'write') return EventAction.WRITE;
-    if (action === 'root') return EventAction.ROOT;
-    return EventAction.DEFAULT_ACTION;
+  private getActionEnum(action: ContextAction): ActionEnum {
+    if (action === 'save') return ActionEnum.SAVE;
+    if (action === 'remove') return ActionEnum.REMOVE;
+    if (action === 'read') return ActionEnum.READ;
+    if (action === 'write') return ActionEnum.WRITE;
+    if (action === 'root') return ActionEnum.ROOT;
+    if (action === 'introspect') return ActionEnum.INTROSPECT;
+    return ActionEnum.DEFAULT_ACTION;
   }
 
-  private getType(type: ContextType): BaseType {
-    if (type === 'mariadb') return BaseType.MARIADB;
-    if (type === 'mysql:8') return BaseType.MYSQL8;
-    if (type === 'sqlite') return BaseType.SQLITE;
-    return BaseType.DEFAULT_TYPE;
+  private getLevelEnum(level: ContextLevel): LevelEnum {
+    if (level === 'environment') return LevelEnum.DATABASE;
+    if (level === 'database') return LevelEnum.DATABASE;
+    if (level === 'table') return LevelEnum.TABLE;
+    if (level === 'row') return LevelEnum.ROW;
+    return LevelEnum.DEFAULT_LEVEL;
+  }
+
+  private getType(type: TypeEnum): ContextType | '' {
+    if (type === TypeEnum.MARIADB) return 'mariadb';
+    if (type === TypeEnum.MYSQL8) return 'mysql:8';
+    if (type === TypeEnum.SQLITE) return 'sqlite';
+    return '';
+  }
+
+  private getTypeEnum(type: ContextType | ''): TypeEnum {
+    if (type === 'mariadb') return TypeEnum.MARIADB;
+    if (type === 'mysql:8') return TypeEnum.MYSQL8;
+    if (type === 'sqlite') return TypeEnum.SQLITE;
+    return TypeEnum.DEFAULT_TYPE;
   }
 }
 
