@@ -3,7 +3,7 @@ import _m0 from 'protobufjs/minimal';
 
 export const protobufPackage = 'dest';
 
-export enum BaseType {
+export enum TypeEnum {
   DEFAULT_TYPE = 0,
   SQLITE = 2049,
   MARIADB = 3306,
@@ -11,76 +11,125 @@ export enum BaseType {
   UNRECOGNIZED = -1,
 }
 
-export function baseTypeFromJSON(object: any): BaseType {
+export function typeEnumFromJSON(object: any): TypeEnum {
   switch (object) {
     case 0:
     case 'DEFAULT_TYPE':
-      return BaseType.DEFAULT_TYPE;
+      return TypeEnum.DEFAULT_TYPE;
     case 2049:
     case 'SQLITE':
-      return BaseType.SQLITE;
+      return TypeEnum.SQLITE;
     case 3306:
     case 'MARIADB':
-      return BaseType.MARIADB;
+      return TypeEnum.MARIADB;
     case 3307:
     case 'MYSQL8':
-      return BaseType.MYSQL8;
+      return TypeEnum.MYSQL8;
     case -1:
     case 'UNRECOGNIZED':
     default:
-      return BaseType.UNRECOGNIZED;
+      return TypeEnum.UNRECOGNIZED;
   }
 }
 
-export function baseTypeToJSON(object: BaseType): string {
+export function typeEnumToJSON(object: TypeEnum): string {
   switch (object) {
-    case BaseType.DEFAULT_TYPE:
+    case TypeEnum.DEFAULT_TYPE:
       return 'DEFAULT_TYPE';
-    case BaseType.SQLITE:
+    case TypeEnum.SQLITE:
       return 'SQLITE';
-    case BaseType.MARIADB:
+    case TypeEnum.MARIADB:
       return 'MARIADB';
-    case BaseType.MYSQL8:
+    case TypeEnum.MYSQL8:
       return 'MYSQL8';
-    case BaseType.UNRECOGNIZED:
+    case TypeEnum.UNRECOGNIZED:
     default:
       return 'UNRECOGNIZED';
   }
 }
 
-export interface BaseRequest {
-  type: BaseType;
+export interface TypeRequest {
+  type: TypeEnum;
+}
+
+export interface NameRequest {
+  type: TypeEnum;
   name: string;
 }
 
-export interface BaseResponse {
-  success: boolean;
-}
-
-export interface ResultItem {
-  time: number;
-  table: string;
-  rows: string[];
-}
-
-export interface ResultsResponse {
-  success: boolean;
-  results: ResultItem[];
-}
-
 export interface SchemasRequest {
-  type: BaseType;
+  type: TypeEnum;
   name: string;
   schemas: string[];
 }
 
-function createBaseBaseRequest(): BaseRequest {
+export interface SuccessResponse {
+  success: boolean;
+}
+
+function createBaseTypeRequest(): TypeRequest {
+  return { type: 0 };
+}
+
+export const TypeRequest = {
+  encode(
+    message: TypeRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.type !== 0) {
+      writer.uint32(8).int32(message.type);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): TypeRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTypeRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.type = reader.int32() as any;
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TypeRequest {
+    return { type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0 };
+  },
+
+  toJSON(message: TypeRequest): unknown {
+    const obj: any = {};
+    message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<TypeRequest>, I>>(base?: I): TypeRequest {
+    return TypeRequest.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<TypeRequest>, I>>(
+    object: I,
+  ): TypeRequest {
+    const message = createBaseTypeRequest();
+    message.type = object.type ?? 0;
+    return message;
+  },
+};
+
+function createBaseNameRequest(): NameRequest {
   return { type: 0, name: '' };
 }
 
-export const BaseRequest = {
+export const NameRequest = {
   encode(
-    message: BaseRequest,
+    message: NameRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.type !== 0) {
@@ -92,10 +141,10 @@ export const BaseRequest = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): BaseRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): NameRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseBaseRequest();
+    const message = createBaseNameRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -113,228 +162,30 @@ export const BaseRequest = {
     return message;
   },
 
-  fromJSON(object: any): BaseRequest {
+  fromJSON(object: any): NameRequest {
     return {
-      type: isSet(object.type) ? baseTypeFromJSON(object.type) : 0,
+      type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0,
       name: isSet(object.name) ? String(object.name) : '',
     };
   },
 
-  toJSON(message: BaseRequest): unknown {
+  toJSON(message: NameRequest): unknown {
     const obj: any = {};
-    message.type !== undefined && (obj.type = baseTypeToJSON(message.type));
+    message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
     message.name !== undefined && (obj.name = message.name);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<BaseRequest>, I>>(
+  create<I extends Exact<DeepPartial<NameRequest>, I>>(base?: I): NameRequest {
+    return NameRequest.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<NameRequest>, I>>(
     object: I,
-  ): BaseRequest {
-    const message = createBaseBaseRequest();
+  ): NameRequest {
+    const message = createBaseNameRequest();
     message.type = object.type ?? 0;
     message.name = object.name ?? '';
-    return message;
-  },
-};
-
-function createBaseBaseResponse(): BaseResponse {
-  return { success: false };
-}
-
-export const BaseResponse = {
-  encode(
-    message: BaseResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.success === true) {
-      writer.uint32(8).bool(message.success);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): BaseResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseBaseResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.success = reader.bool();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): BaseResponse {
-    return { success: isSet(object.success) ? Boolean(object.success) : false };
-  },
-
-  toJSON(message: BaseResponse): unknown {
-    const obj: any = {};
-    message.success !== undefined && (obj.success = message.success);
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<BaseResponse>, I>>(
-    object: I,
-  ): BaseResponse {
-    const message = createBaseBaseResponse();
-    message.success = object.success ?? false;
-    return message;
-  },
-};
-
-function createBaseResultItem(): ResultItem {
-  return { time: 0, table: '', rows: [] };
-}
-
-export const ResultItem = {
-  encode(
-    message: ResultItem,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.time !== 0) {
-      writer.uint32(8).uint32(message.time);
-    }
-    if (message.table !== '') {
-      writer.uint32(18).string(message.table);
-    }
-    for (const v of message.rows) {
-      writer.uint32(26).string(v!);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): ResultItem {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseResultItem();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.time = reader.uint32();
-          break;
-        case 2:
-          message.table = reader.string();
-          break;
-        case 3:
-          message.rows.push(reader.string());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ResultItem {
-    return {
-      time: isSet(object.time) ? Number(object.time) : 0,
-      table: isSet(object.table) ? String(object.table) : '',
-      rows: Array.isArray(object?.rows)
-        ? object.rows.map((e: any) => String(e))
-        : [],
-    };
-  },
-
-  toJSON(message: ResultItem): unknown {
-    const obj: any = {};
-    message.time !== undefined && (obj.time = Math.round(message.time));
-    message.table !== undefined && (obj.table = message.table);
-    if (message.rows) {
-      obj.rows = message.rows.map((e) => e);
-    } else {
-      obj.rows = [];
-    }
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<ResultItem>, I>>(
-    object: I,
-  ): ResultItem {
-    const message = createBaseResultItem();
-    message.time = object.time ?? 0;
-    message.table = object.table ?? '';
-    message.rows = object.rows?.map((e) => e) || [];
-    return message;
-  },
-};
-
-function createBaseResultsResponse(): ResultsResponse {
-  return { success: false, results: [] };
-}
-
-export const ResultsResponse = {
-  encode(
-    message: ResultsResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.success === true) {
-      writer.uint32(8).bool(message.success);
-    }
-    for (const v of message.results) {
-      ResultItem.encode(v!, writer.uint32(18).fork()).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): ResultsResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseResultsResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.success = reader.bool();
-          break;
-        case 2:
-          message.results.push(ResultItem.decode(reader, reader.uint32()));
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ResultsResponse {
-    return {
-      success: isSet(object.success) ? Boolean(object.success) : false,
-      results: Array.isArray(object?.results)
-        ? object.results.map((e: any) => ResultItem.fromJSON(e))
-        : [],
-    };
-  },
-
-  toJSON(message: ResultsResponse): unknown {
-    const obj: any = {};
-    message.success !== undefined && (obj.success = message.success);
-    if (message.results) {
-      obj.results = message.results.map((e) =>
-        e ? ResultItem.toJSON(e) : undefined,
-      );
-    } else {
-      obj.results = [];
-    }
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<ResultsResponse>, I>>(
-    object: I,
-  ): ResultsResponse {
-    const message = createBaseResultsResponse();
-    message.success = object.success ?? false;
-    message.results =
-      object.results?.map((e) => ResultItem.fromPartial(e)) || [];
     return message;
   },
 };
@@ -386,7 +237,7 @@ export const SchemasRequest = {
 
   fromJSON(object: any): SchemasRequest {
     return {
-      type: isSet(object.type) ? baseTypeFromJSON(object.type) : 0,
+      type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0,
       name: isSet(object.name) ? String(object.name) : '',
       schemas: Array.isArray(object?.schemas)
         ? object.schemas.map((e: any) => String(e))
@@ -396,7 +247,7 @@ export const SchemasRequest = {
 
   toJSON(message: SchemasRequest): unknown {
     const obj: any = {};
-    message.type !== undefined && (obj.type = baseTypeToJSON(message.type));
+    message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
     message.name !== undefined && (obj.name = message.name);
     if (message.schemas) {
       obj.schemas = message.schemas.map((e) => e);
@@ -404,6 +255,12 @@ export const SchemasRequest = {
       obj.schemas = [];
     }
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SchemasRequest>, I>>(
+    base?: I,
+  ): SchemasRequest {
+    return SchemasRequest.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<SchemasRequest>, I>>(
@@ -417,6 +274,64 @@ export const SchemasRequest = {
   },
 };
 
+function createBaseSuccessResponse(): SuccessResponse {
+  return { success: false };
+}
+
+export const SuccessResponse = {
+  encode(
+    message: SuccessResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.success === true) {
+      writer.uint32(8).bool(message.success);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SuccessResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSuccessResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.success = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SuccessResponse {
+    return { success: isSet(object.success) ? Boolean(object.success) : false };
+  },
+
+  toJSON(message: SuccessResponse): unknown {
+    const obj: any = {};
+    message.success !== undefined && (obj.success = message.success);
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SuccessResponse>, I>>(
+    base?: I,
+  ): SuccessResponse {
+    return SuccessResponse.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SuccessResponse>, I>>(
+    object: I,
+  ): SuccessResponse {
+    const message = createBaseSuccessResponse();
+    message.success = object.success ?? false;
+    return message;
+  },
+};
+
 export type DatabaseDefinition = typeof DatabaseDefinition;
 export const DatabaseDefinition = {
   name: 'Database',
@@ -424,17 +339,17 @@ export const DatabaseDefinition = {
   methods: {
     deleteDatabase: {
       name: 'DeleteDatabase',
-      requestType: BaseRequest,
+      requestType: NameRequest,
       requestStream: false,
-      responseType: BaseResponse,
+      responseType: SuccessResponse,
       responseStream: false,
       options: {},
     },
     getDatabase: {
       name: 'GetDatabase',
-      requestType: BaseRequest,
+      requestType: NameRequest,
       requestStream: false,
-      responseType: ResultsResponse,
+      responseType: SuccessResponse,
       responseStream: false,
       options: {},
     },
@@ -442,7 +357,7 @@ export const DatabaseDefinition = {
       name: 'PostDatabase',
       requestType: SchemasRequest,
       requestStream: false,
-      responseType: BaseResponse,
+      responseType: SuccessResponse,
       responseStream: false,
       options: {},
     },

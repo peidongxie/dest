@@ -1,6 +1,6 @@
 import { type EntitySchemaOptions } from 'typeorm';
 import { createAdapter, type Adapter, type AdapterType } from '../adapter';
-import { type DatabaseEventItem, type DatabaseResult } from './type';
+import { type DatabaseEvent, type DatabaseResult } from './type';
 
 class Database {
   private adapter: Adapter;
@@ -42,7 +42,7 @@ class Database {
   }
 
   public emit<T>(
-    event: DatabaseEventItem<unknown>,
+    event: DatabaseEvent<unknown>,
   ): Promise<DatabaseResult<T>> | null {
     return this[event.action]?.(event.target, event.values) || null;
   }

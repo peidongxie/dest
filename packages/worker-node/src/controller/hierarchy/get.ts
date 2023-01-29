@@ -37,6 +37,7 @@ const getHierarchyByHttp: Route = {
         code: 400,
         body: {
           success: false,
+          environments: [],
         },
       };
     }

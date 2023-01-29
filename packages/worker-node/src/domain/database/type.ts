@@ -6,7 +6,7 @@ type DatabaseAction =
   | 'root'
   | 'introspect';
 
-interface DatabaseEventItem<T> {
+interface DatabaseEvent<T> {
   action: DatabaseAction;
   target: string;
   values: T[];
@@ -19,4 +19,4 @@ interface DatabaseResult<T> {
   rows: T[];
 }
 
-export { type DatabaseAction, type DatabaseEventItem, type DatabaseResult };
+export { type DatabaseAction, type DatabaseEvent, type DatabaseResult };

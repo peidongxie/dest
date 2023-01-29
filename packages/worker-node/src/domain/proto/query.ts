@@ -124,7 +124,6 @@ export interface EventItem {
   action: ActionEnum;
   target: string;
   values: string[];
-  tables: string[];
 }
 
 export interface EventRequest {
@@ -272,7 +271,7 @@ export const NameRequest = {
 };
 
 function createBaseEventItem(): EventItem {
-  return { action: 0, target: '', values: [], tables: [] };
+  return { action: 0, target: '', values: [] };
 }
 
 export const EventItem = {
@@ -288,9 +287,6 @@ export const EventItem = {
     }
     for (const v of message.values) {
       writer.uint32(26).string(v!);
-    }
-    for (const v of message.tables) {
-      writer.uint32(34).string(v!);
     }
     return writer;
   },
@@ -311,9 +307,6 @@ export const EventItem = {
         case 3:
           message.values.push(reader.string());
           break;
-        case 4:
-          message.tables.push(reader.string());
-          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -329,9 +322,6 @@ export const EventItem = {
       values: Array.isArray(object?.values)
         ? object.values.map((e: any) => String(e))
         : [],
-      tables: Array.isArray(object?.tables)
-        ? object.tables.map((e: any) => String(e))
-        : [],
     };
   },
 
@@ -344,11 +334,6 @@ export const EventItem = {
       obj.values = message.values.map((e) => e);
     } else {
       obj.values = [];
-    }
-    if (message.tables) {
-      obj.tables = message.tables.map((e) => e);
-    } else {
-      obj.tables = [];
     }
     return obj;
   },
@@ -364,7 +349,6 @@ export const EventItem = {
     message.action = object.action ?? 0;
     message.target = object.target ?? '';
     message.values = object.values?.map((e) => e) || [];
-    message.tables = object.tables?.map((e) => e) || [];
     return message;
   },
 };

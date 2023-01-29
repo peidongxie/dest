@@ -1,22 +1,58 @@
 type ContextType = 'mariadb' | 'mysql:8' | 'sqlite';
 
-type ContextAction = 'save' | 'remove' | 'read' | 'write' | 'root';
+type ContextLevel = 'environment' | 'database' | 'table' | 'row';
 
-interface ContextEventItem<T> {
+type ContextAction =
+  | 'save'
+  | 'remove'
+  | 'read'
+  | 'write'
+  | 'root'
+  | 'introspect';
+
+interface ContextSnapshot {
+  table: string;
+  rows: unknown[];
+}
+
+interface ContextDatabase {
+  name: string;
+  snapshots: ContextSnapshot[];
+}
+
+interface ContextEnvironment {
+  type: ContextType | '';
+  databases: ContextDatabase[];
+}
+
+interface ContextEvent<T> {
   action: ContextAction;
   target: string;
   values: T[];
 }
 
-interface ContextResultItem<T> {
+interface ContextResult<T> {
+  time: number;
+  error: string;
+  rows: T[];
+}
+
+interface ContextExpectation<T> {
   time: number;
   table: string;
-  rows: T[];
+  checkpoints: {
+    count: number;
+    values: T[];
+  }[];
 }
 
 export {
   type ContextAction,
-  type ContextEventItem,
-  type ContextResultItem,
+  type ContextDatabase,
+  type ContextEnvironment,
+  type ContextEvent,
+  type ContextLevel,
+  type ContextResult,
+  type ContextSnapshot,
   type ContextType,
 };
