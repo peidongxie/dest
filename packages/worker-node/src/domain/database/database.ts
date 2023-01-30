@@ -59,7 +59,7 @@ class Database {
     if (tables.some((table) => typeof table !== 'string')) return null;
     if (level === 'table') {
       return this.getResult<T>(async () => {
-        const rows = (await this.adapter.getTables())?.map((table) => ({
+        const rows = (await this.adapter.fetchTables())?.map((table) => ({
           table,
         }));
         if (!rows) throw 'Unknown error';
@@ -70,7 +70,7 @@ class Database {
       const rows = await Promise.all(
         tables.map(async (table) => ({
           table,
-          rows: await this.adapter.getRows(table as string),
+          rows: await this.adapter.fetchRows(table as string),
         })),
       );
       if (rows.some((row) => !row.rows)) throw 'Unknown error';

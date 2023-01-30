@@ -70,25 +70,25 @@ class Mysql8 implements Adapter {
     }
   }
 
+  public async fetchRows(table: string) {
+    if (!this.name) return null;
+    return this.readable.query(`SELECT * FROM ${table}`);
+  }
+
+  public async fetchTables() {
+    if (!this.name) return null;
+    const rows: { Name: string }[] = await this.readable.query(
+      `SHOW TABLE STATUS`,
+    );
+    return rows.map((row) => row.Name);
+  }
+
   public getReadableDataSource() {
     return this.readable;
   }
 
   public getRootDataSource() {
     return Mysql8.root;
-  }
-
-  public async getRows(table: string) {
-    if (!this.name) return null;
-    return this.readable.query(`SELECT * FROM ${table}`);
-  }
-
-  public async getTables() {
-    if (!this.name) return null;
-    const rows: { Name: string }[] = await this.readable.query(
-      `SHOW TABLE STATUS`,
-    );
-    return rows.map((row) => row.Name);
   }
 
   public getWritableDataSource() {
@@ -134,6 +134,21 @@ class Mysql8 implements Adapter {
     if (!this.name) return;
     await Mysql8.root.query(`DROP DATABASE IF EXISTS \`${this.name}\``);
     await Mysql8.root.query(`CREATE DATABASE \`${this.name}\``);
+  }
+
+  public async preDestroy() {
+    if (this.name) return;
+    const rows: { Database: string }[] = await Mysql8.root.query(
+      `SHOW DATABASES`,
+    );
+    const names = rows
+      .filter((row) => {
+        return !protectedDatabases.includes(row.Database);
+      })
+      .map((row) => row.Database);
+    for (const name of names) {
+      await Mysql8.root.query(`DROP DATABASE IF EXISTS \`${name}\``);
+    }
   }
 }
 
