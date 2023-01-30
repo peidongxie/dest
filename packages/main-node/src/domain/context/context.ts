@@ -1,14 +1,14 @@
-import { type ContextEvent, type ContextType } from './type';
+import { type ClientEvent, type ClientType } from '../client';
 
 class Context {
   private name: string;
-  private events: ContextEvent<unknown>[];
-  private type: ContextType;
+  private events: ClientEvent<unknown>[];
+  private type: ClientType;
 
   constructor(
-    type: ContextType,
+    type: ClientType,
     name?: string,
-    events?: ContextEvent<unknown>[],
+    events?: ClientEvent<unknown>[],
   ) {
     this.type = type;
     this.name = name || '';

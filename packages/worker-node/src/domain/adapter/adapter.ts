@@ -1,8 +1,8 @@
 import { EntitySchema, type EntitySchemaOptions } from 'typeorm';
-import Mariadb from './mariadb';
-import Mysql8 from './mysql8';
-import Default from './default';
-import Sqlite from './sqlite';
+import { Mariadb } from './mariadb';
+import { Mysql8 } from './mysql8';
+import { Default } from './default';
+import { Sqlite } from './sqlite';
 import { type Adapter, type AdapterType } from './type';
 
 const createAdapter = (

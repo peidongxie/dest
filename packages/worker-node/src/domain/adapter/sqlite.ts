@@ -105,4 +105,4 @@ class Sqlite implements Adapter {
   }
 }
 
-export default Sqlite;
+export { Sqlite };

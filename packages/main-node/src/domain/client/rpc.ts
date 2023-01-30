@@ -10,12 +10,12 @@ import {
   QueryDefinition,
 } from '../../domain';
 import {
-  type ContextAction,
-  type ContextEvent,
-  type ContextLevel,
-  type ContextType,
-} from '../context';
-import { type Client } from './type';
+  type Client,
+  type ClientAction,
+  type ClientEvent,
+  type ClientLevel,
+  type ClientType,
+} from './type';
 
 class RpcClient implements Client {
   private raw: ClientRaw<
@@ -43,7 +43,7 @@ class RpcClient implements Client {
     });
   }
 
-  public deleteDatabase(type: ContextType, name: string) {
+  public deleteDatabase(type: ClientType, name: string) {
     return this.raw.call('deleteDatabase')({
       type: this.getTypeEnum(type),
       name,
@@ -56,7 +56,7 @@ class RpcClient implements Client {
     });
   }
 
-  public getDatabase(type: ContextType, name: string) {
+  public getDatabase(type: ClientType, name: string) {
     return this.raw.call('getDatabase')({
       type: this.getTypeEnum(type),
       name,
@@ -64,10 +64,10 @@ class RpcClient implements Client {
   }
 
   public async getHierarchy(
-    type: ContextType | '',
+    type: ClientType | '',
     name: string,
     table: string,
-    level: ContextLevel,
+    level: ClientLevel,
   ) {
     const { success, environments } = await this.raw.call('getHierarchy')({
       type: this.getTypeEnum(type),
@@ -97,7 +97,7 @@ class RpcClient implements Client {
   }
 
   public postDatabase(
-    type: ContextType,
+    type: ClientType,
     name: string,
     schemas: EntitySchemaOptions<unknown>[],
   ) {
@@ -109,9 +109,9 @@ class RpcClient implements Client {
   }
 
   public async postQuery(
-    type: ContextType,
+    type: ClientType,
     name: string,
-    event: ContextEvent<unknown>,
+    event: ClientEvent<unknown>,
   ) {
     const { success, result } = await this.raw.call('postQuery')({
       type: this.getTypeEnum(type),
@@ -132,7 +132,7 @@ class RpcClient implements Client {
     };
   }
 
-  private getActionEnum(action: ContextAction): ActionEnum {
+  private getActionEnum(action: ClientAction): ActionEnum {
     if (action === 'save') return ActionEnum.SAVE;
     if (action === 'remove') return ActionEnum.REMOVE;
     if (action === 'read') return ActionEnum.READ;
@@ -142,7 +142,7 @@ class RpcClient implements Client {
     return ActionEnum.DEFAULT_ACTION;
   }
 
-  private getLevelEnum(level: ContextLevel): LevelEnum {
+  private getLevelEnum(level: ClientLevel): LevelEnum {
     if (level === 'environment') return LevelEnum.DATABASE;
     if (level === 'database') return LevelEnum.DATABASE;
     if (level === 'table') return LevelEnum.TABLE;
@@ -150,14 +150,14 @@ class RpcClient implements Client {
     return LevelEnum.DEFAULT_LEVEL;
   }
 
-  private getType(type: TypeEnum): ContextType | '' {
+  private getType(type: TypeEnum): ClientType | '' {
     if (type === TypeEnum.MARIADB) return 'mariadb';
     if (type === TypeEnum.MYSQL8) return 'mysql:8';
     if (type === TypeEnum.SQLITE) return 'sqlite';
     return '';
   }
 
-  private getTypeEnum(type: ContextType | ''): TypeEnum {
+  private getTypeEnum(type: ClientType | ''): TypeEnum {
     if (type === 'mariadb') return TypeEnum.MARIADB;
     if (type === 'mysql:8') return TypeEnum.MYSQL8;
     if (type === 'sqlite') return TypeEnum.SQLITE;

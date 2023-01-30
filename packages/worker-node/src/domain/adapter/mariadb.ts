@@ -152,4 +152,4 @@ class Mariadb implements Adapter {
   }
 }
 
-export default Mariadb;
+export { Mariadb };

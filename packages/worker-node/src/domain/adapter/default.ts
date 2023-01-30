@@ -17,4 +17,4 @@ class Default implements Adapter {
   }
 }
 
-export default Default;
+export { Default };

@@ -152,4 +152,4 @@ class Mysql8 implements Adapter {
   }
 }
 
-export default Mysql8;
+export { Mysql8 };
