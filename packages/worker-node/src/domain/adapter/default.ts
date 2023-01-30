@@ -1,15 +1,14 @@
 import { type Adapter } from './type';
 
 class Default implements Adapter {
+  public async fetchRows() {
+    return null;
+  }
+
+  public async fetchTables() {
+    return null;
+  }
   public getReadableDataSource() {
-    return null;
-  }
-
-  public async getRows() {
-    return null;
-  }
-
-  public async getTables() {
     return null;
   }
 
@@ -18,4 +17,4 @@ class Default implements Adapter {
   }
 }
 
-export default Default;
+export { Default };

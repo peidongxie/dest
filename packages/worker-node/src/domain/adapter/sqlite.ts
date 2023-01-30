@@ -59,16 +59,12 @@ class Sqlite implements Adapter {
     }
   }
 
-  public getReadableDataSource() {
-    return this.readable;
-  }
-
-  public async getRows(table: string) {
+  public async fetchRows(table: string) {
     if (!this.name) return null;
     return (this.readable as DataSource).query(`SELECT * FROM ${table}`);
   }
 
-  public async getTables() {
+  public async fetchTables() {
     if (!this.name) return null;
     const rows: { name: string }[] = await (this.readable as DataSource).query(
       `SELECT name FROM sqlite_master WHERE type = 'table'`,
@@ -78,8 +74,17 @@ class Sqlite implements Adapter {
       .map((row) => row.name);
   }
 
+  public getReadableDataSource() {
+    return this.readable;
+  }
+
   public getWritableDataSource() {
     return this.writable;
+  }
+
+  public async postCreate() {
+    if (this.name) return;
+    await rm(dir, { force: true });
   }
 
   public async postDestroy() {
@@ -91,8 +96,13 @@ class Sqlite implements Adapter {
   public async preCreate() {
     if (!this.name) return;
     const file = this.name + '.sqlite';
-    rm(join(dir, file), { force: true });
+    await rm(join(dir, file), { force: true });
+  }
+
+  public async preDestroy() {
+    if (!this.name) return;
+    await rm(dir, { force: true });
   }
 }
 
-export default Sqlite;
+export { Sqlite };

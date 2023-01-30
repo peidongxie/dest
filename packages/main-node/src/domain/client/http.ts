@@ -2,14 +2,14 @@ import { Client as ClientRaw, Router } from '@dest-toolkit/http-client';
 import { type EntitySchemaOptions } from 'typeorm';
 import { ActionEnum, LevelEnum, TypeEnum } from '../../domain';
 import {
-  type ContextAction,
-  type ContextDatabase,
-  type ContextEvent,
-  type ContextLevel,
-  type ContextResult,
-  type ContextType,
-} from '../context';
-import { type Client } from './type';
+  type Client,
+  type ClientAction,
+  type ClientDatabase,
+  type ClientEvent,
+  type ClientLevel,
+  type ClientResult,
+  type ClientType,
+} from './type';
 
 class HttpClient implements Client {
   private raw: ClientRaw;
@@ -67,7 +67,7 @@ class HttpClient implements Client {
     }>(`deleteAgent?secret=${secret}`)();
   }
 
-  public deleteDatabase(type: ContextType, name: string) {
+  public deleteDatabase(type: ClientType, name: string) {
     return this.call<{
       success: boolean;
     }>(`deleteDatabase?type=${this.getTypeEnum(type)}&name=${name}`)();
@@ -80,7 +80,7 @@ class HttpClient implements Client {
     }>(`getAgent?secret=${secret}`)();
   }
 
-  public getDatabase(type: ContextType, name: string) {
+  public getDatabase(type: ClientType, name: string) {
     return this.call<{
       success: boolean;
     }>(`getDatabase?type=${this.getTypeEnum(type)}&name=${name}`)();
@@ -94,14 +94,14 @@ class HttpClient implements Client {
   }
 
   public async getHierarchy(
-    type: ContextType | '',
+    type: ClientType | '',
     name: string,
     table: string,
-    level: ContextLevel,
+    level: ClientLevel,
   ) {
     const { success, environments } = await this.call<{
       success: boolean;
-      environments: { type: TypeEnum; databases: ContextDatabase[] }[];
+      environments: { type: TypeEnum; databases: ClientDatabase[] }[];
     }>(
       `getHierarchy?type=${
         this.getTypeEnum(type) || ''
@@ -117,7 +117,7 @@ class HttpClient implements Client {
   }
 
   public postDatabase(
-    type: ContextType,
+    type: ClientType,
     name: string,
     schemas: EntitySchemaOptions<unknown>[],
   ) {
@@ -127,13 +127,13 @@ class HttpClient implements Client {
   }
 
   public postQuery<T>(
-    type: ContextType,
+    type: ClientType,
     name: string,
-    event: ContextEvent<unknown>,
+    event: ClientEvent<unknown>,
   ) {
     return this.call<{
       success: boolean;
-      result: ContextResult<T>;
+      result: ClientResult<T>;
     }>(`postQuery?type=${this.getTypeEnum(type)}&name=${name}`)({
       ...event,
       action: this.getActionEnum(event.action),
@@ -153,7 +153,7 @@ class HttpClient implements Client {
     };
   }
 
-  private getActionEnum(action: ContextAction): ActionEnum {
+  private getActionEnum(action: ClientAction): ActionEnum {
     if (action === 'save') return ActionEnum.SAVE;
     if (action === 'remove') return ActionEnum.REMOVE;
     if (action === 'read') return ActionEnum.READ;
@@ -163,7 +163,7 @@ class HttpClient implements Client {
     return ActionEnum.DEFAULT_ACTION;
   }
 
-  private getLevelEnum(level: ContextLevel): LevelEnum {
+  private getLevelEnum(level: ClientLevel): LevelEnum {
     if (level === 'environment') return LevelEnum.DATABASE;
     if (level === 'database') return LevelEnum.DATABASE;
     if (level === 'table') return LevelEnum.TABLE;
@@ -171,14 +171,14 @@ class HttpClient implements Client {
     return LevelEnum.DEFAULT_LEVEL;
   }
 
-  private getType(type: TypeEnum): ContextType | '' {
+  private getType(type: TypeEnum): ClientType | '' {
     if (type === TypeEnum.MARIADB) return 'mariadb';
     if (type === TypeEnum.MYSQL8) return 'mysql:8';
     if (type === TypeEnum.SQLITE) return 'sqlite';
     return '';
   }
 
-  private getTypeEnum(type: ContextType | ''): TypeEnum {
+  private getTypeEnum(type: ClientType | ''): TypeEnum {
     if (type === 'mariadb') return TypeEnum.MARIADB;
     if (type === 'mysql:8') return TypeEnum.MYSQL8;
     if (type === 'sqlite') return TypeEnum.SQLITE;

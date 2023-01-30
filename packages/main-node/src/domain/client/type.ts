@@ -1,11 +1,43 @@
 import { type EntitySchemaOptions } from 'typeorm';
-import {
-  type ContextEnvironment,
-  type ContextEvent,
-  type ContextLevel,
-  type ContextResult,
-  type ContextType,
-} from '../context';
+
+type ClientType = 'mariadb' | 'mysql:8' | 'sqlite';
+
+type ClientLevel = 'environment' | 'database' | 'table' | 'row';
+
+interface ClientSnapshot {
+  table: string;
+  rows: unknown[];
+}
+
+interface ClientDatabase {
+  name: string;
+  snapshots: ClientSnapshot[];
+}
+
+interface ClientEnvironment {
+  type: ClientType | '';
+  databases: ClientDatabase[];
+}
+
+type ClientAction =
+  | 'save'
+  | 'remove'
+  | 'read'
+  | 'write'
+  | 'root'
+  | 'introspect';
+
+interface ClientEvent<T> {
+  action: ClientAction;
+  target: string;
+  values: T[];
+}
+
+interface ClientResult<T> {
+  time: number;
+  error: string;
+  rows: T[];
+}
 
 interface Client {
   deleteAgent: (secret: string) => Promise<{
@@ -13,7 +45,7 @@ interface Client {
     token: string;
   }>;
   deleteDatabase: (
-    type: ContextType,
+    type: ClientType,
     name: string,
   ) => Promise<{
     success: boolean;
@@ -23,39 +55,49 @@ interface Client {
     token: string;
   }>;
   getDatabase: (
-    type: ContextType,
+    type: ClientType,
     name: string,
   ) => Promise<{
     success: boolean;
   }>;
   getHierarchy: (
-    type: ContextType | '',
+    type: ClientType | '',
     name: string,
     table: string,
-    level: ContextLevel,
+    level: ClientLevel,
   ) => Promise<{
     success: boolean;
-    environments: ContextEnvironment[];
+    environments: ClientEnvironment[];
   }>;
   postAgent: (secret: string) => Promise<{
     success: boolean;
     token: string;
   }>;
   postDatabase: (
-    type: ContextType,
+    type: ClientType,
     name: string,
     schemas: EntitySchemaOptions<unknown>[],
   ) => Promise<{
     success: boolean;
   }>;
   postQuery: <T>(
-    type: ContextType,
+    type: ClientType,
     name: string,
-    event: ContextEvent<unknown>,
+    event: ClientEvent<unknown>,
   ) => Promise<{
     success: boolean;
-    result: ContextResult<T>;
+    result: ClientResult<T>;
   }>;
 }
 
-export { type Client };
+export {
+  type Client,
+  type ClientAction,
+  type ClientDatabase,
+  type ClientEnvironment,
+  type ClientEvent,
+  type ClientLevel,
+  type ClientResult,
+  type ClientSnapshot,
+  type ClientType,
+};

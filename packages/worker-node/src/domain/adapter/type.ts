@@ -1,10 +1,10 @@
 import { type DataSource } from 'typeorm';
 
 interface Adapter {
+  fetchRows: (table: string) => Promise<unknown[] | null>;
+  fetchTables: () => Promise<string[] | null>;
   getReadableDataSource: () => DataSource | null;
   getRootDataSource?: () => DataSource | null;
-  getRows: (table: string) => Promise<unknown[] | null>;
-  getTables: () => Promise<string[] | null>;
   getWritableDataSource: () => DataSource | null;
   postCreate?: () => Promise<void>;
   postDestroy?: () => Promise<void>;
