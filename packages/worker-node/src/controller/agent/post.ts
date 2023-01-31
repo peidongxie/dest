@@ -8,24 +8,23 @@ const postAgentByHttp: Route = {
   pathname: '/agent',
   handler: async (req) => {
     const { url } = req;
-    const secret = url.searchParams.get('secret') || '';
-    const actualSecret = readMemo<string>(['secret']) || '';
-    if (secret !== actualSecret) {
+    const secret = url.searchParams.get('secret');
+    const token = url.searchParams.get('token');
+    const actualSecret = readMemo<string>(['secret']);
+    if ((secret || '') !== (actualSecret || '') || !token) {
       return {
         code: 401,
         body: {
           success: false,
-          token: '',
         },
       };
     }
-    const agent = await createAgent();
+    const agent = await createAgent(token);
     if (!agent) {
       return {
         code: 409,
         body: {
           success: false,
-          token: '',
         },
       };
     }
@@ -33,7 +32,6 @@ const postAgentByHttp: Route = {
       code: 200,
       body: {
         success: true,
-        token: agent,
       },
     };
   },
@@ -43,24 +41,21 @@ const postAgentByRpc: Plugin<AgentDefinition> = {
   definition: AgentDefinition,
   handlers: {
     postAgent: async (req) => {
-      const { secret } = req;
-      const actualSecret = readMemo<string>(['secret']) || '';
-      if (secret !== actualSecret) {
+      const { secret, token } = req;
+      const actualSecret = readMemo<string>(['secret']);
+      if ((secret || '') !== (actualSecret || '') || !token) {
         return {
           success: false,
-          token: '',
         };
       }
-      const agent = await createAgent();
+      const agent = await createAgent(token);
       if (!agent) {
         return {
           success: false,
-          token: '',
         };
       }
       return {
         success: true,
-        token: agent,
       };
     },
   },

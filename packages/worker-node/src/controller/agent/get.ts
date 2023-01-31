@@ -8,9 +8,9 @@ const getAgentByHttp: Route = {
   pathname: '/agent',
   handler: async (req) => {
     const { url } = req;
-    const secret = url.searchParams.get('secret') || '';
-    const actualSecret = readMemo<string>(['secret']) || '';
-    if (secret !== actualSecret) {
+    const secret = url.searchParams.get('secret');
+    const actualSecret = readMemo<string>(['secret']);
+    if ((secret || '') !== (actualSecret || '')) {
       return {
         code: 401,
         body: {
@@ -44,8 +44,8 @@ const getAgentByRpc: Plugin<AgentDefinition> = {
   handlers: {
     getAgent: async (req) => {
       const { secret } = req;
-      const actualSecret = readMemo<string>(['secret']) || '';
-      if (secret !== actualSecret) {
+      const actualSecret = readMemo<string>(['secret']);
+      if ((secret || '') !== (actualSecret || '')) {
         return {
           success: false,
           token: '',

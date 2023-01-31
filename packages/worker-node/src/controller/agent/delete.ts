@@ -8,14 +8,13 @@ const deleteAgentByHttp: Route = {
   pathname: '/agent',
   handler: async (req) => {
     const { url } = req;
-    const secret = url.searchParams.get('secret') || '';
-    const actualSecret = readMemo<string>(['secret']) || '';
-    if (secret !== actualSecret) {
+    const secret = url.searchParams.get('secret');
+    const actualSecret = readMemo<string>(['secret']);
+    if ((secret || '') !== (actualSecret || '')) {
       return {
         code: 401,
         body: {
           success: false,
-          token: '',
         },
       };
     }
@@ -25,7 +24,6 @@ const deleteAgentByHttp: Route = {
         code: 404,
         body: {
           success: false,
-          token: '',
         },
       };
     }
@@ -33,7 +31,6 @@ const deleteAgentByHttp: Route = {
       code: 200,
       body: {
         success: true,
-        token: agent,
       },
     };
   },
@@ -44,23 +41,20 @@ const deleteAgentByRpc: Plugin<AgentDefinition> = {
   handlers: {
     deleteAgent: async (req) => {
       const { secret } = req;
-      const actualSecret = readMemo<string>(['secret']) || '';
-      if (secret !== actualSecret) {
+      const actualSecret = readMemo<string>(['secret']);
+      if ((secret || '') !== (actualSecret || '')) {
         return {
           success: false,
-          token: '',
         };
       }
       const agent = await deleteAgent();
       if (!agent) {
         return {
           success: false,
-          token: '',
         };
       }
       return {
         success: true,
-        token: agent,
       };
     },
   },
