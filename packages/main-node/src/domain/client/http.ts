@@ -89,7 +89,7 @@ class HttpClient implements Client {
   public postAgent(secret: string, token: string) {
     return this.call<{
       success: boolean;
-    }>(`postAgent?secret=${secret}&token=${token}`)();
+    }>(`postAgent?secret=${secret}`)({ token });
   }
 
   public async getHierarchy(

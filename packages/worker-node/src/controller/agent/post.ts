@@ -7,9 +7,9 @@ const postAgentByHttp: Route = {
   method: 'POST',
   pathname: '/agent',
   handler: async (req) => {
-    const { url } = req;
+    const { url, body } = req;
     const secret = url.searchParams.get('secret');
-    const token = url.searchParams.get('token');
+    const { token } = await body.json<{ token: string }>();
     const actualSecret = readMemo<string>(['secret']);
     if ((secret || '') !== (actualSecret || '') || !token) {
       return {
