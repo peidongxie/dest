@@ -1,4 +1,4 @@
-import { rm } from 'fs/promises';
+import { readdir, rm } from 'fs/promises';
 import { join } from 'path';
 import sqlite3 from 'sqlite3';
 import { DataSource, EntitySchema } from 'typeorm';
@@ -84,7 +84,9 @@ class Sqlite implements Adapter {
 
   public async postCreate() {
     if (this.name) return;
-    await rm(dir, { force: true });
+    for (const file of await readdir(dir)) {
+      await rm(join(dir, file), { force: true });
+    }
   }
 
   public async postDestroy() {
@@ -100,8 +102,10 @@ class Sqlite implements Adapter {
   }
 
   public async preDestroy() {
-    if (!this.name) return;
-    await rm(dir, { force: true });
+    if (this.name) return;
+    for (const file of await readdir(dir)) {
+      await rm(join(dir, file), { force: true });
+    }
   }
 }
 
