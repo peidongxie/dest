@@ -45,11 +45,15 @@ const getHierarchyByHttp: Route = {
       hierarchyLevel === 'environment'
         ? await readHierarchyEnvironment()
         : hierarchyLevel === 'database'
-        ? await readHierarchyDatabase(adapterType)
+        ? await readHierarchyDatabase(adapterType || undefined)
         : hierarchyLevel === 'table'
-        ? await readHierarchyTable(adapterType, name)
+        ? await readHierarchyTable(adapterType || undefined, name || undefined)
         : hierarchyLevel === 'row'
-        ? await readHierarchyRow(adapterType, name, table)
+        ? await readHierarchyRow(
+            adapterType || undefined,
+            name || undefined,
+            table || undefined,
+          )
         : [];
     return {
       code: 200,
@@ -88,11 +92,18 @@ const getHierarchyByRpc: Plugin<HierarchyDefinition> = {
         hierarchyLevel === 'environment'
           ? await readHierarchyEnvironment()
           : hierarchyLevel === 'database'
-          ? await readHierarchyDatabase(adapterType)
+          ? await readHierarchyDatabase(adapterType || undefined)
           : hierarchyLevel === 'table'
-          ? await readHierarchyTable(adapterType, name)
+          ? await readHierarchyTable(
+              adapterType || undefined,
+              name || undefined,
+            )
           : hierarchyLevel === 'row'
-          ? await readHierarchyRow(adapterType, name, table)
+          ? await readHierarchyRow(
+              adapterType || undefined,
+              name || undefined,
+              table || undefined,
+            )
           : [];
       return {
         success: true,

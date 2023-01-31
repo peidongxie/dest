@@ -11,9 +11,7 @@ const readHierarchyEnvironment = (): HierarchyEnvironment[] => {
   return environments;
 };
 
-const readHierarchyDatabase = (
-  type?: AdapterType | null,
-): HierarchyEnvironment[] => {
+const readHierarchyDatabase = (type?: AdapterType): HierarchyEnvironment[] => {
   const types = readMemos<AdapterType>(['type']);
   const environments = (type ? [type] : types).map((type) => {
     const schedulers = readDatabases(type);
@@ -30,8 +28,8 @@ const readHierarchyDatabase = (
 };
 
 const readHierarchyTable = (
-  type?: AdapterType | null,
-  name?: string | null,
+  type?: AdapterType,
+  name?: string,
 ): Promise<HierarchyEnvironment[]> => {
   const types = readMemos<AdapterType>(['type']);
   const environments = (type ? [type] : types).map((type) => {
@@ -61,9 +59,9 @@ const readHierarchyTable = (
 };
 
 const readHierarchyRow = (
-  type?: AdapterType | null,
-  name?: string | null,
-  table?: string | null,
+  type?: AdapterType,
+  name?: string,
+  table?: string,
 ): Promise<HierarchyEnvironment[]> => {
   const types = readMemos<AdapterType>(['type']);
   const environments = (type ? [type] : types).map((type) => {

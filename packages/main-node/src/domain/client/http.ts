@@ -63,7 +63,6 @@ class HttpClient implements Client {
   public deleteAgent(secret: string) {
     return this.call<{
       success: boolean;
-      token: string;
     }>(`deleteAgent?secret=${secret}`)();
   }
 
@@ -83,14 +82,14 @@ class HttpClient implements Client {
   public getDatabase(type: ClientType, name: string) {
     return this.call<{
       success: boolean;
+      schemas: EntitySchemaOptions<unknown>[];
     }>(`getDatabase?type=${this.getTypeEnum(type)}&name=${name}`)();
   }
 
-  public postAgent(secret: string) {
+  public postAgent(secret: string, token: string) {
     return this.call<{
       success: boolean;
-      token: string;
-    }>(`postAgent?secret=${secret}`)();
+    }>(`postAgent?secret=${secret}`)({ token });
   }
 
   public async getHierarchy(

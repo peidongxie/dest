@@ -56,11 +56,15 @@ class RpcClient implements Client {
     });
   }
 
-  public getDatabase(type: ClientType, name: string) {
-    return this.raw.call('getDatabase')({
+  public async getDatabase(type: ClientType, name: string) {
+    const { success, schemas } = await this.raw.call('getDatabase')({
       type: this.getTypeEnum(type),
       name,
     });
+    return {
+      success,
+      schemas: schemas.map((schema) => JSON.parse(schema)),
+    };
   }
 
   public async getHierarchy(
@@ -90,9 +94,10 @@ class RpcClient implements Client {
     };
   }
 
-  public postAgent(secret: string) {
+  public postAgent(secret: string, token: string) {
     return this.raw.call('postAgent')({
       secret,
+      token,
     });
   }
 

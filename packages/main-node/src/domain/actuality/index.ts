@@ -1,1 +1,1 @@
-export * from './actuality';
+export * from './type';

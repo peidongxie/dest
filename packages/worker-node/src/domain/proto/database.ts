@@ -67,6 +67,11 @@ export interface SuccessResponse {
   success: boolean;
 }
 
+export interface SchemasResponse {
+  success: boolean;
+  schemas: string[];
+}
+
 function createBaseTypeRequest(): TypeRequest {
   return { type: 0 };
 }
@@ -332,6 +337,81 @@ export const SuccessResponse = {
   },
 };
 
+function createBaseSchemasResponse(): SchemasResponse {
+  return { success: false, schemas: [] };
+}
+
+export const SchemasResponse = {
+  encode(
+    message: SchemasResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.success === true) {
+      writer.uint32(8).bool(message.success);
+    }
+    for (const v of message.schemas) {
+      writer.uint32(18).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SchemasResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSchemasResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.success = reader.bool();
+          break;
+        case 2:
+          message.schemas.push(reader.string());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SchemasResponse {
+    return {
+      success: isSet(object.success) ? Boolean(object.success) : false,
+      schemas: Array.isArray(object?.schemas)
+        ? object.schemas.map((e: any) => String(e))
+        : [],
+    };
+  },
+
+  toJSON(message: SchemasResponse): unknown {
+    const obj: any = {};
+    message.success !== undefined && (obj.success = message.success);
+    if (message.schemas) {
+      obj.schemas = message.schemas.map((e) => e);
+    } else {
+      obj.schemas = [];
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SchemasResponse>, I>>(
+    base?: I,
+  ): SchemasResponse {
+    return SchemasResponse.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SchemasResponse>, I>>(
+    object: I,
+  ): SchemasResponse {
+    const message = createBaseSchemasResponse();
+    message.success = object.success ?? false;
+    message.schemas = object.schemas?.map((e) => e) || [];
+    return message;
+  },
+};
+
 export type DatabaseDefinition = typeof DatabaseDefinition;
 export const DatabaseDefinition = {
   name: 'Database',
@@ -349,7 +429,7 @@ export const DatabaseDefinition = {
       name: 'GetDatabase',
       requestType: NameRequest,
       requestStream: false,
-      responseType: SuccessResponse,
+      responseType: SchemasResponse,
       responseStream: false,
       options: {},
     },

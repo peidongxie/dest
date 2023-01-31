@@ -11,6 +11,11 @@ export interface SuccessResponse {
   success: boolean;
 }
 
+export interface TokenRequest {
+  secret: string;
+  token: string;
+}
+
 export interface TokenResponse {
   success: boolean;
   token: string;
@@ -132,6 +137,75 @@ export const SuccessResponse = {
   },
 };
 
+function createBaseTokenRequest(): TokenRequest {
+  return { secret: '', token: '' };
+}
+
+export const TokenRequest = {
+  encode(
+    message: TokenRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.secret !== '') {
+      writer.uint32(10).string(message.secret);
+    }
+    if (message.token !== '') {
+      writer.uint32(18).string(message.token);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): TokenRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTokenRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.secret = reader.string();
+          break;
+        case 2:
+          message.token = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TokenRequest {
+    return {
+      secret: isSet(object.secret) ? String(object.secret) : '',
+      token: isSet(object.token) ? String(object.token) : '',
+    };
+  },
+
+  toJSON(message: TokenRequest): unknown {
+    const obj: any = {};
+    message.secret !== undefined && (obj.secret = message.secret);
+    message.token !== undefined && (obj.token = message.token);
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<TokenRequest>, I>>(
+    base?: I,
+  ): TokenRequest {
+    return TokenRequest.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<TokenRequest>, I>>(
+    object: I,
+  ): TokenRequest {
+    const message = createBaseTokenRequest();
+    message.secret = object.secret ?? '';
+    message.token = object.token ?? '';
+    return message;
+  },
+};
+
 function createBaseTokenResponse(): TokenResponse {
   return { success: false, token: '' };
 }
@@ -210,7 +284,7 @@ export const AgentDefinition = {
       name: 'DeleteAgent',
       requestType: SecretRequest,
       requestStream: false,
-      responseType: TokenResponse,
+      responseType: SuccessResponse,
       responseStream: false,
       options: {},
     },
@@ -224,9 +298,9 @@ export const AgentDefinition = {
     },
     postAgent: {
       name: 'PostAgent',
-      requestType: SecretRequest,
+      requestType: TokenRequest,
       requestStream: false,
-      responseType: TokenResponse,
+      responseType: SuccessResponse,
       responseStream: false,
       options: {},
     },
