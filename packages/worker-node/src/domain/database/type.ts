@@ -10,7 +10,6 @@ interface DatabaseEvent<T> {
   action: DatabaseAction;
   target: string;
   values: T[];
-  tables: string[];
 }
 
 interface DatabaseResult<T> {
