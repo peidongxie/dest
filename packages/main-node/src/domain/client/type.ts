@@ -42,7 +42,6 @@ interface ClientResult<T> {
 interface Client {
   deleteAgent: (secret: string) => Promise<{
     success: boolean;
-    token: string;
   }>;
   deleteDatabase: (
     type: ClientType,
@@ -59,6 +58,7 @@ interface Client {
     name: string,
   ) => Promise<{
     success: boolean;
+    schemas: EntitySchemaOptions<unknown>[];
   }>;
   getHierarchy: (
     type: ClientType | '',
@@ -69,9 +69,11 @@ interface Client {
     success: boolean;
     environments: ClientEnvironment[];
   }>;
-  postAgent: (secret: string) => Promise<{
+  postAgent: (
+    secret: string,
+    token: string,
+  ) => Promise<{
     success: boolean;
-    token: string;
   }>;
   postDatabase: (
     type: ClientType,
