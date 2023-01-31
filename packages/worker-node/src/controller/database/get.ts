@@ -16,6 +16,7 @@ const getDatabaseByHttp: Route = {
         code: 400,
         body: {
           success: false,
+          schemas: [],
         },
       };
     }
@@ -25,6 +26,7 @@ const getDatabaseByHttp: Route = {
         code: 404,
         body: {
           success: false,
+          schemas: [],
         },
       };
     }
@@ -32,6 +34,7 @@ const getDatabaseByHttp: Route = {
       code: 200,
       body: {
         success: true,
+        schemas: scheduler.getTarget().getSchemas(),
       },
     };
   },
@@ -46,16 +49,22 @@ const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
       if (!adapterType || !name) {
         return {
           success: false,
+          schemas: [],
         };
       }
       const scheduler = readDatabase(adapterType, name);
       if (!scheduler) {
         return {
           success: false,
+          schemas: [],
         };
       }
       return {
         success: true,
+        schemas: scheduler
+          .getTarget()
+          .getSchemas()
+          .map((schema) => JSON.stringify(schema)),
       };
     },
   },

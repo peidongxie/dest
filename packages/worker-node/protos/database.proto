@@ -4,7 +4,7 @@ package dest;
 
 service Database {
   rpc DeleteDatabase (NameRequest) returns (SuccessResponse) {}
-  rpc GetDatabase (NameRequest) returns (SuccessResponse) {}
+  rpc GetDatabase (NameRequest) returns (SchemasResponse) {}
   rpc PostDatabase (SchemasRequest) returns (SuccessResponse) {}
 }
 
@@ -40,4 +40,11 @@ message SchemasRequest {
 
 message SuccessResponse {
   bool success = 1;
+}
+
+// Schema
+
+message SchemasResponse {
+  bool success = 1;
+  repeated string schemas = 2;
 }

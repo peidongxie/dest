@@ -5,7 +5,7 @@ import { type DatabaseEvent, type DatabaseResult } from './type';
 class Database {
   private adapter: Adapter;
   private name: string;
-  private type: AdapterType | '';
+  private schemas: EntitySchemaOptions<unknown>[];
 
   constructor(
     type?: AdapterType,
@@ -14,7 +14,7 @@ class Database {
   ) {
     this.adapter = createAdapter(type, name, schemas);
     this.name = name || '';
-    this.type = type || '';
+    this.schemas = schemas || [];
   }
 
   public async create(): Promise<this> {
@@ -49,6 +49,10 @@ class Database {
 
   public getName(): string {
     return this.name;
+  }
+
+  public getSchemas(): EntitySchemaOptions<unknown>[] {
+    return this.schemas;
   }
 
   public introspect<T>(
