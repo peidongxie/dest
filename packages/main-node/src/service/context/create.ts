@@ -6,7 +6,7 @@ const createContext = (
   name: string,
   events: ClientEvent<unknown>[],
 ): Context | null => {
-  const context = new Context(type, name, events);
+  const context = { type, name, events };
   return createMemo(['context', type, name], context);
 };
 
