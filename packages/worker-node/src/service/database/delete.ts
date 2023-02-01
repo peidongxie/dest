@@ -17,8 +17,7 @@ const deleteDatabase = (
   });
   rootScheduler.removeStakeholder(scheduler);
   typeScheduler.removeStakeholder(scheduler);
-  scheduler.removeStakeholder(rootScheduler);
-  scheduler.removeStakeholder(typeScheduler);
+  scheduler.removeStakeholder(rootScheduler, typeScheduler);
   return promise;
 };
 
