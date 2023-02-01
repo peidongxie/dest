@@ -6,7 +6,7 @@ interface ExpectationPart<T> {
 }
 
 interface Expectation<T> {
-  time: number;
+  uuid: string;
   parts: ExpectationPart<T>[];
   snapshots: ClientSnapshot[];
 }

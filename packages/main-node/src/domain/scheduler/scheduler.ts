@@ -14,18 +14,22 @@ class Scheduler<T> {
     this.target = target;
   }
 
-  public addStakeholder(scheduler: Scheduler<unknown>): void {
-    if (scheduler === this) return;
-    this.stakeholders.add(scheduler);
+  public addStakeholder(...schedulers: Scheduler<unknown>[]): void {
+    for (const scheduler of schedulers) {
+      if (scheduler === this) return;
+      this.stakeholders.add(scheduler);
+    }
   }
 
   public getTarget(): T {
     return this.target;
   }
 
-  public removeStakeholder(scheduler: Scheduler<unknown>): void {
-    if (scheduler === this) return;
-    this.stakeholders.delete(scheduler);
+  public removeStakeholder(...schedulers: Scheduler<unknown>[]): void {
+    for (const scheduler of schedulers) {
+      if (scheduler === this) return;
+      this.stakeholders.delete(scheduler);
+    }
   }
 
   public runTask<R>(

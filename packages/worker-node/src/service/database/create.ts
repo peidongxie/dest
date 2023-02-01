@@ -18,8 +18,7 @@ const createDatabase = (
   if (!scheduler) return null;
   rootScheduler.addStakeholder(scheduler);
   typeScheduler.addStakeholder(scheduler);
-  scheduler.addStakeholder(rootScheduler);
-  scheduler.addStakeholder(typeScheduler);
+  scheduler.addStakeholder(rootScheduler, typeScheduler);
   const promise = scheduler.runTask(async (database) => {
     await database.create();
     return scheduler;
