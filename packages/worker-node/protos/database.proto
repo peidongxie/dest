@@ -8,6 +8,12 @@ service Database {
   rpc PostDatabase (SchemasRequest) returns (SuccessResponse) {}
 }
 
+// Secret
+
+message SecretRequest {
+  string secret = 1;
+}
+
 // Type
 
 enum TypeEnum {
@@ -18,22 +24,25 @@ enum TypeEnum {
 }
 
 message TypeRequest {
-  TypeEnum type = 1;
+  string secret = 1;
+  TypeEnum type = 2;
 }
 
 // Name
 
 message NameRequest {
-  TypeEnum type = 1;
-  string name = 2;
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
 }
 
 // Schema
 
 message SchemasRequest {
-  TypeEnum type = 1;
-  string name = 2;
-  repeated string schemas = 3;
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
+  repeated string schemas = 4;
 }
 
 // Success

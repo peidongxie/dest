@@ -7,13 +7,20 @@ const postAgentByHttp: Route = {
   method: 'POST',
   pathname: '/agent',
   handler: async (req) => {
-    const { url, body } = req;
-    const secret = url.searchParams.get('secret');
-    const { token } = await body.json<{ token: string }>();
-    const actualSecret = readMemo<string>(['secret']);
-    if ((secret || '') !== (actualSecret || '') || !token) {
+    const secret = req.url.searchParams.get('secret');
+    if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
       return {
         code: 401,
+        body: {
+          success: false,
+        },
+      };
+    }
+    const { body } = req;
+    const { token } = await body.json<{ token: string }>();
+    if (!token) {
+      return {
+        code: 400,
         body: {
           success: false,
         },
@@ -41,9 +48,14 @@ const postAgentByRpc: Plugin<AgentDefinition> = {
   definition: AgentDefinition,
   handlers: {
     postAgent: async (req) => {
-      const { secret, token } = req;
-      const actualSecret = readMemo<string>(['secret']);
-      if ((secret || '') !== (actualSecret || '') || !token) {
+      const { secret } = req;
+      if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+        return {
+          success: false,
+        };
+      }
+      const { token } = req;
+      if (!token) {
         return {
           success: false,
         };

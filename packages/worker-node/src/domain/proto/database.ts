@@ -48,16 +48,23 @@ export function typeEnumToJSON(object: TypeEnum): string {
   }
 }
 
+export interface SecretRequest {
+  secret: string;
+}
+
 export interface TypeRequest {
+  secret: string;
   type: TypeEnum;
 }
 
 export interface NameRequest {
+  secret: string;
   type: TypeEnum;
   name: string;
 }
 
 export interface SchemasRequest {
+  secret: string;
   type: TypeEnum;
   name: string;
   schemas: string[];
@@ -72,8 +79,66 @@ export interface SchemasResponse {
   schemas: string[];
 }
 
+function createBaseSecretRequest(): SecretRequest {
+  return { secret: '' };
+}
+
+export const SecretRequest = {
+  encode(
+    message: SecretRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.secret !== '') {
+      writer.uint32(10).string(message.secret);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SecretRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSecretRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.secret = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SecretRequest {
+    return { secret: isSet(object.secret) ? String(object.secret) : '' };
+  },
+
+  toJSON(message: SecretRequest): unknown {
+    const obj: any = {};
+    message.secret !== undefined && (obj.secret = message.secret);
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SecretRequest>, I>>(
+    base?: I,
+  ): SecretRequest {
+    return SecretRequest.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SecretRequest>, I>>(
+    object: I,
+  ): SecretRequest {
+    const message = createBaseSecretRequest();
+    message.secret = object.secret ?? '';
+    return message;
+  },
+};
+
 function createBaseTypeRequest(): TypeRequest {
-  return { type: 0 };
+  return { secret: '', type: 0 };
 }
 
 export const TypeRequest = {
@@ -81,8 +146,11 @@ export const TypeRequest = {
     message: TypeRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
+    if (message.secret !== '') {
+      writer.uint32(10).string(message.secret);
+    }
     if (message.type !== 0) {
-      writer.uint32(8).int32(message.type);
+      writer.uint32(16).int32(message.type);
     }
     return writer;
   },
@@ -95,6 +163,9 @@ export const TypeRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          message.secret = reader.string();
+          break;
+        case 2:
           message.type = reader.int32() as any;
           break;
         default:
@@ -106,11 +177,15 @@ export const TypeRequest = {
   },
 
   fromJSON(object: any): TypeRequest {
-    return { type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0 };
+    return {
+      secret: isSet(object.secret) ? String(object.secret) : '',
+      type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0,
+    };
   },
 
   toJSON(message: TypeRequest): unknown {
     const obj: any = {};
+    message.secret !== undefined && (obj.secret = message.secret);
     message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
     return obj;
   },
@@ -123,13 +198,14 @@ export const TypeRequest = {
     object: I,
   ): TypeRequest {
     const message = createBaseTypeRequest();
+    message.secret = object.secret ?? '';
     message.type = object.type ?? 0;
     return message;
   },
 };
 
 function createBaseNameRequest(): NameRequest {
-  return { type: 0, name: '' };
+  return { secret: '', type: 0, name: '' };
 }
 
 export const NameRequest = {
@@ -137,11 +213,14 @@ export const NameRequest = {
     message: NameRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
+    if (message.secret !== '') {
+      writer.uint32(10).string(message.secret);
+    }
     if (message.type !== 0) {
-      writer.uint32(8).int32(message.type);
+      writer.uint32(16).int32(message.type);
     }
     if (message.name !== '') {
-      writer.uint32(18).string(message.name);
+      writer.uint32(26).string(message.name);
     }
     return writer;
   },
@@ -154,9 +233,12 @@ export const NameRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.type = reader.int32() as any;
+          message.secret = reader.string();
           break;
         case 2:
+          message.type = reader.int32() as any;
+          break;
+        case 3:
           message.name = reader.string();
           break;
         default:
@@ -169,6 +251,7 @@ export const NameRequest = {
 
   fromJSON(object: any): NameRequest {
     return {
+      secret: isSet(object.secret) ? String(object.secret) : '',
       type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0,
       name: isSet(object.name) ? String(object.name) : '',
     };
@@ -176,6 +259,7 @@ export const NameRequest = {
 
   toJSON(message: NameRequest): unknown {
     const obj: any = {};
+    message.secret !== undefined && (obj.secret = message.secret);
     message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
     message.name !== undefined && (obj.name = message.name);
     return obj;
@@ -189,6 +273,7 @@ export const NameRequest = {
     object: I,
   ): NameRequest {
     const message = createBaseNameRequest();
+    message.secret = object.secret ?? '';
     message.type = object.type ?? 0;
     message.name = object.name ?? '';
     return message;
@@ -196,7 +281,7 @@ export const NameRequest = {
 };
 
 function createBaseSchemasRequest(): SchemasRequest {
-  return { type: 0, name: '', schemas: [] };
+  return { secret: '', type: 0, name: '', schemas: [] };
 }
 
 export const SchemasRequest = {
@@ -204,14 +289,17 @@ export const SchemasRequest = {
     message: SchemasRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
+    if (message.secret !== '') {
+      writer.uint32(10).string(message.secret);
+    }
     if (message.type !== 0) {
-      writer.uint32(8).int32(message.type);
+      writer.uint32(16).int32(message.type);
     }
     if (message.name !== '') {
-      writer.uint32(18).string(message.name);
+      writer.uint32(26).string(message.name);
     }
     for (const v of message.schemas) {
-      writer.uint32(26).string(v!);
+      writer.uint32(34).string(v!);
     }
     return writer;
   },
@@ -224,12 +312,15 @@ export const SchemasRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.type = reader.int32() as any;
+          message.secret = reader.string();
           break;
         case 2:
-          message.name = reader.string();
+          message.type = reader.int32() as any;
           break;
         case 3:
+          message.name = reader.string();
+          break;
+        case 4:
           message.schemas.push(reader.string());
           break;
         default:
@@ -242,6 +333,7 @@ export const SchemasRequest = {
 
   fromJSON(object: any): SchemasRequest {
     return {
+      secret: isSet(object.secret) ? String(object.secret) : '',
       type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0,
       name: isSet(object.name) ? String(object.name) : '',
       schemas: Array.isArray(object?.schemas)
@@ -252,6 +344,7 @@ export const SchemasRequest = {
 
   toJSON(message: SchemasRequest): unknown {
     const obj: any = {};
+    message.secret !== undefined && (obj.secret = message.secret);
     message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
     message.name !== undefined && (obj.name = message.name);
     if (message.schemas) {
@@ -272,6 +365,7 @@ export const SchemasRequest = {
     object: I,
   ): SchemasRequest {
     const message = createBaseSchemasRequest();
+    message.secret = object.secret ?? '';
     message.type = object.type ?? 0;
     message.name = object.name ?? '';
     message.schemas = object.schemas?.map((e) => e) || [];

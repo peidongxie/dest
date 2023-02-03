@@ -8,6 +8,15 @@ const postDatabaseByHttp: Route = {
   method: 'POST',
   pathname: '/database',
   handler: async (req) => {
+    const secret = req.url.searchParams.get('secret');
+    if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+      return {
+        code: 401,
+        body: {
+          success: false,
+        },
+      };
+    }
     const { url, body } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
@@ -43,6 +52,12 @@ const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
   definition: DatabaseDefinition,
   handlers: {
     postDatabase: async (req) => {
+      const { secret } = req;
+      if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+        return {
+          success: false,
+        };
+      }
       const { name, schemas, type } = req;
       const adapterType = readMemo<AdapterType>(['type', type]);
       if (!adapterType || !name || !Array.isArray(schemas)) {

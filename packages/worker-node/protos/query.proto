@@ -16,14 +16,16 @@ enum TypeEnum {
 }
 
 message TypeRequest {
-  TypeEnum type = 1;
+  string secret = 1;
+  TypeEnum type = 2;
 }
 
 // Name
 
 message NameRequest {
-  TypeEnum type = 1;
-  string name = 2;
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
 }
 
 // Event
@@ -45,9 +47,10 @@ message EventItem {
 }
 
 message EventRequest {
-  TypeEnum type = 1;
-  string name = 2;
-  EventItem event = 3;
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
+  EventItem event = 4;
 }
 
 // Success

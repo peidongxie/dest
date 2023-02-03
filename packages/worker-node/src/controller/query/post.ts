@@ -12,6 +12,20 @@ const postQueryByHttp: Route = {
   method: 'POST',
   pathname: '/query',
   handler: async (req) => {
+    const secret = req.url.searchParams.get('secret');
+    if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+      return {
+        code: 401,
+        body: {
+          success: false,
+          result: {
+            time: 0,
+            error: '',
+            rows: [],
+          },
+        },
+      };
+    }
     const { url, body } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
@@ -91,6 +105,17 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
   definition: QueryDefinition,
   handlers: {
     postQuery: async (req) => {
+      const { secret } = req;
+      if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+        return {
+          success: false,
+          result: {
+            time: 0,
+            error: '',
+            rows: [],
+          },
+        };
+      }
       const { event, name, type } = req;
       const adapterType = readMemo<AdapterType>(['type', type]);
       const databaseAction = readMemo<DatabaseAction>([
