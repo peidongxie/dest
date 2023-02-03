@@ -6,6 +6,12 @@ service Hierarchy {
   rpc GetHierarchy (LevelRequest) returns (EnvironmentsResponse) {}
 }
 
+// Secret
+
+message SecretRequest {
+  string secret = 1;
+}
+
 // Type
 
 enum TypeEnum {
@@ -16,22 +22,25 @@ enum TypeEnum {
 }
 
 message TypeRequest {
-  TypeEnum type = 1;
+  string secret = 1;
+  TypeEnum type = 2;
 }
 
 // Name
 
 message NameRequest {
-  TypeEnum type = 1;
-  string name = 2;
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
 }
 
 // Table
 
 message TableRequest {
-  TypeEnum type = 1;
-  string name = 2;
-  string table = 3;
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
+  string table = 4;
 }
 
 // Level
@@ -45,10 +54,11 @@ enum LevelEnum {
 }
 
 message LevelRequest {
-  TypeEnum type = 1;
-  string name = 2;
-  string table = 3;
-  LevelEnum level = 4;
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
+  string table = 4;
+  LevelEnum level = 5;
 }
 
 // Success

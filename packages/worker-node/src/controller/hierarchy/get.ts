@@ -18,6 +18,16 @@ const getHierarchyByHttp: Route = {
   method: 'GET',
   pathname: '/hierarchy',
   handler: async (req) => {
+    const secret = req.url.searchParams.get('secret');
+    if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+      return {
+        code: 401,
+        body: {
+          success: false,
+          environments: [],
+        },
+      };
+    }
     const { url } = req;
     const level = url.searchParams.get('level');
     const name = url.searchParams.get('name');
@@ -72,6 +82,13 @@ const getHierarchyByRpc: Plugin<HierarchyDefinition> = {
   definition: HierarchyDefinition,
   handlers: {
     getHierarchy: async (req) => {
+      const { secret } = req;
+      if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+        return {
+          success: false,
+          environments: [],
+        };
+      }
       const { level, name, table, type } = req;
       const adapterType = readMemo<AdapterType>(['type', Number(type)]);
       const hierarchyLevel = readMemo<HierarchyLevel>(['level', Number(level)]);

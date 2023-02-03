@@ -7,6 +7,16 @@ const getDatabaseByHttp: Route = {
   method: 'GET',
   pathname: '/database',
   handler: async (req) => {
+    const secret = req.url.searchParams.get('secret');
+    if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+      return {
+        code: 401,
+        body: {
+          success: false,
+          schemas: [],
+        },
+      };
+    }
     const { url } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
@@ -44,6 +54,13 @@ const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
   definition: DatabaseDefinition,
   handlers: {
     getDatabase: async (req) => {
+      const { secret } = req;
+      if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+        return {
+          success: false,
+          schemas: [],
+        };
+      }
       const { name, type } = req;
       const adapterType = readMemo<AdapterType>(['type', type]);
       if (!adapterType || !name) {

@@ -12,9 +12,10 @@ const createQuery = <T>(
 ): Promise<DatabaseResult<T> | null> | null => {
   const scheduler = readDatabase(type, name);
   if (!scheduler) return null;
-  return scheduler.runTask((database) => {
+  const promise = scheduler.runTask((database) => {
     return database.emit<T>(event);
   }, event.action === 'read');
+  return promise;
 };
 
 export { createQuery };

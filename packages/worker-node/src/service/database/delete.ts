@@ -62,7 +62,15 @@ const deleteDatabases = (): Promise<Scheduler<Database>[]> | null => {
     });
     promises.push(promise);
   }
-  return Promise.all(promises);
+  return Promise.allSettled(promises).then((promiseSettledResults) =>
+    promiseSettledResults.map((promiseSettledResult) => {
+      if (promiseSettledResult.status === 'fulfilled') {
+        return promiseSettledResult.value;
+      } else {
+        throw promiseSettledResult.reason;
+      }
+    }),
+  );
 };
 
 export { deleteDatabase, deleteDatabases };
