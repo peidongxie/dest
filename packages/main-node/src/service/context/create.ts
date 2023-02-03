@@ -1,13 +1,24 @@
-import { Context, type ClientEvent, type ClientType } from '../../domain';
+import { EntitySchemaOptions } from 'typeorm';
+import { Context, Scheduler, type ClientType } from '../../domain';
+import { readClients } from '../client';
 import { createMemo } from '../memo';
 
 const createContext = (
   type: ClientType,
   name: string,
-  events: ClientEvent<unknown>[],
-): Context | null => {
-  const context = { type, name, events };
-  return createMemo(['context', type, name], context);
+  schemas: EntitySchemaOptions<unknown>[],
+): Promise<Scheduler<Context>> | null => {
+  const scheduler = createMemo(
+    ['context'],
+    new Scheduler(new Context(type, name, schemas)),
+  );
+  if (!scheduler) return null;
+  const clients = readClients();
+  const promise = scheduler.runTask(async (context) => {
+    context.addClient(...clients);
+    return scheduler;
+  });
+  return promise;
 };
 
 export { createContext };

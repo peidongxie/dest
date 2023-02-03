@@ -1,8 +1,15 @@
-import { type ClientType, type Context } from '../../domain';
-import { readMemo } from '../memo';
+import { type ClientType, type Context, type Scheduler } from '../../domain';
+import { readMemo, readMemos } from '../memo';
 
-const readContext = (type: ClientType, name: string): Context | null => {
-  return readMemo<Context>(['context', type, name]);
+const readContext = (
+  type: ClientType,
+  name: string,
+): Scheduler<Context> | null => {
+  return readMemo<Scheduler<Context>>(['context', type, name]);
 };
 
-export { readContext };
+const readContexts = (): Scheduler<Context>[] => {
+  return readMemos<Scheduler<Context>>(['context']);
+};
+
+export { readContext, readContexts };
