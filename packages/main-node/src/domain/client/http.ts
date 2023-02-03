@@ -8,56 +8,60 @@ import {
   type ClientEvent,
   type ClientLevel,
   type ClientResult,
+  type ClientSetup,
   type ClientType,
 } from './type';
 
 class HttpClient implements Client {
   private raw: ClientRaw;
+  private token: string;
 
-  constructor(port: number, hostname: string) {
+  constructor(token: string, setup: ClientSetup) {
     const router = new Router({ host: 'localhost' });
+    const host = `${setup.hostname}:${setup.port}`;
     router.setRoute({
       pathname: 'deleteAgent',
-      redirect: `${hostname}:${port}/agent`,
+      redirect: host + '/agent',
       method: 'DELETE',
     });
     router.setRoute({
       pathname: 'deleteDatabase',
-      redirect: `${hostname}:${port}/database`,
+      redirect: host + '/database',
       method: 'DELETE',
     });
     router.setRoute({
       pathname: 'getAgent',
-      redirect: `${hostname}:${port}/agent`,
+      redirect: host + '/agent',
       method: 'GET',
     });
     router.setRoute({
       pathname: 'getDatabase',
-      redirect: `${hostname}:${port}/database`,
+      redirect: host + '/database',
       method: 'GET',
     });
     router.setRoute({
       pathname: 'getHierarchy',
-      redirect: `${hostname}:${port}/hierarchy`,
+      redirect: host + '/hierarchy',
       method: 'GET',
     });
     router.setRoute({
       pathname: 'postAgent',
-      redirect: `${hostname}:${port}/agent`,
+      redirect: host + '/agent',
       method: 'POST',
     });
     router.setRoute({
       pathname: 'postDatabase',
-      redirect: `${hostname}:${port}/database`,
+      redirect: host + '/database',
       method: 'POST',
     });
     router.setRoute({
       pathname: 'postQuery',
-      redirect: `${hostname}:${port}/query`,
+      redirect: host + '/query',
       method: 'POST',
     });
     this.raw = new ClientRaw();
     this.raw.use(router);
+    this.token = token;
   }
 
   public deleteAgent(secret: string) {
@@ -72,11 +76,12 @@ class HttpClient implements Client {
     }>(`deleteDatabase?type=${this.getTypeEnum(type)}&name=${name}`)();
   }
 
-  public getAgent(secret: string) {
-    return this.call<{
+  public async getAgent(secret: string) {
+    const { success, token } = await this.call<{
       success: boolean;
       token: string;
     }>(`getAgent?secret=${secret}`)();
+    return { success: success && token === this.token };
   }
 
   public getDatabase(type: ClientType, name: string) {
@@ -86,10 +91,10 @@ class HttpClient implements Client {
     }>(`getDatabase?type=${this.getTypeEnum(type)}&name=${name}`)();
   }
 
-  public postAgent(secret: string, token: string) {
+  public postAgent(secret: string) {
     return this.call<{
       success: boolean;
-    }>(`postAgent?secret=${secret}`)({ token });
+    }>(`postAgent?secret=${secret}`)({ token: this.token });
   }
 
   public async getHierarchy(

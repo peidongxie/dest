@@ -14,6 +14,7 @@ import {
   type ClientAction,
   type ClientEvent,
   type ClientLevel,
+  type ClientSetup,
   type ClientType,
 } from './type';
 
@@ -21,8 +22,9 @@ class RpcClient implements Client {
   private raw: ClientRaw<
     AgentDefinition | DatabaseDefinition | HierarchyDefinition | QueryDefinition
   >;
+  private token: string;
 
-  constructor(port: number, hostname: string) {
+  constructor(token: string, setup: ClientSetup) {
     this.raw = new ClientRaw(
       [
         AgentDefinition,
@@ -30,11 +32,9 @@ class RpcClient implements Client {
         HierarchyDefinition,
         QueryDefinition,
       ],
-      {
-        port,
-        hostname,
-      },
+      setup,
     );
+    this.token = token;
   }
 
   public deleteAgent(secret: string) {
@@ -50,10 +50,11 @@ class RpcClient implements Client {
     });
   }
 
-  public getAgent(secret: string) {
-    return this.raw.call('getAgent')({
+  public async getAgent(secret: string) {
+    const { success, token } = await this.raw.call('getAgent')({
       secret,
     });
+    return { success: success && token === this.token };
   }
 
   public async getDatabase(type: ClientType, name: string) {
@@ -94,10 +95,10 @@ class RpcClient implements Client {
     };
   }
 
-  public postAgent(secret: string, token: string) {
+  public postAgent(secret: string) {
     return this.raw.call('postAgent')({
       secret,
-      token,
+      token: this.token,
     });
   }
 
