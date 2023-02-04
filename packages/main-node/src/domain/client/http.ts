@@ -203,7 +203,7 @@ class HttpClient implements Client {
   }
 
   private getLevelEnum(level: ClientLevel): LevelEnum {
-    if (level === 'environment') return LevelEnum.DATABASE;
+    if (level === 'environment') return LevelEnum.ENVIRONMENT;
     if (level === 'database') return LevelEnum.DATABASE;
     if (level === 'table') return LevelEnum.TABLE;
     if (level === 'row') return LevelEnum.ROW;
