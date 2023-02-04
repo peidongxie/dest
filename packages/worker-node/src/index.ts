@@ -24,7 +24,13 @@ import {
   type DatabaseAction,
   type HierarchyLevel,
 } from './domain';
-import { createMemo, createServer } from './service';
+import {
+  createAction,
+  createEnum,
+  createLevel,
+  createServer,
+  createType,
+} from './service';
 
 const config = {
   database: ['sqlite'] as AdapterType[],
@@ -44,64 +50,19 @@ const config = {
 };
 
 for (const type of config.database) {
-  if (type === 'mariadb') {
-    createMemo(['type', TypeEnum.MARIADB], 'mariadb');
-    createMemo(['enum', 'mariadb'], TypeEnum.MARIADB);
-  }
-  if (type === 'mysql:8') {
-    createMemo(['type', TypeEnum.MYSQL8], 'mysql:8');
-    createMemo(['enum', 'mysql:8'], TypeEnum.MYSQL8);
-  }
-  if (type === 'sqlite') {
-    createMemo(['type', TypeEnum.SQLITE], 'sqlite');
-    createMemo(['enum', 'sqlite'], TypeEnum.SQLITE);
-  }
+  const key = TypeEnum[type.toUpperCase() as Uppercase<AdapterType>];
+  key && createType(key, type);
+  key && createEnum(type, key);
 }
 
 for (const level of config.hierarchy) {
-  if (level === 'environment') {
-    createMemo(['level', LevelEnum.ENVIRONMENT], 'environment');
-    createMemo(['enum', 'environment'], LevelEnum.ENVIRONMENT);
-  }
-  if (level === 'database') {
-    createMemo(['level', LevelEnum.DATABASE], 'database');
-    createMemo(['enum', 'database'], LevelEnum.DATABASE);
-  }
-  if (level === 'table') {
-    createMemo(['level', LevelEnum.TABLE], 'table');
-    createMemo(['enum', 'table'], LevelEnum.TABLE);
-  }
-  if (level === 'row') {
-    createMemo(['level', LevelEnum.ROW], 'row');
-    createMemo(['enum', 'row'], LevelEnum.ROW);
-  }
+  const key = LevelEnum[level.toUpperCase() as Uppercase<HierarchyLevel>];
+  key && createLevel(key, level);
 }
 
 for (const action of config.query) {
-  if (action === 'save') {
-    createMemo(['action', ActionEnum.SAVE], 'save');
-    createMemo(['enum', 'save'], ActionEnum.SAVE);
-  }
-  if (action === 'remove') {
-    createMemo(['action', ActionEnum.REMOVE], 'remove');
-    createMemo(['enum', 'remove'], ActionEnum.REMOVE);
-  }
-  if (action === 'read') {
-    createMemo(['action', ActionEnum.READ], 'read');
-    createMemo(['enum', 'read'], ActionEnum.READ);
-  }
-  if (action === 'write') {
-    createMemo(['action', ActionEnum.WRITE], 'write');
-    createMemo(['enum', 'write'], ActionEnum.WRITE);
-  }
-  if (action === 'root') {
-    createMemo(['action', ActionEnum.ROOT], 'root');
-    createMemo(['enum', 'root'], ActionEnum.ROOT);
-  }
-  if (action === 'introspect') {
-    createMemo(['action', ActionEnum.INTROSPECT], 'introspect');
-    createMemo(['enum', 'introspect'], ActionEnum.INTROSPECT);
-  }
+  const key = ActionEnum[action.toUpperCase() as Uppercase<DatabaseAction>];
+  key && createAction(key, action);
 }
 
 for (const [port, call] of Object.entries(config.server)) {

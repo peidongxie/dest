@@ -5,7 +5,7 @@ interface ClientHost {
   port: number;
 }
 
-type ClientType = 'mariadb' | 'mysql:8' | 'sqlite';
+type ClientType = 'mariadb' | 'mysql8' | 'sqlite';
 
 type ClientLevel = 'environment' | 'database' | 'table' | 'row';
 

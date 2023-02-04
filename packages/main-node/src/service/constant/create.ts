@@ -1,7 +1,7 @@
 import { createMemo } from '../memo';
 
-const createSecret = (secret: string): void => {
-  createMemo(['constant', 'secret'], secret);
+const createSecret = (value: string): void => {
+  createMemo(['constant', 'secret'], value);
 };
 
 export { createSecret };

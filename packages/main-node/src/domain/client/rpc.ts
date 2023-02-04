@@ -165,14 +165,14 @@ class RpcClient implements Client {
 
   private getType(type: TypeEnum): ClientType | '' {
     if (type === TypeEnum.MARIADB) return 'mariadb';
-    if (type === TypeEnum.MYSQL8) return 'mysql:8';
+    if (type === TypeEnum.MYSQL8) return 'mysql8';
     if (type === TypeEnum.SQLITE) return 'sqlite';
     return '';
   }
 
   private getTypeEnum(type: ClientType | ''): TypeEnum {
     if (type === 'mariadb') return TypeEnum.MARIADB;
-    if (type === 'mysql:8') return TypeEnum.MYSQL8;
+    if (type === 'mysql8') return TypeEnum.MYSQL8;
     if (type === 'sqlite') return TypeEnum.SQLITE;
     return TypeEnum.DEFAULT_TYPE;
   }

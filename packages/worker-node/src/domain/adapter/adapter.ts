@@ -14,7 +14,7 @@ const createAdapter = (
   switch (type) {
     case 'mariadb':
       return new Mariadb(name, entities);
-    case 'mysql:8':
+    case 'mysql8':
       return new Mysql8(name, entities);
     case 'sqlite':
       return new Sqlite(name, entities);

@@ -1,10 +1,10 @@
-import { readMemo, readMemos } from '../memo';
 import {
   type AdapterType,
   type DatabaseAction,
   type HierarchyLevel,
   type TypeEnum,
 } from '../../domain';
+import { readMemo, readMemos } from '../memo';
 
 const readAction = (key: unknown): DatabaseAction | '' => {
   return readMemo<DatabaseAction>(['constant', 'action', Number(key)]) || '';
