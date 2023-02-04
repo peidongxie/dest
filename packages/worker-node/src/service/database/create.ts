@@ -1,5 +1,6 @@
 import { type EntitySchemaOptions } from 'typeorm';
 import { Database, Scheduler, type AdapterType } from '../../domain';
+import { readTypes } from '../constant';
 import { createMemo, readMemo, readMemos } from '../memo';
 
 const createDatabase = (
@@ -29,7 +30,7 @@ const createDatabase = (
 const createDatabases = (): Promise<Scheduler<Database>[]> | null => {
   const promises = [];
   const rootScheduler = createMemo(['database'], new Scheduler(new Database()));
-  const types = readMemos<AdapterType>(['type']);
+  const types = readTypes();
   for (const type of types) {
     const typeScheduler = createMemo(
       ['database', type],

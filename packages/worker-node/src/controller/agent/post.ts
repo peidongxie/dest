@@ -1,14 +1,14 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { AgentDefinition } from '../../domain';
-import { createAgent, readMemo } from '../../service';
+import { createAgent, readSecret } from '../../service';
 
 const postAgentByHttp: Route = {
   method: 'POST',
   pathname: '/agent',
   handler: async (req) => {
     const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+    if ((secret || '') !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -49,7 +49,7 @@ const postAgentByRpc: Plugin<AgentDefinition> = {
   handlers: {
     postAgent: async (req) => {
       const { secret } = req;
-      if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+      if ((secret || '') !== readSecret()) {
         return {
           success: false,
         };

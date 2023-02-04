@@ -1,6 +1,7 @@
 import { HttpClient, RpcClient, type Client } from '../../domain';
+import { readSecret } from '../constant';
 import { readContexts } from '../context';
-import { createMemo, readMemo } from '../memo';
+import { createMemo } from '../memo';
 
 const createClient = (
   token: string,
@@ -10,7 +11,7 @@ const createClient = (
     hostname: string;
   },
 ): Promise<Client> | null => {
-  const secret = readMemo<string>(['secret']) || '';
+  const secret = readSecret();
   const client =
     setup.api === 'http'
       ? createMemo(['client', token], new HttpClient(setup, token, secret))

@@ -1,14 +1,14 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { AgentDefinition } from '../../domain';
-import { deleteAgent, readMemo } from '../../service';
+import { deleteAgent, readSecret } from '../../service';
 
 const deleteAgentByHttp: Route = {
   method: 'DELETE',
   pathname: '/agent',
   handler: async (req) => {
     const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+    if ((secret || '') !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -39,7 +39,7 @@ const deleteAgentByRpc: Plugin<AgentDefinition> = {
   handlers: {
     deleteAgent: async (req) => {
       const { secret } = req;
-      if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+      if ((secret || '') !== readSecret()) {
         return {
           success: false,
         };

@@ -1,15 +1,15 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { type EntitySchemaOptions } from 'typeorm';
-import { DatabaseDefinition, type AdapterType } from '../../domain';
-import { createDatabase, readMemo } from '../../service';
+import { DatabaseDefinition } from '../../domain';
+import { createDatabase, readSecret, readType } from '../../service';
 
 const postDatabaseByHttp: Route = {
   method: 'POST',
   pathname: '/database',
   handler: async (req) => {
     const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+    if ((secret || '') !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -21,9 +21,7 @@ const postDatabaseByHttp: Route = {
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
     const schemas = await body.json<EntitySchemaOptions<unknown>[]>();
-    const adapterType = Number(type)
-      ? readMemo<AdapterType>(['type', Number(type)])
-      : '';
+    const adapterType = readType(type);
     if (!adapterType || !name || !Array.isArray(schemas)) {
       return {
         code: 400,
@@ -55,13 +53,13 @@ const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
   handlers: {
     postDatabase: async (req) => {
       const { secret } = req;
-      if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+      if ((secret || '') !== readSecret()) {
         return {
           success: false,
         };
       }
       const { name, schemas, type } = req;
-      const adapterType = type ? readMemo<AdapterType>(['type', type]) : '';
+      const adapterType = readType(type);
       if (!adapterType || !name || !Array.isArray(schemas)) {
         return {
           success: false,

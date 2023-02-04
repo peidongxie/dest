@@ -1,17 +1,15 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
+import { HierarchyDefinition } from '../../domain';
 import {
-  HierarchyDefinition,
-  type AdapterType,
-  type HierarchyLevel,
-  type TypeEnum,
-} from '../../domain';
-import {
+  readEnum,
   readHierarchyDatabase,
   readHierarchyEnvironment,
   readHierarchyRow,
   readHierarchyTable,
-  readMemo,
+  readLevel,
+  readSecret,
+  readType,
 } from '../../service';
 
 const getHierarchyByHttp: Route = {
@@ -19,7 +17,7 @@ const getHierarchyByHttp: Route = {
   pathname: '/hierarchy',
   handler: async (req) => {
     const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+    if ((secret || '') !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -33,12 +31,8 @@ const getHierarchyByHttp: Route = {
     const name = url.searchParams.get('name');
     const table = url.searchParams.get('table');
     const type = url.searchParams.get('type');
-    const adapterType = Number(type)
-      ? readMemo<AdapterType>(['type', Number(type)])
-      : '';
-    const hierarchyLevel = Number(level)
-      ? readMemo<HierarchyLevel>(['level', Number(level)])
-      : '';
+    const adapterType = readType(type);
+    const hierarchyLevel = readLevel(level);
     if (
       adapterType === null ||
       hierarchyLevel === null ||
@@ -75,7 +69,7 @@ const getHierarchyByHttp: Route = {
         success: true,
         environments: environments.map((environment) => ({
           ...environment,
-          type: readMemo<TypeEnum>(['enum', environment.type]) as TypeEnum,
+          type: readEnum(environment.type),
         })),
       },
     };
@@ -87,17 +81,15 @@ const getHierarchyByRpc: Plugin<HierarchyDefinition> = {
   handlers: {
     getHierarchy: async (req) => {
       const { secret } = req;
-      if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+      if ((secret || '') !== readSecret()) {
         return {
           success: false,
           environments: [],
         };
       }
       const { level, name, table, type } = req;
-      const adapterType = type ? readMemo<AdapterType>(['type', type]) : '';
-      const hierarchyLevel = level
-        ? readMemo<HierarchyLevel>(['level', level])
-        : '';
+      const adapterType = readType(type);
+      const hierarchyLevel = readLevel(level);
       if (
         adapterType === null ||
         hierarchyLevel === null ||
@@ -131,7 +123,7 @@ const getHierarchyByRpc: Plugin<HierarchyDefinition> = {
       return {
         success: true,
         environments: environments.map((environment) => ({
-          type: readMemo<TypeEnum>(['enum', environment.type]) as TypeEnum,
+          type: readEnum(environment.type),
           databases: environment.databases.map((database) => ({
             ...database,
             snapshots: database.snapshots.map((snapshot) => ({
