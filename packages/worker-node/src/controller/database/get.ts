@@ -1,14 +1,14 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
-import { DatabaseDefinition, type AdapterType } from '../../domain';
-import { readDatabase, readMemo } from '../../service';
+import { DatabaseDefinition } from '../../domain';
+import { readDatabase, readSecret, readType } from '../../service';
 
 const getDatabaseByHttp: Route = {
   method: 'GET',
   pathname: '/database',
   handler: async (req) => {
     const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+    if ((secret || '') !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -20,7 +20,7 @@ const getDatabaseByHttp: Route = {
     const { url } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const adapterType = readMemo<AdapterType>(['type', Number(type)]);
+    const adapterType = readType(type);
     if (!adapterType || !name) {
       return {
         code: 400,
@@ -55,14 +55,14 @@ const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
   handlers: {
     getDatabase: async (req) => {
       const { secret } = req;
-      if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+      if ((secret || '') !== readSecret()) {
         return {
           success: false,
           schemas: [],
         };
       }
       const { name, type } = req;
-      const adapterType = readMemo<AdapterType>(['type', type]);
+      const adapterType = readType(type);
       if (!adapterType || !name) {
         return {
           success: false,

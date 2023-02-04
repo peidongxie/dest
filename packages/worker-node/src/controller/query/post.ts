@@ -1,19 +1,14 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
-import {
-  QueryDefinition,
-  type ActionEnum,
-  type AdapterType,
-  type DatabaseAction,
-} from '../../domain';
-import { createQuery, readMemo } from '../../service';
+import { QueryDefinition, type ActionEnum } from '../../domain';
+import { createQuery, readAction, readSecret, readType } from '../../service';
 
 const postQueryByHttp: Route = {
   method: 'POST',
   pathname: '/query',
   handler: async (req) => {
     const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+    if ((secret || '') !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -35,11 +30,8 @@ const postQueryByHttp: Route = {
       values: unknown[];
       tables: string[];
     }>();
-    const adapterType = readMemo<AdapterType>(['type', Number(type)]);
-    const databaseAction = readMemo<DatabaseAction>([
-      'action',
-      Number(event?.action),
-    ]);
+    const adapterType = readType(type);
+    const databaseAction = readAction(event?.action);
     if (
       !adapterType ||
       (!name && databaseAction !== 'root') ||
@@ -106,7 +98,7 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
   handlers: {
     postQuery: async (req) => {
       const { secret } = req;
-      if ((secret || '') !== (readMemo<string>(['secret']) || '')) {
+      if ((secret || '') !== readSecret()) {
         return {
           success: false,
           result: {
@@ -117,11 +109,8 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
         };
       }
       const { event, name, type } = req;
-      const adapterType = readMemo<AdapterType>(['type', type]);
-      const databaseAction = readMemo<DatabaseAction>([
-        'action',
-        event?.action || 0,
-      ]);
+      const adapterType = readType(type);
+      const databaseAction = readAction(event?.action);
       if (
         !adapterType ||
         (!name && databaseAction !== 'root') ||

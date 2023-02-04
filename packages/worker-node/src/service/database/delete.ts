@@ -1,5 +1,6 @@
 import { type AdapterType, type Database, type Scheduler } from '../../domain';
-import { deleteMemo, deleteMemos, readMemo, readMemos } from '../memo';
+import { readTypes } from '../constant';
+import { deleteMemo, deleteMemos, readMemo } from '../memo';
 
 const deleteDatabase = (
   type: AdapterType,
@@ -24,7 +25,7 @@ const deleteDatabase = (
 const deleteDatabases = (): Promise<Scheduler<Database>[]> | null => {
   const promises = [];
   const rootScheduler = deleteMemo<Scheduler<Database>>(['database']);
-  const types = readMemos<AdapterType>(['type']);
+  const types = readTypes();
   for (const type of types) {
     const typeScheduler = deleteMemo<Scheduler<Database>>(['database', type]);
     const schedulers = deleteMemos<Scheduler<Database>>(['database', type]);

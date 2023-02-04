@@ -1,9 +1,9 @@
 import { type AdapterType, type HierarchyEnvironment } from '../../domain';
+import { readTypes } from '../constant';
 import { readDatabase, readDatabases } from '../database';
-import { readMemos } from '../memo';
 
 const readHierarchyEnvironment = (): HierarchyEnvironment[] => {
-  const types = readMemos<AdapterType>(['type']);
+  const types = readTypes();
   const environments = types.map((type) => ({
     type,
     databases: [],
@@ -12,7 +12,7 @@ const readHierarchyEnvironment = (): HierarchyEnvironment[] => {
 };
 
 const readHierarchyDatabase = (type?: AdapterType): HierarchyEnvironment[] => {
-  const types = readMemos<AdapterType>(['type']);
+  const types = readTypes();
   const environments = (type ? [type] : types).map((type) => {
     const schedulers = readDatabases(type);
     const databases = schedulers.map((scheduler) => ({
@@ -31,7 +31,7 @@ const readHierarchyTable = (
   type?: AdapterType,
   name?: string,
 ): Promise<HierarchyEnvironment[]> => {
-  const types = readMemos<AdapterType>(['type']);
+  const types = readTypes();
   const environments = (type ? [type] : types).map((type) => {
     const schedulers = readDatabases(type);
     const scheduler = name && readDatabase(type, name);
@@ -63,7 +63,7 @@ const readHierarchyRow = (
   name?: string,
   table?: string,
 ): Promise<HierarchyEnvironment[]> => {
-  const types = readMemos<AdapterType>(['type']);
+  const types = readTypes();
   const environments = (type ? [type] : types).map((type) => {
     const schedulers = readDatabases(type);
     const scheduler = name && readDatabase(type, name);

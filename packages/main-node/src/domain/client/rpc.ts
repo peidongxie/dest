@@ -13,8 +13,8 @@ import {
   type Client,
   type ClientAction,
   type ClientEvent,
+  type ClientHost,
   type ClientLevel,
-  type ClientSetup,
   type ClientType,
 } from './type';
 
@@ -22,9 +22,10 @@ class RpcClient implements Client {
   private raw: ClientRaw<
     AgentDefinition | DatabaseDefinition | HierarchyDefinition | QueryDefinition
   >;
+  private secret: string;
   private token: string;
 
-  constructor(token: string, setup: ClientSetup) {
+  constructor(host: ClientHost, token: string, secret?: string) {
     this.raw = new ClientRaw(
       [
         AgentDefinition,
@@ -32,33 +33,36 @@ class RpcClient implements Client {
         HierarchyDefinition,
         QueryDefinition,
       ],
-      setup,
+      host,
     );
     this.token = token;
+    this.secret = secret || '';
   }
 
-  public deleteAgent(secret: string) {
+  public deleteAgent() {
     return this.raw.call('deleteAgent')({
-      secret,
+      secret: this.secret,
     });
   }
 
   public deleteDatabase(type: ClientType, name: string) {
     return this.raw.call('deleteDatabase')({
+      secret: this.secret,
       type: this.getTypeEnum(type),
       name,
     });
   }
 
-  public async getAgent(secret: string) {
+  public async getAgent() {
     const { success, token } = await this.raw.call('getAgent')({
-      secret,
+      secret: this.secret,
     });
     return { success: success && token === this.token };
   }
 
   public async getDatabase(type: ClientType, name: string) {
     const { success, schemas } = await this.raw.call('getDatabase')({
+      secret: this.secret,
       type: this.getTypeEnum(type),
       name,
     });
@@ -75,6 +79,7 @@ class RpcClient implements Client {
     level: ClientLevel,
   ) {
     const { success, environments } = await this.raw.call('getHierarchy')({
+      secret: this.secret,
       type: this.getTypeEnum(type),
       name,
       table,
@@ -95,9 +100,9 @@ class RpcClient implements Client {
     };
   }
 
-  public postAgent(secret: string) {
+  public postAgent() {
     return this.raw.call('postAgent')({
-      secret,
+      secret: this.secret,
       token: this.token,
     });
   }
@@ -108,6 +113,7 @@ class RpcClient implements Client {
     schemas: EntitySchemaOptions<unknown>[],
   ) {
     return this.raw.call('postDatabase')({
+      secret: this.secret,
       type: this.getTypeEnum(type),
       name,
       schemas: schemas.map((schema) => JSON.stringify(schema)),
@@ -120,6 +126,7 @@ class RpcClient implements Client {
     event: ClientEvent<unknown>,
   ) {
     const { success, result } = await this.raw.call('postQuery')({
+      secret: this.secret,
       type: this.getTypeEnum(type),
       name,
       event: {
@@ -149,7 +156,7 @@ class RpcClient implements Client {
   }
 
   private getLevelEnum(level: ClientLevel): LevelEnum {
-    if (level === 'environment') return LevelEnum.DATABASE;
+    if (level === 'environment') return LevelEnum.ENVIRONMENT;
     if (level === 'database') return LevelEnum.DATABASE;
     if (level === 'table') return LevelEnum.TABLE;
     if (level === 'row') return LevelEnum.ROW;
@@ -158,14 +165,14 @@ class RpcClient implements Client {
 
   private getType(type: TypeEnum): ClientType | '' {
     if (type === TypeEnum.MARIADB) return 'mariadb';
-    if (type === TypeEnum.MYSQL8) return 'mysql:8';
+    if (type === TypeEnum.MYSQL8) return 'mysql8';
     if (type === TypeEnum.SQLITE) return 'sqlite';
     return '';
   }
 
   private getTypeEnum(type: ClientType | ''): TypeEnum {
     if (type === 'mariadb') return TypeEnum.MARIADB;
-    if (type === 'mysql:8') return TypeEnum.MYSQL8;
+    if (type === 'mysql8') return TypeEnum.MYSQL8;
     if (type === 'sqlite') return TypeEnum.SQLITE;
     return TypeEnum.DEFAULT_TYPE;
   }

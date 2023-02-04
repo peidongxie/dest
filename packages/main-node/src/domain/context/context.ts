@@ -88,7 +88,7 @@ class Context {
     this.events = events;
     const clients = client ? [client] : Array.from(this.clients);
     const promises = clients.map(async (client) => {
-      const { success: getAgentSuccess } = await client.getAgent('');
+      const { success: getAgentSuccess } = await client.getAgent();
       if (!getAgentSuccess) throw new TypeError('Bad Client');
       await client.deleteDatabase(this.type, this.name);
       const { success: postDatabaseSuccess } = await client.postDatabase(

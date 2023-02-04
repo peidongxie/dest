@@ -1,4 +1,5 @@
 import { HttpClient, RpcClient, type Client } from '../../domain';
+import { readSecret } from '../constant';
 import { readContexts } from '../context';
 import { createMemo } from '../memo';
 
@@ -8,14 +9,14 @@ const createClient = (
     api: 'http' | 'rpc';
     port: number;
     hostname: string;
-    secret?: string;
   },
 ): Promise<Client> | null => {
+  const secret = readSecret();
   const client =
     setup.api === 'http'
-      ? createMemo(['client', token], new HttpClient(token, setup))
+      ? createMemo(['client', token], new HttpClient(setup, token, secret))
       : setup.api === 'rpc'
-      ? createMemo(['client', token], new RpcClient(token, setup))
+      ? createMemo(['client', token], new RpcClient(setup, token, secret))
       : null;
   if (!client) return null;
   const promises = [];

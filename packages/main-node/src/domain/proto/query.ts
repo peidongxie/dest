@@ -112,10 +112,12 @@ export function actionEnumToJSON(object: ActionEnum): string {
 }
 
 export interface TypeRequest {
+  secret: string;
   type: TypeEnum;
 }
 
 export interface NameRequest {
+  secret: string;
   type: TypeEnum;
   name: string;
 }
@@ -127,6 +129,7 @@ export interface EventItem {
 }
 
 export interface EventRequest {
+  secret: string;
   type: TypeEnum;
   name: string;
   event: EventItem | undefined;
@@ -148,7 +151,7 @@ export interface ResultResponse {
 }
 
 function createBaseTypeRequest(): TypeRequest {
-  return { type: 0 };
+  return { secret: '', type: 0 };
 }
 
 export const TypeRequest = {
@@ -156,8 +159,11 @@ export const TypeRequest = {
     message: TypeRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
+    if (message.secret !== '') {
+      writer.uint32(10).string(message.secret);
+    }
     if (message.type !== 0) {
-      writer.uint32(8).int32(message.type);
+      writer.uint32(16).int32(message.type);
     }
     return writer;
   },
@@ -170,6 +176,9 @@ export const TypeRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          message.secret = reader.string();
+          break;
+        case 2:
           message.type = reader.int32() as any;
           break;
         default:
@@ -181,11 +190,15 @@ export const TypeRequest = {
   },
 
   fromJSON(object: any): TypeRequest {
-    return { type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0 };
+    return {
+      secret: isSet(object.secret) ? String(object.secret) : '',
+      type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0,
+    };
   },
 
   toJSON(message: TypeRequest): unknown {
     const obj: any = {};
+    message.secret !== undefined && (obj.secret = message.secret);
     message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
     return obj;
   },
@@ -198,13 +211,14 @@ export const TypeRequest = {
     object: I,
   ): TypeRequest {
     const message = createBaseTypeRequest();
+    message.secret = object.secret ?? '';
     message.type = object.type ?? 0;
     return message;
   },
 };
 
 function createBaseNameRequest(): NameRequest {
-  return { type: 0, name: '' };
+  return { secret: '', type: 0, name: '' };
 }
 
 export const NameRequest = {
@@ -212,11 +226,14 @@ export const NameRequest = {
     message: NameRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
+    if (message.secret !== '') {
+      writer.uint32(10).string(message.secret);
+    }
     if (message.type !== 0) {
-      writer.uint32(8).int32(message.type);
+      writer.uint32(16).int32(message.type);
     }
     if (message.name !== '') {
-      writer.uint32(18).string(message.name);
+      writer.uint32(26).string(message.name);
     }
     return writer;
   },
@@ -229,9 +246,12 @@ export const NameRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.type = reader.int32() as any;
+          message.secret = reader.string();
           break;
         case 2:
+          message.type = reader.int32() as any;
+          break;
+        case 3:
           message.name = reader.string();
           break;
         default:
@@ -244,6 +264,7 @@ export const NameRequest = {
 
   fromJSON(object: any): NameRequest {
     return {
+      secret: isSet(object.secret) ? String(object.secret) : '',
       type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0,
       name: isSet(object.name) ? String(object.name) : '',
     };
@@ -251,6 +272,7 @@ export const NameRequest = {
 
   toJSON(message: NameRequest): unknown {
     const obj: any = {};
+    message.secret !== undefined && (obj.secret = message.secret);
     message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
     message.name !== undefined && (obj.name = message.name);
     return obj;
@@ -264,6 +286,7 @@ export const NameRequest = {
     object: I,
   ): NameRequest {
     const message = createBaseNameRequest();
+    message.secret = object.secret ?? '';
     message.type = object.type ?? 0;
     message.name = object.name ?? '';
     return message;
@@ -354,7 +377,7 @@ export const EventItem = {
 };
 
 function createBaseEventRequest(): EventRequest {
-  return { type: 0, name: '', event: undefined };
+  return { secret: '', type: 0, name: '', event: undefined };
 }
 
 export const EventRequest = {
@@ -362,14 +385,17 @@ export const EventRequest = {
     message: EventRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
+    if (message.secret !== '') {
+      writer.uint32(10).string(message.secret);
+    }
     if (message.type !== 0) {
-      writer.uint32(8).int32(message.type);
+      writer.uint32(16).int32(message.type);
     }
     if (message.name !== '') {
-      writer.uint32(18).string(message.name);
+      writer.uint32(26).string(message.name);
     }
     if (message.event !== undefined) {
-      EventItem.encode(message.event, writer.uint32(26).fork()).ldelim();
+      EventItem.encode(message.event, writer.uint32(34).fork()).ldelim();
     }
     return writer;
   },
@@ -382,12 +408,15 @@ export const EventRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.type = reader.int32() as any;
+          message.secret = reader.string();
           break;
         case 2:
-          message.name = reader.string();
+          message.type = reader.int32() as any;
           break;
         case 3:
+          message.name = reader.string();
+          break;
+        case 4:
           message.event = EventItem.decode(reader, reader.uint32());
           break;
         default:
@@ -400,6 +429,7 @@ export const EventRequest = {
 
   fromJSON(object: any): EventRequest {
     return {
+      secret: isSet(object.secret) ? String(object.secret) : '',
       type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0,
       name: isSet(object.name) ? String(object.name) : '',
       event: isSet(object.event) ? EventItem.fromJSON(object.event) : undefined,
@@ -408,6 +438,7 @@ export const EventRequest = {
 
   toJSON(message: EventRequest): unknown {
     const obj: any = {};
+    message.secret !== undefined && (obj.secret = message.secret);
     message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
     message.name !== undefined && (obj.name = message.name);
     message.event !== undefined &&
@@ -425,6 +456,7 @@ export const EventRequest = {
     object: I,
   ): EventRequest {
     const message = createBaseEventRequest();
+    message.secret = object.secret ?? '';
     message.type = object.type ?? 0;
     message.name = object.name ?? '';
     message.event =
