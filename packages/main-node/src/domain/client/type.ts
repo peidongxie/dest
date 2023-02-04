@@ -1,8 +1,8 @@
 import { type EntitySchemaOptions } from 'typeorm';
 
-interface ClientSetup {
-  port: number;
+interface ClientHost {
   hostname: string;
+  port: number;
 }
 
 type ClientType = 'mariadb' | 'mysql:8' | 'sqlite';
@@ -45,7 +45,7 @@ interface ClientResult<T> {
 }
 
 interface Client {
-  deleteAgent: (secret: string) => Promise<{
+  deleteAgent: () => Promise<{
     success: boolean;
   }>;
   deleteDatabase: (
@@ -54,7 +54,7 @@ interface Client {
   ) => Promise<{
     success: boolean;
   }>;
-  getAgent: (secret: string) => Promise<{
+  getAgent: () => Promise<{
     success: boolean;
   }>;
   getDatabase: (
@@ -73,7 +73,7 @@ interface Client {
     success: boolean;
     environments: ClientEnvironment[];
   }>;
-  postAgent: (secret: string) => Promise<{
+  postAgent: () => Promise<{
     success: boolean;
   }>;
   postDatabase: (
@@ -99,9 +99,9 @@ export {
   type ClientDatabase,
   type ClientEnvironment,
   type ClientEvent,
+  type ClientHost,
   type ClientLevel,
   type ClientResult,
-  type ClientSetup,
   type ClientSnapshot,
   type ClientType,
 };
