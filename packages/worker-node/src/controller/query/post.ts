@@ -35,11 +35,12 @@ const postQueryByHttp: Route = {
       values: unknown[];
       tables: string[];
     }>();
-    const adapterType = readMemo<AdapterType>(['type', Number(type)]);
-    const databaseAction = readMemo<DatabaseAction>([
-      'action',
-      Number(event?.action),
-    ]);
+    const adapterType = Number(type)
+      ? readMemo<AdapterType>(['type', Number(type)])
+      : '';
+    const databaseAction = Number(event?.action)
+      ? readMemo<DatabaseAction>(['action', Number(event?.action)])
+      : '';
     if (
       !adapterType ||
       (!name && databaseAction !== 'root') ||
@@ -117,11 +118,10 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
         };
       }
       const { event, name, type } = req;
-      const adapterType = readMemo<AdapterType>(['type', type]);
-      const databaseAction = readMemo<DatabaseAction>([
-        'action',
-        event?.action || 0,
-      ]);
+      const adapterType = type ? readMemo<AdapterType>(['type', type]) : '';
+      const databaseAction = Number(event?.action)
+        ? readMemo<DatabaseAction>(['action', Number(event?.action)])
+        : '';
       if (
         !adapterType ||
         (!name && databaseAction !== 'root') ||

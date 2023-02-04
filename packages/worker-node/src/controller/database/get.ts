@@ -20,7 +20,9 @@ const getDatabaseByHttp: Route = {
     const { url } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const adapterType = readMemo<AdapterType>(['type', Number(type)]);
+    const adapterType = Number(type)
+      ? readMemo<AdapterType>(['type', Number(type)])
+      : '';
     if (!adapterType || !name) {
       return {
         code: 400,
@@ -62,7 +64,7 @@ const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
         };
       }
       const { name, type } = req;
-      const adapterType = readMemo<AdapterType>(['type', type]);
+      const adapterType = type ? readMemo<AdapterType>(['type', type]) : '';
       if (!adapterType || !name) {
         return {
           success: false,

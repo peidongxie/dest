@@ -33,15 +33,19 @@ const getHierarchyByHttp: Route = {
     const name = url.searchParams.get('name');
     const table = url.searchParams.get('table');
     const type = url.searchParams.get('type');
-    const adapterType = readMemo<AdapterType>(['type', Number(type)]);
-    const hierarchyLevel = readMemo<HierarchyLevel>(['level', Number(level)]);
+    const adapterType = Number(type)
+      ? readMemo<AdapterType>(['type', Number(type)])
+      : '';
+    const hierarchyLevel = Number(level)
+      ? readMemo<HierarchyLevel>(['level', Number(level)])
+      : '';
     if (
-      (!type && !name && table) ||
-      (!type && name && !table) ||
-      (!type && name && table) ||
-      (type && !name && table) ||
-      (type && !adapterType) ||
-      !hierarchyLevel
+      adapterType === null ||
+      hierarchyLevel === null ||
+      (!adapterType && !name && table) ||
+      (!adapterType && name && !table) ||
+      (!adapterType && name && table) ||
+      (adapterType && !name && table)
     ) {
       return {
         code: 400,
@@ -90,15 +94,17 @@ const getHierarchyByRpc: Plugin<HierarchyDefinition> = {
         };
       }
       const { level, name, table, type } = req;
-      const adapterType = readMemo<AdapterType>(['type', Number(type)]);
-      const hierarchyLevel = readMemo<HierarchyLevel>(['level', Number(level)]);
+      const adapterType = type ? readMemo<AdapterType>(['type', type]) : '';
+      const hierarchyLevel = level
+        ? readMemo<HierarchyLevel>(['level', level])
+        : '';
       if (
-        (!type && !name && table) ||
-        (!type && name && !table) ||
-        (!type && name && table) ||
-        (type && !name && table) ||
-        (type && !adapterType) ||
-        !hierarchyLevel
+        adapterType === null ||
+        hierarchyLevel === null ||
+        (!adapterType && !name && table) ||
+        (!adapterType && name && !table) ||
+        (!adapterType && name && table) ||
+        (adapterType && !name && table)
       ) {
         return {
           success: false,

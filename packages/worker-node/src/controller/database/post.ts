@@ -21,7 +21,9 @@ const postDatabaseByHttp: Route = {
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
     const schemas = await body.json<EntitySchemaOptions<unknown>[]>();
-    const adapterType = readMemo<AdapterType>(['type', Number(type)]);
+    const adapterType = Number(type)
+      ? readMemo<AdapterType>(['type', Number(type)])
+      : '';
     if (!adapterType || !name || !Array.isArray(schemas)) {
       return {
         code: 400,
@@ -59,7 +61,7 @@ const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
         };
       }
       const { name, schemas, type } = req;
-      const adapterType = readMemo<AdapterType>(['type', type]);
+      const adapterType = type ? readMemo<AdapterType>(['type', type]) : '';
       if (!adapterType || !name || !Array.isArray(schemas)) {
         return {
           success: false,
