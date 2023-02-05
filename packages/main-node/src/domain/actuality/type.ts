@@ -8,4 +8,10 @@ interface Actuality<T> {
   time: number;
 }
 
-export { type Actuality };
+interface ActualityCondition {
+  query: string;
+  values: unknown[];
+  tables: string[];
+}
+
+export { type Actuality, type ActualityCondition };
