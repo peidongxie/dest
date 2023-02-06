@@ -1,7 +1,7 @@
 import {
+  type AssertionDifference,
+  type AssertionPart,
   type ClientSnapshot,
-  type Difference,
-  type ExpectationPart,
 } from '../../domain';
 import { readActuality } from '../actuality';
 import { readExpectation } from '../expectation';
@@ -23,9 +23,9 @@ const createAssertionCheck = (
 
 const createAssertionDifference = <A extends E, E>(
   actualitySnapshot: ClientSnapshot<A>,
-  expectationPart: ExpectationPart<E>,
-): Difference<A, E> | null => {
-  const difference: Difference<A, E> = {
+  expectationPart: AssertionPart<E>,
+): AssertionDifference<A, E> | null => {
+  const difference: AssertionDifference<A, E> = {
     table: actualitySnapshot.table,
     index: 0,
     row: actualitySnapshot.rows[0] || {},
@@ -48,7 +48,7 @@ const createAssertionDifference = <A extends E, E>(
 const createAssertion = (
   actualityUuid: string,
   expectationUuid: string,
-): Difference<unknown, unknown>[] | null => {
+): AssertionDifference<unknown, unknown>[] | null => {
   const actuality = readActuality(actualityUuid);
   if (!actuality) return null;
   const expectation = readExpectation(expectationUuid);

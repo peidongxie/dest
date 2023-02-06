@@ -1,15 +1,15 @@
 import { randomUUID } from 'crypto';
 import {
+  type AssertionExpectation,
+  type AssertionPart,
   type ClientSnapshot,
-  type Expectation,
-  type ExpectationPart,
 } from '../../domain';
 import { createMemo } from '../memo';
 
 const createExpectation = <T>(
-  parts: ExpectationPart<T>[],
-  snapshots?: ClientSnapshot[],
-): Expectation<T> | null => {
+  parts: AssertionPart<T>[],
+  snapshots?: ClientSnapshot<unknown>[],
+): AssertionExpectation<T> | null => {
   const uuid = randomUUID();
   return createMemo(['expectation', uuid], {
     uuid,

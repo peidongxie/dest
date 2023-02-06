@@ -1,6 +1,6 @@
 import {
-  type Actuality,
-  type ActualityCondition,
+  type AssertionActuality,
+  type AssertionCondition,
   type ClientType,
 } from '../../domain';
 import { readContext } from '../context';
@@ -9,8 +9,8 @@ import { createMemo } from '../memo';
 const createReadActuality = <T>(
   type: ClientType,
   name: string,
-  condition: ActualityCondition,
-): Promise<Actuality<T>> | null => {
+  condition: AssertionCondition,
+): Promise<AssertionActuality<T>> | null => {
   const scheduler = readContext(type, name);
   if (!scheduler) return null;
   const promise = scheduler.runTask(async (context) => {
@@ -24,8 +24,8 @@ const createReadActuality = <T>(
 const createWriteActuality = <T>(
   type: ClientType,
   name: string,
-  condition: ActualityCondition,
-): Promise<Actuality<T>> | null => {
+  condition: AssertionCondition,
+): Promise<AssertionActuality<T>> | null => {
   const scheduler = readContext(type, name);
   if (!scheduler) return null;
   const promise = scheduler.runTask(async (context) => {

@@ -1,8 +1,8 @@
-import { type Expectation } from '../../domain';
+import { type AssertionExpectation } from '../../domain';
 import { readMemo } from '../memo';
 
-const readExpectation = <T>(uuid: string): Expectation<T> | null => {
-  return readMemo<Expectation<T>>(['expectation', uuid]);
+const readExpectation = <T>(uuid: string): AssertionExpectation<T> | null => {
+  return readMemo<AssertionExpectation<T>>(['expectation', uuid]);
 };
 
 export { readExpectation };
