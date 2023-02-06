@@ -131,15 +131,13 @@ class Context {
       target: query,
       values,
     });
-    const { result: introspectResult } = await client.postQuery<ClientSnapshot>(
-      type,
-      name,
-      {
-        action: 'introspect',
-        target: 'row',
-        values: tables,
-      },
-    );
+    const { result: introspectResult } = await client.postQuery<
+      ClientSnapshot<unknown>
+    >(type, name, {
+      action: 'introspect',
+      target: 'row',
+      values: tables,
+    });
     await client.deleteDatabase(type, name);
     return {
       uuid: randomUUID(),

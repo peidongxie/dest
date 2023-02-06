@@ -8,7 +8,7 @@ interface ExpectationPart<T> {
 interface Expectation<T> {
   uuid: string;
   parts: ExpectationPart<T>[];
-  snapshots: ClientSnapshot[];
+  snapshots: ClientSnapshot<unknown>[];
 }
 
 export { type Expectation, type ExpectationPart };

@@ -4,7 +4,7 @@ interface Actuality<T> {
   uuid: string;
   error: string;
   rows: T[];
-  snapshots: ClientSnapshot[];
+  snapshots: ClientSnapshot<unknown>[];
   time: number;
 }
 
