@@ -1,6 +1,6 @@
 import { randomInt, randomUUID } from 'crypto';
 import { type EntitySchemaOptions } from 'typeorm';
-import { type Actuality } from '../actuality';
+import { type AssertionActuality } from '../actuality';
 import {
   type Client,
   type ClientEvent,
@@ -46,7 +46,7 @@ class Context {
   public async read<T>(
     query: string,
     values: unknown[],
-  ): Promise<Actuality<T>> {
+  ): Promise<AssertionActuality<T>> {
     const client = this.getClient();
     if (!client) throw new TypeError('No Client');
     const type = this.type;
@@ -117,7 +117,7 @@ class Context {
     query: string,
     values: unknown[],
     tables: string[],
-  ): Promise<Actuality<T>> {
+  ): Promise<AssertionActuality<T>> {
     const client = this.getClient();
     if (!client) throw new TypeError('No Client');
     const type = this.type;
@@ -131,15 +131,13 @@ class Context {
       target: query,
       values,
     });
-    const { result: introspectResult } = await client.postQuery<ClientSnapshot>(
-      type,
-      name,
-      {
-        action: 'introspect',
-        target: 'row',
-        values: tables,
-      },
-    );
+    const { result: introspectResult } = await client.postQuery<
+      ClientSnapshot<unknown>
+    >(type, name, {
+      action: 'introspect',
+      target: 'row',
+      values: tables,
+    });
     await client.deleteDatabase(type, name);
     return {
       uuid: randomUUID(),

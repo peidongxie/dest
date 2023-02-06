@@ -1,8 +1,8 @@
-import { type Actuality } from '../../domain';
+import { type AssertionActuality } from '../../domain';
 import { deleteMemo } from '../memo';
 
-const deleteActuality = <T>(uuid: string): Actuality<T> | null => {
-  return deleteMemo<Actuality<T>>(['actuality', uuid]);
+const deleteActuality = <T>(uuid: string): AssertionActuality<T> | null => {
+  return deleteMemo<AssertionActuality<T>>(['actuality', uuid]);
 };
 
 export { deleteActuality };

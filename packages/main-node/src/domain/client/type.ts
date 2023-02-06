@@ -9,14 +9,14 @@ type ClientType = 'mariadb' | 'mysql8' | 'sqlite';
 
 type ClientLevel = 'environment' | 'database' | 'table' | 'row';
 
-interface ClientSnapshot {
+interface ClientSnapshot<T> {
   table: string;
-  rows: unknown[];
+  rows: T[];
 }
 
 interface ClientDatabase {
   name: string;
-  snapshots: ClientSnapshot[];
+  snapshots: ClientSnapshot<unknown>[];
 }
 
 interface ClientEnvironment {
