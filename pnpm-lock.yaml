@@ -164,7 +164,9 @@ importers:
   packages/main-node:
     specifiers:
       '@dest-toolkit/grpc-client': workspace:^0.1.18
+      '@dest-toolkit/grpc-server': workspace:^0.1.18
       '@dest-toolkit/http-client': workspace:^0.1.18
+      '@dest-toolkit/http-server': workspace:^0.1.18
       '@types/fs-extra': ^11.0.1
       '@types/node': ^18.11.19
       '@types/sqlite3': ^3.1.8
@@ -184,7 +186,9 @@ importers:
       typescript: ^4.9.5
     dependencies:
       '@dest-toolkit/grpc-client': link:../grpc-client
+      '@dest-toolkit/grpc-server': link:../grpc-server
       '@dest-toolkit/http-client': link:../http-client
+      '@dest-toolkit/http-server': link:../http-server
       protobufjs: 7.2.1
     devDependencies:
       '@types/fs-extra': 11.0.1
