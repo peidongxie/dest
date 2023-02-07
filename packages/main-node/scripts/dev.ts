@@ -1,23 +1,13 @@
 import { execSync, fork, type ChildProcess } from 'child_process';
-import { build, type BuildOptions } from 'esbuild';
-import { existsSync, readdirSync, statSync, watch } from 'fs-extra';
-import { basename, dirname, extname, join } from 'path';
-
-let childProcess: ChildProcess | null = null;
-const entryPoints = new Set<string>();
-
-const getEntryPoints = (dir: string): string[] => {
-  const files = readdirSync(dir);
-  return files
-    .map((file) => {
-      const stats = statSync(join(dir, file));
-      if (stats.isFile() && '.proto' === extname(file)) {
-        return basename(file, '.proto');
-      }
-      return null;
-    })
-    .filter((v): v is string => v !== null);
-};
+import { context, type BuildOptions } from 'esbuild';
+import {
+  existsSync,
+  moveSync,
+  readFileSync,
+  removeSync,
+  statSync,
+} from 'fs-extra';
+import { dirname, extname } from 'path';
 
 const execCommand = (command: string[]): void => {
   try {
@@ -28,34 +18,20 @@ const execCommand = (command: string[]): void => {
   }
 };
 
-const protoc = (source: string, target: string): void => {
-  if (!existsSync(source)) return;
-  const stats = statSync(source);
+const protoc = (protoPath: string, tsPath: string): void => {
+  if (!existsSync(protoPath)) return;
+  const stats = statSync(protoPath);
   if (!stats.isFile()) return;
-  const ext = extname(source);
+  const ext = extname(protoPath);
   if (ext !== '.proto') return;
   execCommand([
     'grpc_tools_node_protoc',
-    '--proto_path=' + dirname(source),
+    '--proto_path=' + dirname(protoPath),
     '--plugin=node_modules/.bin/protoc-gen-ts_proto',
-    '--ts_proto_out=' + target,
+    '--ts_proto_out=' + tsPath,
     '--ts_proto_opt=esModuleInterop=true,outputServices=generic-definitions',
-    source,
+    protoPath,
   ]);
-};
-
-const mv = (source: string, target: string): void => {
-  if (!existsSync(source)) return;
-  execCommand(['mv', source, target]);
-};
-
-const eslint = (path: string): void => {
-  if (!existsSync(path)) return;
-  const stats = statSync(path);
-  if (!stats.isFile()) return;
-  const ext = extname(path);
-  if (ext !== '.ts') return;
-  execCommand(['eslint', '--fix', path]);
 };
 
 const sed = (path: string): void => {
@@ -78,65 +54,177 @@ const sed = (path: string): void => {
   ]);
 };
 
-const createProto = () => {
-  for (const service of getEntryPoints('../worker-node/protos')) {
-    if (!entryPoints.has(service)) {
-      entryPoints.add(service);
-      watch(`../worker-node/protos/${service}.proto`, () => createProto());
-    }
-  }
-  for (const service of getEntryPoints('../worker-node/protos')) {
-    const protoPath = join('..', 'worker-node', 'protos', service + '.proto');
-    const sourcePath = join('..', 'worker-node', 'protos', service + '.ts');
-    const targetPath = join('src', 'domain', 'proto', service + '.ts');
-    protoc(protoPath, dirname(sourcePath));
-    mv(sourcePath, targetPath);
-    sed(targetPath);
-    eslint(targetPath);
-  }
+const eslint = (path: string): void => {
+  if (!existsSync(path)) return;
+  const stats = statSync(path);
+  if (!stats.isFile()) return;
+  const ext = extname(path);
+  if (ext !== '.ts') return;
+  execCommand(['eslint', '--fix', path]);
 };
 
-const startChildProcess = () => {
-  if (!childProcess) {
-    childProcess = fork('dist/index.js');
-  }
-};
-
-const stopChildProcess = () => {
-  if (childProcess) {
-    childProcess.kill();
-    childProcess = null;
-  }
-};
-
-const buildOptions: BuildOptions = {
+const buildMainProtoOptions: BuildOptions = {
+  // General options
   bundle: true,
-  define: {},
-  entryPoints: ['src/index.ts'],
-  external: ['@dest-toolkit/grpc-client', '@dest-toolkit/http-client'],
-  format: 'esm',
-  inject: [],
-  loader: {},
-  minify: false,
-  minifyWhitespace: false,
-  minifyIdentifiers: false,
-  minifySyntax: false,
-  outdir: 'dist',
   platform: 'node',
-  sourcemap: false,
+  tsconfig: 'tsconfig.json',
+  // Input
+  entryPoints: ['protos/client.proto'],
+  // Output contents
+  format: 'esm',
   splitting: true,
-  target: 'esnext',
-  watch: {
-    onRebuild: () => {
-      stopChildProcess();
-      startChildProcess();
-    },
-  },
+  // Output location
+  outdir: 'src/domain/proto',
   write: true,
+  // Path resolution
+  external: [],
+  // Transformation
+  target: 'esnext',
+  // Optimization
+  minify: false,
+  // Source maps
+  sourcemap: false,
+  // Build metadata
+  metafile: true,
+  // Logging
+  color: true,
+  // Plugins
+  plugins: [
+    {
+      name: 'proto',
+      setup(build) {
+        build.onLoad({ filter: /\.proto$/ }, (args) => {
+          const protoPath = args.path;
+          const tsPath = protoPath.replace(/\.proto$/, '.ts');
+          protoc(protoPath, dirname(tsPath));
+          sed(tsPath);
+          eslint(tsPath);
+          const contents = readFileSync(tsPath);
+          removeSync(tsPath);
+          return {
+            contents,
+            loader: 'copy',
+          };
+        });
+        build.onEnd((result) => {
+          for (const entry of Object.entries(result.metafile?.outputs || {})) {
+            const sourcePath = entry[0];
+            const targetPath = sourcePath.replace(/\.proto$/, '.ts');
+            moveSync(sourcePath, targetPath, { overwrite: true });
+          }
+        });
+      },
+    },
+  ],
+};
+
+const buildWorkerProtoOptions: BuildOptions = {
+  // General options
+  bundle: true,
+  platform: 'node',
+  tsconfig: '../worker-node/tsconfig.json',
+  // Input
+  entryPoints: [
+    '../worker-node/protos/agent.proto',
+    '../worker-node/protos/database.proto',
+    '../worker-node/protos/hierarchy.proto',
+    '../worker-node/protos/query.proto',
+  ],
+  // Output contents
+  format: 'esm',
+  splitting: true,
+  // Output location
+  outdir: 'src/domain/proto',
+  write: true,
+  // Path resolution
+  external: [],
+  // Transformation
+  target: 'esnext',
+  // Optimization
+  minify: false,
+  // Source maps
+  sourcemap: false,
+  // Build metadata
+  metafile: true,
+  // Logging
+  color: true,
+  // Plugins
+  plugins: [
+    {
+      name: 'proto',
+      setup(build) {
+        build.onLoad({ filter: /\.proto$/ }, (args) => {
+          const protoPath = args.path;
+          const tsPath = protoPath.replace(/\.proto$/, '.ts');
+          protoc(protoPath, dirname(tsPath));
+          sed(tsPath);
+          eslint(tsPath);
+          const contents = readFileSync(tsPath);
+          removeSync(tsPath);
+          return {
+            contents,
+            loader: 'copy',
+          };
+        });
+        build.onEnd((result) => {
+          for (const entry of Object.entries(result.metafile?.outputs || {})) {
+            const sourcePath = entry[0];
+            const targetPath = sourcePath.replace(/\.proto$/, '.ts');
+            moveSync(sourcePath, targetPath, { overwrite: true });
+          }
+        });
+      },
+    },
+  ],
+};
+
+const buildTsOptions: BuildOptions = {
+  // General options
+  bundle: true,
+  platform: 'node',
+  tsconfig: 'tsconfig.json',
+  // Input
+  entryPoints: ['src/index.ts'],
+  // Output contents
+  format: 'esm',
+  splitting: true,
+  // Output location
+  outdir: 'dist',
+  write: true,
+  // Path resolution
+  external: [
+    '@dest-toolkit/grpc-client',
+    '@dest-toolkit/grpc-server',
+    '@dest-toolkit/http-client',
+    '@dest-toolkit/http-server',
+  ],
+  // Transformation
+  target: 'esnext',
+  // Optimization
+  minify: false,
+  // Source maps
+  sourcemap: false,
+  // Build metadata
+  metafile: false,
+  // Logging
+  color: true,
+  // Plugins
+  plugins: [
+    {
+      name: 'dev',
+      setup(build) {
+        let childProcess: ChildProcess | null = null;
+        build.onEnd(() => {
+          childProcess?.kill();
+          childProcess = fork('dist/index.js');
+        });
+      },
+    },
+  ],
 };
 
 (async () => {
-  createProto();
-  await build(buildOptions);
-  startChildProcess();
+  await (await context(buildMainProtoOptions)).watch();
+  await (await context(buildWorkerProtoOptions)).watch();
+  await (await context(buildTsOptions)).watch();
 })();

@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package dest;
+
+service Client {
+  rpc DeleteClient (TokenRequest) returns (SuccessResponse) {}
+  rpc GetClient (TokenRequest) returns (HostResponse) {}
+  rpc PostClient (HostRequest) returns (SuccessResponse) {}
+}
+
+// Secret
+
+message SecretRequest {
+  string secret = 1;
+}
+
+// Success
+
+message SuccessResponse {
+  bool success = 1;
+}
+
+// Token
+
+message TokenRequest {
+  string secret = 1;
+  string token = 2;
+}
+
+message TokenResponse {
+  bool success = 1;
+  string token = 2;
+}
+
+// Host
+
+message HostItem {
+  string hostname = 1;
+  uint32 port = 2;
+}
+
+message HostRequest {
+  string secret = 1;
+  string token = 2;
+  HostItem host = 3;
+}
+
+message HostResponse {
+  bool success = 1;
+  HostItem host = 2;
+}
+
