@@ -21,14 +21,13 @@ const postQueryByHttp: Route = {
         },
       };
     }
-    const { url, body } = req;
+    const { body, url } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
     const event = await body.json<{
       action: ActionEnum;
       target: string;
       values: unknown[];
-      tables: string[];
     }>();
     const adapterType = readType(type);
     const databaseAction = readAction(event?.action);

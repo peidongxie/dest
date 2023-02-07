@@ -36,6 +36,12 @@ message NameRequest {
   string name = 3;
 }
 
+// Success
+
+message SuccessResponse {
+  bool success = 1;
+}
+
 // Schema
 
 message SchemasRequest {
@@ -44,14 +50,6 @@ message SchemasRequest {
   string name = 3;
   repeated string schemas = 4;
 }
-
-// Success
-
-message SuccessResponse {
-  bool success = 1;
-}
-
-// Schema
 
 message SchemasResponse {
   bool success = 1;

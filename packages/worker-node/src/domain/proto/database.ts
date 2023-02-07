@@ -63,15 +63,15 @@ export interface NameRequest {
   name: string;
 }
 
+export interface SuccessResponse {
+  success: boolean;
+}
+
 export interface SchemasRequest {
   secret: string;
   type: TypeEnum;
   name: string;
   schemas: string[];
-}
-
-export interface SuccessResponse {
-  success: boolean;
 }
 
 export interface SchemasResponse {
@@ -280,6 +280,64 @@ export const NameRequest = {
   },
 };
 
+function createBaseSuccessResponse(): SuccessResponse {
+  return { success: false };
+}
+
+export const SuccessResponse = {
+  encode(
+    message: SuccessResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.success === true) {
+      writer.uint32(8).bool(message.success);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SuccessResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSuccessResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.success = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SuccessResponse {
+    return { success: isSet(object.success) ? Boolean(object.success) : false };
+  },
+
+  toJSON(message: SuccessResponse): unknown {
+    const obj: any = {};
+    message.success !== undefined && (obj.success = message.success);
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SuccessResponse>, I>>(
+    base?: I,
+  ): SuccessResponse {
+    return SuccessResponse.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SuccessResponse>, I>>(
+    object: I,
+  ): SuccessResponse {
+    const message = createBaseSuccessResponse();
+    message.success = object.success ?? false;
+    return message;
+  },
+};
+
 function createBaseSchemasRequest(): SchemasRequest {
   return { secret: '', type: 0, name: '', schemas: [] };
 }
@@ -369,64 +427,6 @@ export const SchemasRequest = {
     message.type = object.type ?? 0;
     message.name = object.name ?? '';
     message.schemas = object.schemas?.map((e) => e) || [];
-    return message;
-  },
-};
-
-function createBaseSuccessResponse(): SuccessResponse {
-  return { success: false };
-}
-
-export const SuccessResponse = {
-  encode(
-    message: SuccessResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.success === true) {
-      writer.uint32(8).bool(message.success);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): SuccessResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSuccessResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.success = reader.bool();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): SuccessResponse {
-    return { success: isSet(object.success) ? Boolean(object.success) : false };
-  },
-
-  toJSON(message: SuccessResponse): unknown {
-    const obj: any = {};
-    message.success !== undefined && (obj.success = message.success);
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<SuccessResponse>, I>>(
-    base?: I,
-  ): SuccessResponse {
-    return SuccessResponse.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<SuccessResponse>, I>>(
-    object: I,
-  ): SuccessResponse {
-    const message = createBaseSuccessResponse();
-    message.success = object.success ?? false;
     return message;
   },
 };

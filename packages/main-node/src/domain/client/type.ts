@@ -5,6 +5,10 @@ interface ClientHost {
   port: number;
 }
 
+interface ClientSetup extends ClientHost {
+  api: 'http' | 'rpc';
+}
+
 type ClientType = 'mariadb' | 'mysql8' | 'sqlite';
 
 type ClientLevel = 'environment' | 'database' | 'table' | 'row';
@@ -73,6 +77,7 @@ interface Client {
     success: boolean;
     environments: ClientEnvironment[];
   }>;
+  getSetup: () => ClientSetup;
   postAgent: () => Promise<{
     success: boolean;
   }>;
@@ -102,6 +107,7 @@ export {
   type ClientHost,
   type ClientLevel,
   type ClientResult,
+  type ClientSetup,
   type ClientSnapshot,
   type ClientType,
 };

@@ -6,7 +6,7 @@ import { createMemo } from '../memo';
 const createClient = (
   token: string,
   setup: {
-    api: 'http' | 'rpc';
+    api: string;
     port: number;
     hostname: string;
   },
