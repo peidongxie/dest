@@ -17,7 +17,7 @@ const postDatabaseByHttp: Route = {
         },
       };
     }
-    const { url, body } = req;
+    const { body, url } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
     const schemas = await body.json<EntitySchemaOptions<unknown>[]>();

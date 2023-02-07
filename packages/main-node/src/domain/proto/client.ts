@@ -21,20 +21,21 @@ export interface TokenResponse {
   token: string;
 }
 
-export interface HostItem {
+export interface SetupItem {
+  api: string;
   hostname: string;
   port: number;
 }
 
-export interface HostRequest {
+export interface SetupRequest {
   secret: string;
   token: string;
-  host: HostItem | undefined;
+  setup: SetupItem | undefined;
 }
 
-export interface HostResponse {
+export interface SetupResponse {
   success: boolean;
-  host: HostItem | undefined;
+  setup: SetupItem | undefined;
 }
 
 function createBaseSecretRequest(): SecretRequest {
@@ -291,35 +292,41 @@ export const TokenResponse = {
   },
 };
 
-function createBaseHostItem(): HostItem {
-  return { hostname: '', port: 0 };
+function createBaseSetupItem(): SetupItem {
+  return { api: '', hostname: '', port: 0 };
 }
 
-export const HostItem = {
+export const SetupItem = {
   encode(
-    message: HostItem,
+    message: SetupItem,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
+    if (message.api !== '') {
+      writer.uint32(10).string(message.api);
+    }
     if (message.hostname !== '') {
-      writer.uint32(10).string(message.hostname);
+      writer.uint32(18).string(message.hostname);
     }
     if (message.port !== 0) {
-      writer.uint32(16).uint32(message.port);
+      writer.uint32(24).uint32(message.port);
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): HostItem {
+  decode(input: _m0.Reader | Uint8Array, length?: number): SetupItem {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseHostItem();
+    const message = createBaseSetupItem();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.hostname = reader.string();
+          message.api = reader.string();
           break;
         case 2:
+          message.hostname = reader.string();
+          break;
+        case 3:
           message.port = reader.uint32();
           break;
         default:
@@ -330,39 +337,44 @@ export const HostItem = {
     return message;
   },
 
-  fromJSON(object: any): HostItem {
+  fromJSON(object: any): SetupItem {
     return {
+      api: isSet(object.api) ? String(object.api) : '',
       hostname: isSet(object.hostname) ? String(object.hostname) : '',
       port: isSet(object.port) ? Number(object.port) : 0,
     };
   },
 
-  toJSON(message: HostItem): unknown {
+  toJSON(message: SetupItem): unknown {
     const obj: any = {};
+    message.api !== undefined && (obj.api = message.api);
     message.hostname !== undefined && (obj.hostname = message.hostname);
     message.port !== undefined && (obj.port = Math.round(message.port));
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<HostItem>, I>>(base?: I): HostItem {
-    return HostItem.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<SetupItem>, I>>(base?: I): SetupItem {
+    return SetupItem.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<HostItem>, I>>(object: I): HostItem {
-    const message = createBaseHostItem();
+  fromPartial<I extends Exact<DeepPartial<SetupItem>, I>>(
+    object: I,
+  ): SetupItem {
+    const message = createBaseSetupItem();
+    message.api = object.api ?? '';
     message.hostname = object.hostname ?? '';
     message.port = object.port ?? 0;
     return message;
   },
 };
 
-function createBaseHostRequest(): HostRequest {
-  return { secret: '', token: '', host: undefined };
+function createBaseSetupRequest(): SetupRequest {
+  return { secret: '', token: '', setup: undefined };
 }
 
-export const HostRequest = {
+export const SetupRequest = {
   encode(
-    message: HostRequest,
+    message: SetupRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.secret !== '') {
@@ -371,16 +383,16 @@ export const HostRequest = {
     if (message.token !== '') {
       writer.uint32(18).string(message.token);
     }
-    if (message.host !== undefined) {
-      HostItem.encode(message.host, writer.uint32(26).fork()).ldelim();
+    if (message.setup !== undefined) {
+      SetupItem.encode(message.setup, writer.uint32(26).fork()).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): HostRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): SetupRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseHostRequest();
+    const message = createBaseSetupRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -391,7 +403,7 @@ export const HostRequest = {
           message.token = reader.string();
           break;
         case 3:
-          message.host = HostItem.decode(reader, reader.uint32());
+          message.setup = SetupItem.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -401,63 +413,65 @@ export const HostRequest = {
     return message;
   },
 
-  fromJSON(object: any): HostRequest {
+  fromJSON(object: any): SetupRequest {
     return {
       secret: isSet(object.secret) ? String(object.secret) : '',
       token: isSet(object.token) ? String(object.token) : '',
-      host: isSet(object.host) ? HostItem.fromJSON(object.host) : undefined,
+      setup: isSet(object.setup) ? SetupItem.fromJSON(object.setup) : undefined,
     };
   },
 
-  toJSON(message: HostRequest): unknown {
+  toJSON(message: SetupRequest): unknown {
     const obj: any = {};
     message.secret !== undefined && (obj.secret = message.secret);
     message.token !== undefined && (obj.token = message.token);
-    message.host !== undefined &&
-      (obj.host = message.host ? HostItem.toJSON(message.host) : undefined);
+    message.setup !== undefined &&
+      (obj.setup = message.setup ? SetupItem.toJSON(message.setup) : undefined);
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<HostRequest>, I>>(base?: I): HostRequest {
-    return HostRequest.fromPartial(base ?? {});
+  create<I extends Exact<DeepPartial<SetupRequest>, I>>(
+    base?: I,
+  ): SetupRequest {
+    return SetupRequest.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<HostRequest>, I>>(
+  fromPartial<I extends Exact<DeepPartial<SetupRequest>, I>>(
     object: I,
-  ): HostRequest {
-    const message = createBaseHostRequest();
+  ): SetupRequest {
+    const message = createBaseSetupRequest();
     message.secret = object.secret ?? '';
     message.token = object.token ?? '';
-    message.host =
-      object.host !== undefined && object.host !== null
-        ? HostItem.fromPartial(object.host)
+    message.setup =
+      object.setup !== undefined && object.setup !== null
+        ? SetupItem.fromPartial(object.setup)
         : undefined;
     return message;
   },
 };
 
-function createBaseHostResponse(): HostResponse {
-  return { success: false, host: undefined };
+function createBaseSetupResponse(): SetupResponse {
+  return { success: false, setup: undefined };
 }
 
-export const HostResponse = {
+export const SetupResponse = {
   encode(
-    message: HostResponse,
+    message: SetupResponse,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.success === true) {
       writer.uint32(8).bool(message.success);
     }
-    if (message.host !== undefined) {
-      HostItem.encode(message.host, writer.uint32(18).fork()).ldelim();
+    if (message.setup !== undefined) {
+      SetupItem.encode(message.setup, writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): HostResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): SetupResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseHostResponse();
+    const message = createBaseSetupResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -465,7 +479,7 @@ export const HostResponse = {
           message.success = reader.bool();
           break;
         case 2:
-          message.host = HostItem.decode(reader, reader.uint32());
+          message.setup = SetupItem.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -475,35 +489,35 @@ export const HostResponse = {
     return message;
   },
 
-  fromJSON(object: any): HostResponse {
+  fromJSON(object: any): SetupResponse {
     return {
       success: isSet(object.success) ? Boolean(object.success) : false,
-      host: isSet(object.host) ? HostItem.fromJSON(object.host) : undefined,
+      setup: isSet(object.setup) ? SetupItem.fromJSON(object.setup) : undefined,
     };
   },
 
-  toJSON(message: HostResponse): unknown {
+  toJSON(message: SetupResponse): unknown {
     const obj: any = {};
     message.success !== undefined && (obj.success = message.success);
-    message.host !== undefined &&
-      (obj.host = message.host ? HostItem.toJSON(message.host) : undefined);
+    message.setup !== undefined &&
+      (obj.setup = message.setup ? SetupItem.toJSON(message.setup) : undefined);
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<HostResponse>, I>>(
+  create<I extends Exact<DeepPartial<SetupResponse>, I>>(
     base?: I,
-  ): HostResponse {
-    return HostResponse.fromPartial(base ?? {});
+  ): SetupResponse {
+    return SetupResponse.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<HostResponse>, I>>(
+  fromPartial<I extends Exact<DeepPartial<SetupResponse>, I>>(
     object: I,
-  ): HostResponse {
-    const message = createBaseHostResponse();
+  ): SetupResponse {
+    const message = createBaseSetupResponse();
     message.success = object.success ?? false;
-    message.host =
-      object.host !== undefined && object.host !== null
-        ? HostItem.fromPartial(object.host)
+    message.setup =
+      object.setup !== undefined && object.setup !== null
+        ? SetupItem.fromPartial(object.setup)
         : undefined;
     return message;
   },
@@ -526,13 +540,13 @@ export const ClientDefinition = {
       name: 'GetClient',
       requestType: TokenRequest,
       requestStream: false,
-      responseType: HostResponse,
+      responseType: SetupResponse,
       responseStream: false,
       options: {},
     },
     postClient: {
       name: 'PostClient',
-      requestType: HostRequest,
+      requestType: SetupRequest,
       requestStream: false,
       responseType: SuccessResponse,
       responseStream: false,

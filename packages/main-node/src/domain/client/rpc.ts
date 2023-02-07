@@ -19,6 +19,7 @@ import {
 } from './type';
 
 class RpcClient implements Client {
+  private host: ClientHost;
   private raw: ClientRaw<
     AgentDefinition | DatabaseDefinition | HierarchyDefinition | QueryDefinition
   >;
@@ -35,6 +36,7 @@ class RpcClient implements Client {
       ],
       host,
     );
+    this.host = host;
     this.token = token;
     this.secret = secret || '';
   }
@@ -98,6 +100,10 @@ class RpcClient implements Client {
         })),
       })),
     };
+  }
+
+  public getSetup() {
+    return { api: 'rpc' as const, ...this.host };
   }
 
   public postAgent() {

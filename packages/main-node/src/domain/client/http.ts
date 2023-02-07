@@ -14,6 +14,7 @@ import {
 } from './type';
 
 class HttpClient implements Client {
+  private host: ClientHost;
   private raw: ClientRaw;
   private secret: string;
   private token: string;
@@ -63,6 +64,7 @@ class HttpClient implements Client {
     });
     this.raw = new ClientRaw();
     this.raw.use(router);
+    this.host = host;
     this.token = token;
     this.secret = secret || '';
   }
@@ -110,15 +112,6 @@ class HttpClient implements Client {
     }>('getDatabase?' + params.toString())();
   }
 
-  public postAgent() {
-    const params = new URLSearchParams({
-      secret: this.secret,
-    });
-    return this.call<{
-      success: boolean;
-    }>('postAgent?' + params.toString())({ token: this.token });
-  }
-
   public async getHierarchy(
     type: ClientType | '',
     name: string,
@@ -143,6 +136,19 @@ class HttpClient implements Client {
         databases: environment.databases,
       })),
     };
+  }
+
+  public getSetup() {
+    return { api: 'http' as const, ...this.host };
+  }
+
+  public postAgent() {
+    const params = new URLSearchParams({
+      secret: this.secret,
+    });
+    return this.call<{
+      success: boolean;
+    }>('postAgent?' + params.toString())({ token: this.token });
   }
 
   public postDatabase(

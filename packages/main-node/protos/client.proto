@@ -4,8 +4,8 @@ package dest;
 
 service Client {
   rpc DeleteClient (TokenRequest) returns (SuccessResponse) {}
-  rpc GetClient (TokenRequest) returns (HostResponse) {}
-  rpc PostClient (HostRequest) returns (SuccessResponse) {}
+  rpc GetClient (TokenRequest) returns (SetupResponse) {}
+  rpc PostClient (SetupRequest) returns (SuccessResponse) {}
 }
 
 // Secret
@@ -32,21 +32,22 @@ message TokenResponse {
   string token = 2;
 }
 
-// Host
+// Setup
 
-message HostItem {
-  string hostname = 1;
-  uint32 port = 2;
+message SetupItem {
+  string api = 1;
+  string hostname = 2;
+  uint32 port = 3;
 }
 
-message HostRequest {
+message SetupRequest {
   string secret = 1;
   string token = 2;
-  HostItem host = 3;
+  SetupItem setup = 3;
 }
 
-message HostResponse {
+message SetupResponse {
   bool success = 1;
-  HostItem host = 2;
+  SetupItem setup = 2;
 }
 
