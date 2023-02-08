@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package dest;
+
+service Context {
+  rpc DeleteContext (NameRequest) returns (SuccessResponse) {}
+  rpc GetContext (NameRequest) returns (EventsResponse) {}
+  rpc PostContext (EventsRequest) returns (SuccessResponse) {}
+  rpc UpdateContext (EventsRequest) returns (SuccessResponse) {}
+}
+
+// Secret
+
+message SecretRequest {
+  string secret = 1;
+}
+
+// Type
+
+enum TypeEnum {
+  DEFAULT_TYPE = 0;
+  SQLITE = 2049;
+  MARIADB = 3306;
+  MYSQL8 = 3307;
+}
+
+message TypeRequest {
+  string secret = 1;
+  TypeEnum type = 2;
+}
+
+// Name
+
+message NameRequest {
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
+}
+
+// Success
+
+message SuccessResponse {
+  bool success = 1;
+}
+
+// Schema
+
+message SchemasRequest {
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
+  repeated string schemas = 4;
+}
+
+message SchemasResponse {
+  bool success = 1;
+  repeated string schemas = 2;
+}
+
+// Event
+
+enum ActionEnum {
+  DEFAULT_ACTION = 0;
+  SAVE = 1;
+  REMOVE = 2;
+  READ = 3;
+  WRITE = 4;
+  ROOT = 5;
+  INTROSPECT = 6;
+}
+
+message EventItem {
+  ActionEnum action = 1;
+  string target = 2;
+  repeated string values = 3;
+}
+
+message EventRequest {
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
+  EventItem event = 4;
+}
+
+message EventsRequest {
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
+  repeated string schemas = 4;
+  repeated EventItem events = 5;
+}
+
+message EventsResponse {
+  bool success = 1;
+  repeated string schemas = 2;
+  repeated EventItem events = 3;
+}
