@@ -122,6 +122,22 @@ export interface NameRequest {
   name: string;
 }
 
+export interface SuccessResponse {
+  success: boolean;
+}
+
+export interface SchemasRequest {
+  secret: string;
+  type: TypeEnum;
+  name: string;
+  schemas: string[];
+}
+
+export interface SchemasResponse {
+  success: boolean;
+  schemas: string[];
+}
+
 export interface EventItem {
   action: ActionEnum;
   target: string;
@@ -135,8 +151,18 @@ export interface EventRequest {
   event: EventItem | undefined;
 }
 
-export interface SuccessResponse {
+export interface EventsRequest {
+  secret: string;
+  type: TypeEnum;
+  name: string;
+  schemas: string[];
+  events: EventItem[];
+}
+
+export interface EventsResponse {
   success: boolean;
+  schemas: string[];
+  events: EventItem[];
 }
 
 export interface ResultItem {
@@ -289,6 +315,232 @@ export const NameRequest = {
     message.secret = object.secret ?? '';
     message.type = object.type ?? 0;
     message.name = object.name ?? '';
+    return message;
+  },
+};
+
+function createBaseSuccessResponse(): SuccessResponse {
+  return { success: false };
+}
+
+export const SuccessResponse = {
+  encode(
+    message: SuccessResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.success === true) {
+      writer.uint32(8).bool(message.success);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SuccessResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSuccessResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.success = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SuccessResponse {
+    return { success: isSet(object.success) ? Boolean(object.success) : false };
+  },
+
+  toJSON(message: SuccessResponse): unknown {
+    const obj: any = {};
+    message.success !== undefined && (obj.success = message.success);
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SuccessResponse>, I>>(
+    base?: I,
+  ): SuccessResponse {
+    return SuccessResponse.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SuccessResponse>, I>>(
+    object: I,
+  ): SuccessResponse {
+    const message = createBaseSuccessResponse();
+    message.success = object.success ?? false;
+    return message;
+  },
+};
+
+function createBaseSchemasRequest(): SchemasRequest {
+  return { secret: '', type: 0, name: '', schemas: [] };
+}
+
+export const SchemasRequest = {
+  encode(
+    message: SchemasRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.secret !== '') {
+      writer.uint32(10).string(message.secret);
+    }
+    if (message.type !== 0) {
+      writer.uint32(16).int32(message.type);
+    }
+    if (message.name !== '') {
+      writer.uint32(26).string(message.name);
+    }
+    for (const v of message.schemas) {
+      writer.uint32(34).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SchemasRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSchemasRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.secret = reader.string();
+          break;
+        case 2:
+          message.type = reader.int32() as any;
+          break;
+        case 3:
+          message.name = reader.string();
+          break;
+        case 4:
+          message.schemas.push(reader.string());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SchemasRequest {
+    return {
+      secret: isSet(object.secret) ? String(object.secret) : '',
+      type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0,
+      name: isSet(object.name) ? String(object.name) : '',
+      schemas: Array.isArray(object?.schemas)
+        ? object.schemas.map((e: any) => String(e))
+        : [],
+    };
+  },
+
+  toJSON(message: SchemasRequest): unknown {
+    const obj: any = {};
+    message.secret !== undefined && (obj.secret = message.secret);
+    message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
+    message.name !== undefined && (obj.name = message.name);
+    if (message.schemas) {
+      obj.schemas = message.schemas.map((e) => e);
+    } else {
+      obj.schemas = [];
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SchemasRequest>, I>>(
+    base?: I,
+  ): SchemasRequest {
+    return SchemasRequest.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SchemasRequest>, I>>(
+    object: I,
+  ): SchemasRequest {
+    const message = createBaseSchemasRequest();
+    message.secret = object.secret ?? '';
+    message.type = object.type ?? 0;
+    message.name = object.name ?? '';
+    message.schemas = object.schemas?.map((e) => e) || [];
+    return message;
+  },
+};
+
+function createBaseSchemasResponse(): SchemasResponse {
+  return { success: false, schemas: [] };
+}
+
+export const SchemasResponse = {
+  encode(
+    message: SchemasResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.success === true) {
+      writer.uint32(8).bool(message.success);
+    }
+    for (const v of message.schemas) {
+      writer.uint32(18).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SchemasResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSchemasResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.success = reader.bool();
+          break;
+        case 2:
+          message.schemas.push(reader.string());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SchemasResponse {
+    return {
+      success: isSet(object.success) ? Boolean(object.success) : false,
+      schemas: Array.isArray(object?.schemas)
+        ? object.schemas.map((e: any) => String(e))
+        : [],
+    };
+  },
+
+  toJSON(message: SchemasResponse): unknown {
+    const obj: any = {};
+    message.success !== undefined && (obj.success = message.success);
+    if (message.schemas) {
+      obj.schemas = message.schemas.map((e) => e);
+    } else {
+      obj.schemas = [];
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SchemasResponse>, I>>(
+    base?: I,
+  ): SchemasResponse {
+    return SchemasResponse.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SchemasResponse>, I>>(
+    object: I,
+  ): SchemasResponse {
+    const message = createBaseSchemasResponse();
+    message.success = object.success ?? false;
+    message.schemas = object.schemas?.map((e) => e) || [];
     return message;
   },
 };
@@ -467,30 +719,54 @@ export const EventRequest = {
   },
 };
 
-function createBaseSuccessResponse(): SuccessResponse {
-  return { success: false };
+function createBaseEventsRequest(): EventsRequest {
+  return { secret: '', type: 0, name: '', schemas: [], events: [] };
 }
 
-export const SuccessResponse = {
+export const EventsRequest = {
   encode(
-    message: SuccessResponse,
+    message: EventsRequest,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
-    if (message.success === true) {
-      writer.uint32(8).bool(message.success);
+    if (message.secret !== '') {
+      writer.uint32(10).string(message.secret);
+    }
+    if (message.type !== 0) {
+      writer.uint32(16).int32(message.type);
+    }
+    if (message.name !== '') {
+      writer.uint32(26).string(message.name);
+    }
+    for (const v of message.schemas) {
+      writer.uint32(34).string(v!);
+    }
+    for (const v of message.events) {
+      EventItem.encode(v!, writer.uint32(42).fork()).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): SuccessResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): EventsRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSuccessResponse();
+    const message = createBaseEventsRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.success = reader.bool();
+          message.secret = reader.string();
+          break;
+        case 2:
+          message.type = reader.int32() as any;
+          break;
+        case 3:
+          message.name = reader.string();
+          break;
+        case 4:
+          message.schemas.push(reader.string());
+          break;
+        case 5:
+          message.events.push(EventItem.decode(reader, reader.uint32()));
           break;
         default:
           reader.skipType(tag & 7);
@@ -500,27 +776,147 @@ export const SuccessResponse = {
     return message;
   },
 
-  fromJSON(object: any): SuccessResponse {
-    return { success: isSet(object.success) ? Boolean(object.success) : false };
+  fromJSON(object: any): EventsRequest {
+    return {
+      secret: isSet(object.secret) ? String(object.secret) : '',
+      type: isSet(object.type) ? typeEnumFromJSON(object.type) : 0,
+      name: isSet(object.name) ? String(object.name) : '',
+      schemas: Array.isArray(object?.schemas)
+        ? object.schemas.map((e: any) => String(e))
+        : [],
+      events: Array.isArray(object?.events)
+        ? object.events.map((e: any) => EventItem.fromJSON(e))
+        : [],
+    };
   },
 
-  toJSON(message: SuccessResponse): unknown {
+  toJSON(message: EventsRequest): unknown {
     const obj: any = {};
-    message.success !== undefined && (obj.success = message.success);
+    message.secret !== undefined && (obj.secret = message.secret);
+    message.type !== undefined && (obj.type = typeEnumToJSON(message.type));
+    message.name !== undefined && (obj.name = message.name);
+    if (message.schemas) {
+      obj.schemas = message.schemas.map((e) => e);
+    } else {
+      obj.schemas = [];
+    }
+    if (message.events) {
+      obj.events = message.events.map((e) =>
+        e ? EventItem.toJSON(e) : undefined,
+      );
+    } else {
+      obj.events = [];
+    }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<SuccessResponse>, I>>(
+  create<I extends Exact<DeepPartial<EventsRequest>, I>>(
     base?: I,
-  ): SuccessResponse {
-    return SuccessResponse.fromPartial(base ?? {});
+  ): EventsRequest {
+    return EventsRequest.fromPartial(base ?? {});
   },
 
-  fromPartial<I extends Exact<DeepPartial<SuccessResponse>, I>>(
+  fromPartial<I extends Exact<DeepPartial<EventsRequest>, I>>(
     object: I,
-  ): SuccessResponse {
-    const message = createBaseSuccessResponse();
+  ): EventsRequest {
+    const message = createBaseEventsRequest();
+    message.secret = object.secret ?? '';
+    message.type = object.type ?? 0;
+    message.name = object.name ?? '';
+    message.schemas = object.schemas?.map((e) => e) || [];
+    message.events = object.events?.map((e) => EventItem.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseEventsResponse(): EventsResponse {
+  return { success: false, schemas: [], events: [] };
+}
+
+export const EventsResponse = {
+  encode(
+    message: EventsResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.success === true) {
+      writer.uint32(8).bool(message.success);
+    }
+    for (const v of message.schemas) {
+      writer.uint32(18).string(v!);
+    }
+    for (const v of message.events) {
+      EventItem.encode(v!, writer.uint32(26).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): EventsResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseEventsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.success = reader.bool();
+          break;
+        case 2:
+          message.schemas.push(reader.string());
+          break;
+        case 3:
+          message.events.push(EventItem.decode(reader, reader.uint32()));
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): EventsResponse {
+    return {
+      success: isSet(object.success) ? Boolean(object.success) : false,
+      schemas: Array.isArray(object?.schemas)
+        ? object.schemas.map((e: any) => String(e))
+        : [],
+      events: Array.isArray(object?.events)
+        ? object.events.map((e: any) => EventItem.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: EventsResponse): unknown {
+    const obj: any = {};
+    message.success !== undefined && (obj.success = message.success);
+    if (message.schemas) {
+      obj.schemas = message.schemas.map((e) => e);
+    } else {
+      obj.schemas = [];
+    }
+    if (message.events) {
+      obj.events = message.events.map((e) =>
+        e ? EventItem.toJSON(e) : undefined,
+      );
+    } else {
+      obj.events = [];
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<EventsResponse>, I>>(
+    base?: I,
+  ): EventsResponse {
+    return EventsResponse.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<EventsResponse>, I>>(
+    object: I,
+  ): EventsResponse {
+    const message = createBaseEventsResponse();
     message.success = object.success ?? false;
+    message.schemas = object.schemas?.map((e) => e) || [];
+    message.events = object.events?.map((e) => EventItem.fromPartial(e)) || [];
     return message;
   },
 };

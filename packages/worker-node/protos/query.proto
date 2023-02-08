@@ -28,6 +28,26 @@ message NameRequest {
   string name = 3;
 }
 
+// Success
+
+message SuccessResponse {
+  bool success = 1;
+}
+
+// Schema
+
+message SchemasRequest {
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
+  repeated string schemas = 4;
+}
+
+message SchemasResponse {
+  bool success = 1;
+  repeated string schemas = 2;
+}
+
 // Event
 
 enum ActionEnum {
@@ -53,10 +73,18 @@ message EventRequest {
   EventItem event = 4;
 }
 
-// Success
+message EventsRequest {
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
+  repeated string schemas = 4;
+  repeated EventItem events = 5;
+}
 
-message SuccessResponse {
+message EventsResponse {
   bool success = 1;
+  repeated string schemas = 2;
+  repeated EventItem events = 3;
 }
 
 // Result

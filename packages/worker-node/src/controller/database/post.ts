@@ -30,8 +30,8 @@ const postDatabaseByHttp: Route = {
         },
       };
     }
-    const database = await createDatabase(adapterType, name, schemas);
-    if (!database) {
+    const scheduler = await createDatabase(adapterType, name, schemas);
+    if (!scheduler) {
       return {
         code: 409,
         body: {
@@ -65,12 +65,12 @@ const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
           success: false,
         };
       }
-      const database = await createDatabase(
+      const scheduler = await createDatabase(
         adapterType,
         name,
         schemas.map((schema) => JSON.parse(schema)),
       );
-      if (!database) {
+      if (!scheduler) {
         return {
           success: false,
         };
