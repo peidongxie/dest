@@ -11,17 +11,18 @@ import { createMemo } from '../memo';
 const createContext = (
   type: ClientType,
   name: string,
-  schemas?: EntitySchemaOptions<unknown>[],
-  events?: ClientEvent<unknown>[],
+  schemas: EntitySchemaOptions<unknown>[],
+  events: ClientEvent<unknown>[],
 ): Promise<Scheduler<Context>> | null => {
   const scheduler = createMemo(
     ['context', type, name],
-    new Scheduler(new Context(type, name, schemas, events)),
+    new Scheduler(new Context(type, name)),
   );
   if (!scheduler) return null;
   const clients = readClients();
   const promise = scheduler.runTask(async (context) => {
     await context.addClient(...clients);
+    await context.setEvents(schemas, events);
     return scheduler;
   });
   return promise;

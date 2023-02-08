@@ -15,16 +15,11 @@ class Context {
   private schemas: EntitySchemaOptions<unknown>[];
   private type: ClientType;
 
-  constructor(
-    type: ClientType,
-    name: string,
-    schemas?: EntitySchemaOptions<unknown>[],
-    events?: ClientEvent<unknown>[],
-  ) {
+  constructor(type: ClientType, name: string) {
     this.type = type;
     this.name = name;
-    this.schemas = schemas || [];
-    this.events = events || [];
+    this.schemas = [];
+    this.events = [];
     this.clients = new Set();
   }
 
