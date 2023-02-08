@@ -1,6 +1,6 @@
 import { randomInt, randomUUID } from 'crypto';
 import { type EntitySchemaOptions } from 'typeorm';
-import { type AssertionActuality } from '../actuality';
+import { type AssertionActuality } from '../assertion';
 import {
   type Client,
   type ClientEvent,
@@ -18,18 +18,19 @@ class Context {
   constructor(
     type: ClientType,
     name: string,
-    schemas: EntitySchemaOptions<unknown>[],
+    schemas?: EntitySchemaOptions<unknown>[],
+    events?: ClientEvent<unknown>[],
   ) {
     this.type = type;
     this.name = name;
-    this.schemas = schemas;
-    this.events = [];
+    this.schemas = schemas || [];
+    this.events = events || [];
     this.clients = new Set();
   }
 
   public addClient(...clients: Client[]): Promise<void[]> {
     const promises = clients.map(async (client) => {
-      await this.setEvents(this.events, client);
+      await this.setEvents(this.schemas, this.events, client);
       this.clients.add(client);
     });
     return Promise.allSettled(promises).then((promiseSettledResults) =>
@@ -41,6 +42,16 @@ class Context {
         }
       }),
     );
+  }
+
+  public getEvents(): {
+    schemas: EntitySchemaOptions<unknown>[];
+    events: ClientEvent<unknown>[];
+  } {
+    return {
+      schemas: this.schemas,
+      events: this.events,
+    };
   }
 
   public async read<T>(
@@ -82,9 +93,11 @@ class Context {
   }
 
   public async setEvents(
+    schemas: EntitySchemaOptions<unknown>[],
     events: ClientEvent<unknown>[],
     client?: Client,
   ): Promise<void> {
+    this.schemas = schemas;
     this.events = events;
     const clients = client ? [client] : Array.from(this.clients);
     const promises = clients.map(async (client) => {
@@ -97,7 +110,7 @@ class Context {
         this.schemas,
       );
       if (!postDatabaseSuccess) throw new TypeError('Bad Schemas');
-      for (const event of events) {
+      for (const event of this.events) {
         const { success: postQuerySuccess } = await client.postQuery(
           this.type,
           this.name,
