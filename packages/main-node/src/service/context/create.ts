@@ -9,13 +9,13 @@ const createContext = (
   schemas: EntitySchemaOptions<unknown>[],
 ): Promise<Scheduler<Context>> | null => {
   const scheduler = createMemo(
-    ['context'],
+    ['context', type, name],
     new Scheduler(new Context(type, name, schemas)),
   );
   if (!scheduler) return null;
   const clients = readClients();
   const promise = scheduler.runTask(async (context) => {
-    context.addClient(...clients);
+    await context.addClient(...clients);
     return scheduler;
   });
   return promise;
