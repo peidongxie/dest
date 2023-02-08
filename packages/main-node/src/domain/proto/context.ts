@@ -111,6 +111,10 @@ export function actionEnumToJSON(object: ActionEnum): string {
   }
 }
 
+export interface SecretRequest {
+  secret: string;
+}
+
 export interface TypeRequest {
   secret: string;
   type: TypeEnum;
@@ -165,16 +169,63 @@ export interface EventsResponse {
   events: EventItem[];
 }
 
-export interface ResultItem {
-  time: number;
-  error: string;
-  rows: string[];
+function createBaseSecretRequest(): SecretRequest {
+  return { secret: '' };
 }
 
-export interface ResultResponse {
-  success: boolean;
-  result: ResultItem | undefined;
-}
+export const SecretRequest = {
+  encode(
+    message: SecretRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.secret !== '') {
+      writer.uint32(10).string(message.secret);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SecretRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSecretRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.secret = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SecretRequest {
+    return { secret: isSet(object.secret) ? String(object.secret) : '' };
+  },
+
+  toJSON(message: SecretRequest): unknown {
+    const obj: any = {};
+    message.secret !== undefined && (obj.secret = message.secret);
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SecretRequest>, I>>(
+    base?: I,
+  ): SecretRequest {
+    return SecretRequest.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SecretRequest>, I>>(
+    object: I,
+  ): SecretRequest {
+    const message = createBaseSecretRequest();
+    message.secret = object.secret ?? '';
+    return message;
+  },
+};
 
 function createBaseTypeRequest(): TypeRequest {
   return { secret: '', type: 0 };
@@ -921,175 +972,40 @@ export const EventsResponse = {
   },
 };
 
-function createBaseResultItem(): ResultItem {
-  return { time: 0, error: '', rows: [] };
-}
-
-export const ResultItem = {
-  encode(
-    message: ResultItem,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.time !== 0) {
-      writer.uint32(8).uint32(message.time);
-    }
-    if (message.error !== '') {
-      writer.uint32(18).string(message.error);
-    }
-    for (const v of message.rows) {
-      writer.uint32(26).string(v!);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): ResultItem {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseResultItem();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.time = reader.uint32();
-          break;
-        case 2:
-          message.error = reader.string();
-          break;
-        case 3:
-          message.rows.push(reader.string());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ResultItem {
-    return {
-      time: isSet(object.time) ? Number(object.time) : 0,
-      error: isSet(object.error) ? String(object.error) : '',
-      rows: Array.isArray(object?.rows)
-        ? object.rows.map((e: any) => String(e))
-        : [],
-    };
-  },
-
-  toJSON(message: ResultItem): unknown {
-    const obj: any = {};
-    message.time !== undefined && (obj.time = Math.round(message.time));
-    message.error !== undefined && (obj.error = message.error);
-    if (message.rows) {
-      obj.rows = message.rows.map((e) => e);
-    } else {
-      obj.rows = [];
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ResultItem>, I>>(base?: I): ResultItem {
-    return ResultItem.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<ResultItem>, I>>(
-    object: I,
-  ): ResultItem {
-    const message = createBaseResultItem();
-    message.time = object.time ?? 0;
-    message.error = object.error ?? '';
-    message.rows = object.rows?.map((e) => e) || [];
-    return message;
-  },
-};
-
-function createBaseResultResponse(): ResultResponse {
-  return { success: false, result: undefined };
-}
-
-export const ResultResponse = {
-  encode(
-    message: ResultResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.success === true) {
-      writer.uint32(8).bool(message.success);
-    }
-    if (message.result !== undefined) {
-      ResultItem.encode(message.result, writer.uint32(18).fork()).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): ResultResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseResultResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.success = reader.bool();
-          break;
-        case 2:
-          message.result = ResultItem.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ResultResponse {
-    return {
-      success: isSet(object.success) ? Boolean(object.success) : false,
-      result: isSet(object.result)
-        ? ResultItem.fromJSON(object.result)
-        : undefined,
-    };
-  },
-
-  toJSON(message: ResultResponse): unknown {
-    const obj: any = {};
-    message.success !== undefined && (obj.success = message.success);
-    message.result !== undefined &&
-      (obj.result = message.result
-        ? ResultItem.toJSON(message.result)
-        : undefined);
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ResultResponse>, I>>(
-    base?: I,
-  ): ResultResponse {
-    return ResultResponse.fromPartial(base ?? {});
-  },
-
-  fromPartial<I extends Exact<DeepPartial<ResultResponse>, I>>(
-    object: I,
-  ): ResultResponse {
-    const message = createBaseResultResponse();
-    message.success = object.success ?? false;
-    message.result =
-      object.result !== undefined && object.result !== null
-        ? ResultItem.fromPartial(object.result)
-        : undefined;
-    return message;
-  },
-};
-
-export type QueryDefinition = typeof QueryDefinition;
-export const QueryDefinition = {
-  name: 'Query',
-  fullName: 'dest.Query',
+export type ContextDefinition = typeof ContextDefinition;
+export const ContextDefinition = {
+  name: 'Context',
+  fullName: 'dest.Context',
   methods: {
-    postQuery: {
-      name: 'PostQuery',
-      requestType: EventRequest,
+    deleteContext: {
+      name: 'DeleteContext',
+      requestType: NameRequest,
       requestStream: false,
-      responseType: ResultResponse,
+      responseType: SuccessResponse,
+      responseStream: false,
+      options: {},
+    },
+    getContext: {
+      name: 'GetContext',
+      requestType: NameRequest,
+      requestStream: false,
+      responseType: EventsResponse,
+      responseStream: false,
+      options: {},
+    },
+    postContext: {
+      name: 'PostContext',
+      requestType: EventsRequest,
+      requestStream: false,
+      responseType: SuccessResponse,
+      responseStream: false,
+      options: {},
+    },
+    updateContext: {
+      name: 'UpdateContext',
+      requestType: EventsRequest,
+      requestStream: false,
+      responseType: SuccessResponse,
       responseStream: false,
       options: {},
     },

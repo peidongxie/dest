@@ -53,6 +53,8 @@ const createAssertion = (
   if (!actuality) return null;
   const expectation = readExpectation(expectationUuid);
   if (!expectation) return null;
+  const { error } = actuality;
+  if (error) return null;
   const differences = [];
   let start = 0;
   for (const expectationPart of expectation.parts) {

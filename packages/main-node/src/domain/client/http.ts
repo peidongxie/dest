@@ -132,8 +132,8 @@ class HttpClient implements Client {
     return {
       success,
       environments: environments.map((environment) => ({
+        ...environment,
         type: this.getType(environment.type),
-        databases: environment.databases,
       })),
     };
   }

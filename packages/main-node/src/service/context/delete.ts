@@ -10,7 +10,7 @@ const deleteContext = (
   if (!scheduler) return null;
   const clients = readClients();
   const promise = scheduler.runTask(async (context) => {
-    context.addClient(...clients);
+    await context.removeClient(...clients);
     return scheduler;
   });
   return promise;

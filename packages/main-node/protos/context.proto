@@ -2,8 +2,17 @@ syntax = "proto3";
 
 package dest;
 
-service Query {
-  rpc PostQuery (EventRequest) returns (ResultResponse) {}
+service Context {
+  rpc DeleteContext (NameRequest) returns (SuccessResponse) {}
+  rpc GetContext (NameRequest) returns (EventsResponse) {}
+  rpc PostContext (EventsRequest) returns (SuccessResponse) {}
+  rpc UpdateContext (EventsRequest) returns (SuccessResponse) {}
+}
+
+// Secret
+
+message SecretRequest {
+  string secret = 1;
 }
 
 // Type
@@ -85,17 +94,4 @@ message EventsResponse {
   bool success = 1;
   repeated string schemas = 2;
   repeated EventItem events = 3;
-}
-
-// Result
-
-message ResultItem {
-  uint32 time = 1;
-  string error = 2;
-  repeated string rows = 3;
-}
-
-message ResultResponse {
-  bool success = 1;
-  ResultItem result = 2;
 }

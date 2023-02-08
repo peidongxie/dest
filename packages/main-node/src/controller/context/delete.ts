@@ -1,12 +1,11 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
-import { type EntitySchemaOptions } from 'typeorm';
-import { DatabaseDefinition } from '../../domain';
-import { createDatabase, readSecret, readType } from '../../service';
+import { ContextDefinition } from '../../domain';
+import { deleteContext, readSecret, readType } from '../../service';
 
-const postDatabaseByHttp: Route = {
-  method: 'POST',
-  pathname: '/database',
+const deleteContextByHttp: Route = {
+  method: 'DELETE',
+  pathname: '/context',
   handler: async (req) => {
     const secret = req.url.searchParams.get('secret');
     if ((secret || '') !== readSecret()) {
@@ -17,12 +16,11 @@ const postDatabaseByHttp: Route = {
         },
       };
     }
-    const { body, url } = req;
+    const { url } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const schemas = await body.json<EntitySchemaOptions<unknown>[]>();
-    const adapterType = readType(type);
-    if (!adapterType || !name || !Array.isArray(schemas)) {
+    const clientType = readType(type);
+    if (!clientType || !name) {
       return {
         code: 400,
         body: {
@@ -30,17 +28,17 @@ const postDatabaseByHttp: Route = {
         },
       };
     }
-    const scheduler = await createDatabase(adapterType, name, schemas);
+    const scheduler = await deleteContext(clientType, name);
     if (!scheduler) {
       return {
-        code: 409,
+        code: 404,
         body: {
           success: false,
         },
       };
     }
     return {
-      code: 201,
+      code: 200,
       body: {
         success: true,
       },
@@ -48,28 +46,24 @@ const postDatabaseByHttp: Route = {
   },
 };
 
-const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
-  definition: DatabaseDefinition,
+const deleteContextByRpc: Plugin<ContextDefinition> = {
+  definition: ContextDefinition,
   handlers: {
-    postDatabase: async (req) => {
+    deleteContext: async (req) => {
       const { secret } = req;
       if ((secret || '') !== readSecret()) {
         return {
           success: false,
         };
       }
-      const { name, schemas, type } = req;
-      const adapterType = readType(type);
-      if (!adapterType || !name || !Array.isArray(schemas)) {
+      const { name, type } = req;
+      const clientType = readType(type);
+      if (!clientType || !name) {
         return {
           success: false,
         };
       }
-      const scheduler = await createDatabase(
-        adapterType,
-        name,
-        schemas.map((schema) => JSON.parse(schema)),
-      );
+      const scheduler = await deleteContext(clientType, name);
       if (!scheduler) {
         return {
           success: false,
@@ -82,4 +76,4 @@ const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
   },
 };
 
-export { postDatabaseByHttp, postDatabaseByRpc };
+export { deleteContextByHttp, deleteContextByRpc };
