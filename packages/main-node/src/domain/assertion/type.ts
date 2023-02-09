@@ -8,9 +8,9 @@ interface AssertionCondition {
 
 interface AssertionActuality<T> {
   uuid: string;
-  error: string;
-  rows: T[];
   snapshots: ClientSnapshot<unknown>[];
+  rows: T[];
+  error: string;
   time: number;
 }
 
@@ -21,8 +21,8 @@ interface AssertionPart<T> {
 
 interface AssertionExpectation<T> {
   uuid: string;
-  parts: AssertionPart<T>[];
   snapshots: ClientSnapshot<unknown>[];
+  parts: AssertionPart<T>[];
 }
 
 interface AssertionDifference<A extends E, E> {

@@ -145,10 +145,11 @@ class HttpClient implements Client {
   public postAgent() {
     const params = new URLSearchParams({
       secret: this.secret,
+      token: this.token,
     });
     return this.call<{
       success: boolean;
-    }>('postAgent?' + params.toString())({ token: this.token });
+    }>('postAgent?' + params.toString())();
   }
 
   public postDatabase(

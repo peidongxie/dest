@@ -16,8 +16,8 @@ const postAgentByHttp: Route = {
         },
       };
     }
-    const { body } = req;
-    const { token } = await body.json<{ token: string }>();
+    const { url } = req;
+    const token = url.searchParams.get('token');
     if (!token) {
       return {
         code: 400,

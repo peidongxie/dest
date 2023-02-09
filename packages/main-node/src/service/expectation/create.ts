@@ -13,8 +13,8 @@ const createExpectation = <T>(
   const uuid = randomUUID();
   return createMemo(['expectation', uuid], {
     uuid,
-    parts,
     snapshots: snapshots || [],
+    parts,
   });
 };
 

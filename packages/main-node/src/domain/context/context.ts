@@ -64,9 +64,9 @@ class Context {
     });
     return {
       uuid: randomUUID(),
-      error: readResult.error || '',
-      rows: readResult.rows,
       snapshots: [],
+      rows: readResult.rows,
+      error: readResult.error || '',
       time: readResult.time,
     };
   }
@@ -149,9 +149,9 @@ class Context {
     await client.deleteDatabase(type, name);
     return {
       uuid: randomUUID(),
-      error: writeResult.error || introspectResult.error || '',
-      rows: writeResult.rows,
       snapshots: introspectResult.rows,
+      rows: writeResult.rows,
+      error: writeResult.error || introspectResult.error || '',
       time: writeResult.time,
     };
   }
