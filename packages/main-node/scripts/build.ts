@@ -71,6 +71,7 @@ const buildMainProtoOptions: BuildOptions = {
   // Input
   entryPoints: [
     'protos/actuality.proto',
+    'protos/assertion.proto',
     'protos/client.proto',
     'protos/context.proto',
     'protos/expectation.proto',

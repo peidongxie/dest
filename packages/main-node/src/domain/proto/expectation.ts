@@ -16,6 +16,12 @@ export interface UuidRequest {
   uuid: string;
 }
 
+export interface UuidsRequest {
+  secret: string;
+  actuality: string;
+  expectation: string;
+}
+
 export interface UuidResponse {
   success: boolean;
   uuid: string;
@@ -233,6 +239,85 @@ export const UuidRequest = {
     const message = createBaseUuidRequest();
     message.secret = object.secret ?? '';
     message.uuid = object.uuid ?? '';
+    return message;
+  },
+};
+
+function createBaseUuidsRequest(): UuidsRequest {
+  return { secret: '', actuality: '', expectation: '' };
+}
+
+export const UuidsRequest = {
+  encode(
+    message: UuidsRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.secret !== '') {
+      writer.uint32(10).string(message.secret);
+    }
+    if (message.actuality !== '') {
+      writer.uint32(18).string(message.actuality);
+    }
+    if (message.expectation !== '') {
+      writer.uint32(26).string(message.expectation);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): UuidsRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUuidsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.secret = reader.string();
+          break;
+        case 2:
+          message.actuality = reader.string();
+          break;
+        case 3:
+          message.expectation = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UuidsRequest {
+    return {
+      secret: isSet(object.secret) ? String(object.secret) : '',
+      actuality: isSet(object.actuality) ? String(object.actuality) : '',
+      expectation: isSet(object.expectation) ? String(object.expectation) : '',
+    };
+  },
+
+  toJSON(message: UuidsRequest): unknown {
+    const obj: any = {};
+    message.secret !== undefined && (obj.secret = message.secret);
+    message.actuality !== undefined && (obj.actuality = message.actuality);
+    message.expectation !== undefined &&
+      (obj.expectation = message.expectation);
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UuidsRequest>, I>>(
+    base?: I,
+  ): UuidsRequest {
+    return UuidsRequest.fromPartial(base ?? {});
+  },
+
+  fromPartial<I extends Exact<DeepPartial<UuidsRequest>, I>>(
+    object: I,
+  ): UuidsRequest {
+    const message = createBaseUuidsRequest();
+    message.secret = object.secret ?? '';
+    message.actuality = object.actuality ?? '';
+    message.expectation = object.expectation ?? '';
     return message;
   },
 };

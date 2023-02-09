@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package dest;
+
+service Assertion {
+  rpc PostAssertion (UuidsRequest) returns (DifferencesResponse) {}
+}
+
+// Secret
+
+message SecretRequest {
+  string secret = 1;
+}
+
+// Success
+
+message SuccessResponse {
+  bool success = 1;
+}
+
+// Difference
+
+message DifferenceItem {
+  string table = 1;
+  uint32 index = 2;
+  string row = 3;
+  repeated string rows = 4;
+}
+
+message DifferencesResponse {
+  bool success = 1;
+  repeated DifferenceItem differences = 2;
+}
+
+// Uuid
+
+message UuidRequest {
+  string secret = 1;
+  string uuid = 2;
+}
+
+message UuidsRequest {
+  string secret = 1;
+  string actuality = 2;
+  string expectation = 3;
+}
+
+message UuidResponse {
+  bool success = 1;
+  string uuid = 2;
+}

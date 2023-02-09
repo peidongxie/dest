@@ -27,6 +27,12 @@ message UuidRequest {
   string uuid = 2;
 }
 
+message UuidsRequest {
+  string secret = 1;
+  string actuality = 2;
+  string expectation = 3;
+}
+
 message UuidResponse {
   bool success = 1;
   string uuid = 2;
