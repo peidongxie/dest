@@ -20,31 +20,35 @@ const postContextByHttp: Route = {
     const { body, url } = req;
     const name = url.searchParams.get('name');
     const type = url.searchParams.get('type');
-    const { events, schemas } = await body.json<{
+    const dataset = await body.json<{
       schemas: EntitySchemaOptions<unknown>[];
       events: ClientEvent<unknown>[];
     }>();
     const clientType = readType(type);
-    const clientEvents = events?.map<ClientEvent<unknown> | null>((event) => {
-      const clientAction = readAction(event?.action);
-      if (
-        !clientAction ||
-        clientAction === 'read' ||
-        clientAction === 'root' ||
-        clientAction === 'introspect' ||
-        !event.target ||
-        !Array.isArray(event.values)
-      )
-        return null;
-      return {
-        ...event,
-        action: clientAction,
-      };
-    });
+    const clientEvents = dataset?.events?.map<ClientEvent<unknown> | null>(
+      (event) => {
+        const clientAction = readAction(event?.action);
+        if (
+          !clientAction ||
+          clientAction === 'read' ||
+          clientAction === 'root' ||
+          clientAction === 'introspect' ||
+          !event.target ||
+          !Array.isArray(event.values)
+        )
+          return null;
+        return {
+          ...event,
+          action: clientAction,
+        };
+      },
+    );
     if (
       !clientType ||
       !name ||
-      !Array.isArray(schemas) ||
+      !dataset ||
+      !Array.isArray(dataset.schemas) ||
+      !Array.isArray(dataset.events) ||
       !clientEvents?.every((event) => event !== null)
     ) {
       return {
@@ -57,7 +61,7 @@ const postContextByHttp: Route = {
     const scheduler = await createContext(
       clientType,
       name,
-      schemas,
+      dataset.schemas,
       clientEvents as ClientEvent<unknown>[],
     );
     if (!scheduler) {
@@ -87,29 +91,33 @@ const postContextByRpc: Plugin<ContextDefinition> = {
           success: false,
         };
       }
-      const { events, name, schemas, type } = req;
+      const { dataset, name, type } = req;
       const clientType = readType(type);
-      const clientEvents = events?.map<ClientEvent<unknown> | null>((event) => {
-        const clientAction = readAction(event?.action);
-        if (
-          !clientAction ||
-          clientAction === 'read' ||
-          clientAction === 'root' ||
-          clientAction === 'introspect' ||
-          !event.target ||
-          !Array.isArray(event.values)
-        )
-          return null;
-        return {
-          ...event,
-          action: clientAction,
-          values: event.values.map((value) => JSON.parse(value)),
-        };
-      });
+      const clientEvents = dataset?.events?.map<ClientEvent<unknown> | null>(
+        (event) => {
+          const clientAction = readAction(event?.action);
+          if (
+            !clientAction ||
+            clientAction === 'read' ||
+            clientAction === 'root' ||
+            clientAction === 'introspect' ||
+            !event.target ||
+            !Array.isArray(event.values)
+          )
+            return null;
+          return {
+            ...event,
+            action: clientAction,
+            values: event.values.map((value) => JSON.parse(value)),
+          };
+        },
+      );
       if (
         !clientType ||
         !name ||
-        !Array.isArray(schemas) ||
+        !dataset ||
+        !Array.isArray(dataset.schemas) ||
+        !Array.isArray(dataset.events) ||
         !clientEvents?.every((event) => event !== null)
       ) {
         return {
@@ -119,7 +127,7 @@ const postContextByRpc: Plugin<ContextDefinition> = {
       const scheduler = await createContext(
         clientType,
         name,
-        schemas.map((schema) => JSON.parse(schema)),
+        dataset.schemas.map((schema) => JSON.parse(schema)),
         clientEvents as ClientEvent<unknown>[],
       );
       if (!scheduler) {

@@ -4,9 +4,9 @@ package dest;
 
 service Context {
   rpc DeleteContext (NameRequest) returns (SuccessResponse) {}
-  rpc GetContext (NameRequest) returns (EventsResponse) {}
-  rpc PostContext (EventsRequest) returns (SuccessResponse) {}
-  rpc UpdateContext (EventsRequest) returns (SuccessResponse) {}
+  rpc GetContext (NameRequest) returns (DatasetResponse) {}
+  rpc PostContext (DatasetRequest) returns (SuccessResponse) {}
+  rpc UpdateContext (DatasetRequest) returns (SuccessResponse) {}
 }
 
 // Secret
@@ -37,26 +37,6 @@ message NameRequest {
   string name = 3;
 }
 
-// Success
-
-message SuccessResponse {
-  bool success = 1;
-}
-
-// Schema
-
-message SchemasRequest {
-  string secret = 1;
-  TypeEnum type = 2;
-  string name = 3;
-  repeated string schemas = 4;
-}
-
-message SchemasResponse {
-  bool success = 1;
-  repeated string schemas = 2;
-}
-
 // Event
 
 enum ActionEnum {
@@ -82,16 +62,27 @@ message EventRequest {
   EventItem event = 4;
 }
 
-message EventsRequest {
-  string secret = 1;
-  TypeEnum type = 2;
-  string name = 3;
+// Success
+
+message SuccessResponse {
+  bool success = 1;
+}
+
+// Dataset
+
+message DatasetItem {
   repeated string schemas = 4;
   repeated EventItem events = 5;
 }
 
-message EventsResponse {
+message DatasetRequest {
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
+  DatasetItem dataset = 4;
+}
+
+message DatasetResponse {
   bool success = 1;
-  repeated string schemas = 2;
-  repeated EventItem events = 3;
+  DatasetItem dataset = 4;
 }

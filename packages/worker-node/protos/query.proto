@@ -6,6 +6,12 @@ service Query {
   rpc PostQuery (EventRequest) returns (ResultResponse) {}
 }
 
+// Secret
+
+message SecretRequest {
+  string secret = 1;
+}
+
 // Type
 
 enum TypeEnum {
@@ -26,26 +32,6 @@ message NameRequest {
   string secret = 1;
   TypeEnum type = 2;
   string name = 3;
-}
-
-// Success
-
-message SuccessResponse {
-  bool success = 1;
-}
-
-// Schema
-
-message SchemasRequest {
-  string secret = 1;
-  TypeEnum type = 2;
-  string name = 3;
-  repeated string schemas = 4;
-}
-
-message SchemasResponse {
-  bool success = 1;
-  repeated string schemas = 2;
 }
 
 // Event
@@ -73,18 +59,10 @@ message EventRequest {
   EventItem event = 4;
 }
 
-message EventsRequest {
-  string secret = 1;
-  TypeEnum type = 2;
-  string name = 3;
-  repeated string schemas = 4;
-  repeated EventItem events = 5;
-}
+// Success
 
-message EventsResponse {
+message SuccessResponse {
   bool success = 1;
-  repeated string schemas = 2;
-  repeated EventItem events = 3;
 }
 
 // Result
@@ -98,4 +76,18 @@ message ResultItem {
 message ResultResponse {
   bool success = 1;
   ResultItem result = 2;
+}
+
+// Schema
+
+message SchemasRequest {
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
+  repeated string schemas = 4;
+}
+
+message SchemasResponse {
+  bool success = 1;
+  repeated string schemas = 2;
 }

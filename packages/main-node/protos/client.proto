@@ -50,4 +50,3 @@ message SetupResponse {
   bool success = 1;
   SetupItem setup = 2;
 }
-
