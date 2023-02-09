@@ -1,12 +1,18 @@
 import {
+  deleteActualityByHttp,
+  deleteActualityByRpc,
   deleteClientByHttp,
   deleteClientByRpc,
   deleteContextByHttp,
   deleteContextByRpc,
+  getActualityByHttp,
+  getActualityByRpc,
   getClientByHttp,
   getClientByRpc,
   getContextByHttp,
   getContextByRpc,
+  postActualityByHttp,
+  postActualityByRpc,
   postClientByHttp,
   postClientByRpc,
   postContextByHttp,
@@ -53,10 +59,13 @@ for (const [port, call] of Object.entries(config.server)) {
   if (call === 'http') {
     await createServer(
       [
+        deleteActualityByHttp,
         deleteClientByHttp,
         deleteContextByHttp,
+        getActualityByHttp,
         getClientByHttp,
         getContextByHttp,
+        postActualityByHttp,
         postClientByHttp,
         postContextByHttp,
         putContextByHttp,
@@ -67,10 +76,13 @@ for (const [port, call] of Object.entries(config.server)) {
   if (call === 'rpc') {
     await createServer(
       [
+        deleteActualityByRpc,
         deleteClientByRpc,
         deleteContextByRpc,
+        getActualityByRpc,
         getClientByRpc,
         getContextByRpc,
+        postActualityByRpc,
         postClientByRpc,
         postContextByRpc,
         putContextByRpc,

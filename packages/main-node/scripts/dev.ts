@@ -69,7 +69,11 @@ const buildMainProtoOptions: BuildOptions = {
   platform: 'node',
   tsconfig: 'tsconfig.json',
   // Input
-  entryPoints: ['protos/client.proto'],
+  entryPoints: [
+    'protos/actuality.proto',
+    'protos/client.proto',
+    'protos/context.proto',
+  ],
   // Output contents
   format: 'esm',
   splitting: true,

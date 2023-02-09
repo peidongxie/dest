@@ -1,6 +1,7 @@
 import { type ClientSnapshot } from '../client';
 
 interface AssertionCondition {
+  action: 'read' | 'write';
   query: string;
   values: unknown[];
   tables: string[];
