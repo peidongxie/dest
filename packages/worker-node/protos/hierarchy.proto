@@ -6,13 +6,15 @@ service Hierarchy {
   rpc GetHierarchy (LevelRequest) returns (EnvironmentsResponse) {}
 }
 
-// Secret
+// Enum
 
-message SecretRequest {
-  string secret = 1;
+enum LevelEnum {
+  DEFAULT_LEVEL = 0;
+  ENVIRONMENT = 1;
+  DATABASE = 2;
+  TABLE = 3;
+  ROW = 4;
 }
-
-// Type
 
 enum TypeEnum {
   DEFAULT_TYPE = 0;
@@ -20,6 +22,14 @@ enum TypeEnum {
   MARIADB = 3306;
   MYSQL8 = 3307;
 }
+
+// Secret
+
+message SecretRequest {
+  string secret = 1;
+}
+
+// Type
 
 message TypeRequest {
   string secret = 1;
@@ -45,13 +55,6 @@ message TableRequest {
 
 // Level
 
-enum LevelEnum {
-  DEFAULT_LEVEL = 0;
-  ENVIRONMENT = 1;
-  DATABASE = 2;
-  TABLE = 3;
-  ROW = 4;
-}
 
 message LevelRequest {
   string secret = 1;

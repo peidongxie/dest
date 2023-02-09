@@ -22,7 +22,7 @@ const deleteDatabase = (
   return promise;
 };
 
-const deleteDatabases = (): Promise<Scheduler<Database>[]> | null => {
+const deleteDatabases = (): Promise<Scheduler<Database>[]> => {
   const promises = [];
   const rootScheduler = deleteMemo<Scheduler<Database>>(['database']);
   const types = readTypes();

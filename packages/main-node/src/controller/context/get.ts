@@ -13,8 +13,10 @@ const getContextByHttp: Route = {
         code: 401,
         body: {
           success: false,
-          schemas: [],
-          events: [],
+          dataset: {
+            schemas: [],
+            events: [],
+          },
         },
       };
     }
@@ -27,8 +29,10 @@ const getContextByHttp: Route = {
         code: 400,
         body: {
           success: false,
-          schemas: [],
-          events: [],
+          dataset: {
+            schemas: [],
+            events: [],
+          },
         },
       };
     }
@@ -38,18 +42,19 @@ const getContextByHttp: Route = {
         code: 404,
         body: {
           success: false,
-          schemas: [],
-          events: [],
+          dataset: {
+            schemas: [],
+            events: [],
+          },
         },
       };
     }
-    const { events, schemas } = scheduler.getTarget().getEvents();
+    const dataset = scheduler.getTarget().getDataset();
     return {
       code: 200,
       body: {
         success: true,
-        schemas,
-        events,
+        dataset,
       },
     };
   },
@@ -63,8 +68,10 @@ const getContextByRpc: Plugin<ContextDefinition> = {
       if ((secret || '') !== readSecret()) {
         return {
           success: false,
-          schemas: [],
-          events: [],
+          dataset: {
+            schemas: [],
+            events: [],
+          },
         };
       }
       const { name, type } = req;
@@ -72,27 +79,33 @@ const getContextByRpc: Plugin<ContextDefinition> = {
       if (!adapterType || !name) {
         return {
           success: false,
-          schemas: [],
-          events: [],
+          dataset: {
+            schemas: [],
+            events: [],
+          },
         };
       }
       const scheduler = readContext(adapterType, name);
       if (!scheduler) {
         return {
           success: false,
-          schemas: [],
-          events: [],
+          dataset: {
+            schemas: [],
+            events: [],
+          },
         };
       }
-      const { events, schemas } = scheduler.getTarget().getEvents();
+      const dataset = scheduler.getTarget().getDataset();
       return {
         success: true,
-        schemas: schemas.map((schema) => JSON.stringify(schema)),
-        events: events.map((event) => ({
-          ...event,
-          action: readEnum(event.action),
-          values: event.values.map((value) => JSON.stringify(value)),
-        })),
+        dataset: {
+          schemas: dataset.schemas.map((schema) => JSON.stringify(schema)),
+          events: dataset.events.map((event) => ({
+            ...event,
+            action: readEnum(event.action),
+            values: event.values.map((value) => JSON.stringify(value)),
+          })),
+        },
       };
     },
   },

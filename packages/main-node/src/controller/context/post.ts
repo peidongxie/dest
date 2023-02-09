@@ -29,10 +29,9 @@ const postContextByHttp: Route = {
       (event) => {
         const clientAction = readAction(event?.action);
         if (
-          !clientAction ||
-          clientAction === 'read' ||
-          clientAction === 'root' ||
-          clientAction === 'introspect' ||
+          (clientAction !== 'save' &&
+            clientAction !== 'remove' &&
+            clientAction !== 'write') ||
           !event.target ||
           !Array.isArray(event.values)
         )
@@ -97,10 +96,9 @@ const postContextByRpc: Plugin<ContextDefinition> = {
         (event) => {
           const clientAction = readAction(event?.action);
           if (
-            !clientAction ||
-            clientAction === 'read' ||
-            clientAction === 'root' ||
-            clientAction === 'introspect' ||
+            (clientAction !== 'save' &&
+              clientAction !== 'remove' &&
+              clientAction !== 'write') ||
             !event.target ||
             !Array.isArray(event.values)
           )

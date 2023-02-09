@@ -25,7 +25,7 @@ class Context {
 
   public addClient(...clients: Client[]): Promise<void[]> {
     const promises = clients.map(async (client) => {
-      await this.setEvents(this.schemas, this.events, client);
+      await this.setDataset(this.schemas, this.events, client);
       this.clients.add(client);
     });
     return Promise.allSettled(promises).then((promiseSettledResults) =>
@@ -39,7 +39,7 @@ class Context {
     );
   }
 
-  public getEvents(): {
+  public getDataset(): {
     schemas: EntitySchemaOptions<unknown>[];
     events: ClientEvent<unknown>[];
   } {
@@ -87,7 +87,7 @@ class Context {
     );
   }
 
-  public async setEvents(
+  public async setDataset(
     schemas: EntitySchemaOptions<unknown>[],
     events: ClientEvent<unknown>[],
     client?: Client,

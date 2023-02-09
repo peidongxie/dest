@@ -27,7 +27,7 @@ const createDatabase = (
   return promise;
 };
 
-const createDatabases = (): Promise<Scheduler<Database>[]> | null => {
+const createDatabases = (): Promise<Scheduler<Database>[]> => {
   const promises = [];
   const rootScheduler = createMemo(['database'], new Scheduler(new Database()));
   const types = readTypes();

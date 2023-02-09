@@ -9,13 +9,17 @@ service Context {
   rpc UpdateContext (DatasetRequest) returns (SuccessResponse) {}
 }
 
-// Secret
+// Enum
 
-message SecretRequest {
-  string secret = 1;
+enum ActionEnum {
+  DEFAULT_ACTION = 0;
+  SAVE = 1;
+  REMOVE = 2;
+  READ = 3;
+  WRITE = 4;
+  ROOT = 5;
+  INTROSPECT = 6;
 }
-
-// Type
 
 enum TypeEnum {
   DEFAULT_TYPE = 0;
@@ -23,6 +27,14 @@ enum TypeEnum {
   MARIADB = 3306;
   MYSQL8 = 3307;
 }
+
+// Secret
+
+message SecretRequest {
+  string secret = 1;
+}
+
+// Type
 
 message TypeRequest {
   string secret = 1;
@@ -38,16 +50,6 @@ message NameRequest {
 }
 
 // Event
-
-enum ActionEnum {
-  DEFAULT_ACTION = 0;
-  SAVE = 1;
-  REMOVE = 2;
-  READ = 3;
-  WRITE = 4;
-  ROOT = 5;
-  INTROSPECT = 6;
-}
 
 message EventItem {
   ActionEnum action = 1;
