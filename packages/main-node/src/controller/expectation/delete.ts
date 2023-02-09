@@ -1,11 +1,11 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
-import { AgentDefinition } from '../../domain';
-import { createAgent, readSecret } from '../../service';
+import { ExpectationDefinition } from '../../domain';
+import { deleteExpectation, readSecret } from '../../service';
 
-const postAgentByHttp: Route = {
-  method: 'POST',
-  pathname: '/agent',
+const deleteExpectationByHttp: Route = {
+  method: 'DELETE',
+  pathname: '/expectation',
   handler: async (req) => {
     const secret = req.url.searchParams.get('secret');
     if ((secret || '') !== readSecret()) {
@@ -17,8 +17,8 @@ const postAgentByHttp: Route = {
       };
     }
     const { url } = req;
-    const token = url.searchParams.get('token');
-    if (!token) {
+    const uuid = url.searchParams.get('uuid');
+    if (!uuid) {
       return {
         code: 400,
         body: {
@@ -26,10 +26,10 @@ const postAgentByHttp: Route = {
         },
       };
     }
-    const agent = await createAgent(token);
-    if (!agent) {
+    const expectation = await deleteExpectation(uuid);
+    if (!expectation) {
       return {
-        code: 409,
+        code: 404,
         body: {
           success: false,
         },
@@ -44,24 +44,24 @@ const postAgentByHttp: Route = {
   },
 };
 
-const postAgentByRpc: Plugin<AgentDefinition> = {
-  definition: AgentDefinition,
+const deleteExpectationByRpc: Plugin<ExpectationDefinition> = {
+  definition: ExpectationDefinition,
   handlers: {
-    postAgent: async (req) => {
+    deleteExpectation: async (req) => {
       const { secret } = req;
       if ((secret || '') !== readSecret()) {
         return {
           success: false,
         };
       }
-      const { token } = req;
-      if (!token) {
+      const { uuid } = req;
+      if (!uuid) {
         return {
           success: false,
         };
       }
-      const agent = await createAgent(token);
-      if (!agent) {
+      const expectation = await deleteExpectation(uuid);
+      if (!expectation) {
         return {
           success: false,
         };
@@ -73,4 +73,4 @@ const postAgentByRpc: Plugin<AgentDefinition> = {
   },
 };
 
-export { postAgentByHttp, postAgentByRpc };
+export { deleteExpectationByHttp, deleteExpectationByRpc };

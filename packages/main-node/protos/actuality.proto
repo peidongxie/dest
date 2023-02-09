@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+package dest;
+
+service Actuality {
+  rpc DeleteActuality (UuidRequest) returns (SuccessResponse) {}
+  rpc GetActuality (UuidRequest) returns (RowsResponse) {}
+  rpc PostActuality (ConditionRequest) returns (UuidResponse) {}
+}
+
+// Enum
+
+enum ActionEnum {
+  DEFAULT_ACTION = 0;
+  SAVE = 1;
+  REMOVE = 2;
+  READ = 3;
+  WRITE = 4;
+  ROOT = 5;
+  INTROSPECT = 6;
+}
+
+enum TypeEnum {
+  DEFAULT_TYPE = 0;
+  SQLITE = 2049;
+  MARIADB = 3306;
+  MYSQL8 = 3307;
+}
+
+// Secret
+
+message SecretRequest {
+  string secret = 1;
+}
+
+// Type
+
+message TypeRequest {
+  string secret = 1;
+  TypeEnum type = 2;
+}
+
+// Name
+
+message NameRequest {
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
+}
+
+// Condition
+
+message ConditionItem {
+  ActionEnum action = 1;
+  string query = 2;
+  repeated string values = 3;
+  repeated string tables = 4;
+}
+
+message ConditionRequest {
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
+  ConditionItem condition = 4;
+}
+
+// Success
+
+message SuccessResponse {
+  bool success = 1;
+}
+
+// Uuid
+
+message UuidRequest {
+  string secret = 1;
+  string uuid = 2;
+}
+
+message UuidsRequest {
+  string secret = 1;
+  string actuality = 2;
+  string expectation = 3;
+}
+
+message UuidResponse {
+  bool success = 1;
+  string uuid = 2;
+}
+
+// Snapshot
+
+message SnapshotItem {
+  string table = 1;
+  repeated string rows = 2;
+}
+
+message SnapshotsResponse {
+  bool success = 1;
+  string uuid = 2;
+  repeated SnapshotItem snapshots = 3;
+}
+
+// Row
+
+message RowsResponse {
+  bool success = 1;
+  string uuid = 2;
+  repeated SnapshotItem snapshots = 3;
+  repeated string rows = 4;
+  string error = 5;
+  uint32 time = 6;
+}

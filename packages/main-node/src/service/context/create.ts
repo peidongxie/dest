@@ -22,7 +22,7 @@ const createContext = (
   const clients = readClients();
   const promise = scheduler.runTask(async (context) => {
     await context.addClient(...clients);
-    await context.setEvents(schemas, events);
+    await context.setDataset(schemas, events);
     return scheduler;
   });
   return promise;

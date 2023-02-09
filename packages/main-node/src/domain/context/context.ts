@@ -25,7 +25,7 @@ class Context {
 
   public addClient(...clients: Client[]): Promise<void[]> {
     const promises = clients.map(async (client) => {
-      await this.setEvents(this.schemas, this.events, client);
+      await this.setDataset(this.schemas, this.events, client);
       this.clients.add(client);
     });
     return Promise.allSettled(promises).then((promiseSettledResults) =>
@@ -39,7 +39,7 @@ class Context {
     );
   }
 
-  public getEvents(): {
+  public getDataset(): {
     schemas: EntitySchemaOptions<unknown>[];
     events: ClientEvent<unknown>[];
   } {
@@ -64,9 +64,9 @@ class Context {
     });
     return {
       uuid: randomUUID(),
-      error: readResult.error || '',
-      rows: readResult.rows,
       snapshots: [],
+      rows: readResult.rows,
+      error: readResult.error || '',
       time: readResult.time,
     };
   }
@@ -87,7 +87,7 @@ class Context {
     );
   }
 
-  public async setEvents(
+  public async setDataset(
     schemas: EntitySchemaOptions<unknown>[],
     events: ClientEvent<unknown>[],
     client?: Client,
@@ -149,9 +149,9 @@ class Context {
     await client.deleteDatabase(type, name);
     return {
       uuid: randomUUID(),
-      error: writeResult.error || introspectResult.error || '',
-      rows: writeResult.rows,
       snapshots: introspectResult.rows,
+      rows: writeResult.rows,
+      error: writeResult.error || introspectResult.error || '',
       time: writeResult.time,
     };
   }

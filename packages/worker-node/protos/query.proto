@@ -6,7 +6,17 @@ service Query {
   rpc PostQuery (EventRequest) returns (ResultResponse) {}
 }
 
-// Type
+// Enum
+
+enum ActionEnum {
+  DEFAULT_ACTION = 0;
+  SAVE = 1;
+  REMOVE = 2;
+  READ = 3;
+  WRITE = 4;
+  ROOT = 5;
+  INTROSPECT = 6;
+}
 
 enum TypeEnum {
   DEFAULT_TYPE = 0;
@@ -14,6 +24,14 @@ enum TypeEnum {
   MARIADB = 3306;
   MYSQL8 = 3307;
 }
+
+// Secret
+
+message SecretRequest {
+  string secret = 1;
+}
+
+// Type
 
 message TypeRequest {
   string secret = 1;
@@ -28,37 +46,7 @@ message NameRequest {
   string name = 3;
 }
 
-// Success
-
-message SuccessResponse {
-  bool success = 1;
-}
-
-// Schema
-
-message SchemasRequest {
-  string secret = 1;
-  TypeEnum type = 2;
-  string name = 3;
-  repeated string schemas = 4;
-}
-
-message SchemasResponse {
-  bool success = 1;
-  repeated string schemas = 2;
-}
-
 // Event
-
-enum ActionEnum {
-  DEFAULT_ACTION = 0;
-  SAVE = 1;
-  REMOVE = 2;
-  READ = 3;
-  WRITE = 4;
-  ROOT = 5;
-  INTROSPECT = 6;
-}
 
 message EventItem {
   ActionEnum action = 1;
@@ -73,18 +61,10 @@ message EventRequest {
   EventItem event = 4;
 }
 
-message EventsRequest {
-  string secret = 1;
-  TypeEnum type = 2;
-  string name = 3;
-  repeated string schemas = 4;
-  repeated EventItem events = 5;
-}
+// Success
 
-message EventsResponse {
+message SuccessResponse {
   bool success = 1;
-  repeated string schemas = 2;
-  repeated EventItem events = 3;
 }
 
 // Result
@@ -98,4 +78,18 @@ message ResultItem {
 message ResultResponse {
   bool success = 1;
   ResultItem result = 2;
+}
+
+// Schema
+
+message SchemasRequest {
+  string secret = 1;
+  TypeEnum type = 2;
+  string name = 3;
+  repeated string schemas = 4;
+}
+
+message SchemasResponse {
+  bool success = 1;
+  repeated string schemas = 2;
 }

@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package dest;
+
+service Expectation {
+  rpc DeleteExpectation (UuidRequest) returns (SuccessResponse) {}
+  rpc GetExpectation (UuidRequest) returns (PartsResponse) {}
+  rpc PostExpectation (BenchmarkRequest) returns (UuidResponse) {}
+}
+
+// Secret
+
+message SecretRequest {
+  string secret = 1;
+}
+
+// Success
+
+message SuccessResponse {
+  bool success = 1;
+}
+
+// Uuid
+
+message UuidRequest {
+  string secret = 1;
+  string uuid = 2;
+}
+
+message UuidsRequest {
+  string secret = 1;
+  string actuality = 2;
+  string expectation = 3;
+}
+
+message UuidResponse {
+  bool success = 1;
+  string uuid = 2;
+}
+
+// Snapshot
+
+message SnapshotItem {
+  string table = 1;
+  repeated string rows = 2;
+}
+
+message SnapshotsResponse {
+  bool success = 1;
+  string uuid = 2;
+  repeated SnapshotItem snapshots = 3;
+}
+
+// Part
+
+message PartItem {
+  uint32 count = 1;
+  repeated string rows = 2;
+}
+
+message PartsResponse {
+  bool success = 1;
+  string uuid = 2;
+  repeated SnapshotItem snapshots = 3;
+  repeated PartItem parts = 4;
+}
+
+// Benchmark
+
+message BenchmarkItem {
+  repeated SnapshotItem snapshots = 1;
+  repeated PartItem parts = 2;
+}
+
+message BenchmarkRequest {
+  string secret = 1;
+  BenchmarkItem benchmark = 2;
+}

@@ -3,51 +3,6 @@ import _m0 from 'protobufjs/minimal';
 
 export const protobufPackage = 'dest';
 
-export enum TypeEnum {
-  DEFAULT_TYPE = 0,
-  SQLITE = 2049,
-  MARIADB = 3306,
-  MYSQL8 = 3307,
-  UNRECOGNIZED = -1,
-}
-
-export function typeEnumFromJSON(object: any): TypeEnum {
-  switch (object) {
-    case 0:
-    case 'DEFAULT_TYPE':
-      return TypeEnum.DEFAULT_TYPE;
-    case 2049:
-    case 'SQLITE':
-      return TypeEnum.SQLITE;
-    case 3306:
-    case 'MARIADB':
-      return TypeEnum.MARIADB;
-    case 3307:
-    case 'MYSQL8':
-      return TypeEnum.MYSQL8;
-    case -1:
-    case 'UNRECOGNIZED':
-    default:
-      return TypeEnum.UNRECOGNIZED;
-  }
-}
-
-export function typeEnumToJSON(object: TypeEnum): string {
-  switch (object) {
-    case TypeEnum.DEFAULT_TYPE:
-      return 'DEFAULT_TYPE';
-    case TypeEnum.SQLITE:
-      return 'SQLITE';
-    case TypeEnum.MARIADB:
-      return 'MARIADB';
-    case TypeEnum.MYSQL8:
-      return 'MYSQL8';
-    case TypeEnum.UNRECOGNIZED:
-    default:
-      return 'UNRECOGNIZED';
-  }
-}
-
 export enum LevelEnum {
   DEFAULT_LEVEL = 0,
   ENVIRONMENT = 1,
@@ -94,6 +49,51 @@ export function levelEnumToJSON(object: LevelEnum): string {
     case LevelEnum.ROW:
       return 'ROW';
     case LevelEnum.UNRECOGNIZED:
+    default:
+      return 'UNRECOGNIZED';
+  }
+}
+
+export enum TypeEnum {
+  DEFAULT_TYPE = 0,
+  SQLITE = 2049,
+  MARIADB = 3306,
+  MYSQL8 = 3307,
+  UNRECOGNIZED = -1,
+}
+
+export function typeEnumFromJSON(object: any): TypeEnum {
+  switch (object) {
+    case 0:
+    case 'DEFAULT_TYPE':
+      return TypeEnum.DEFAULT_TYPE;
+    case 2049:
+    case 'SQLITE':
+      return TypeEnum.SQLITE;
+    case 3306:
+    case 'MARIADB':
+      return TypeEnum.MARIADB;
+    case 3307:
+    case 'MYSQL8':
+      return TypeEnum.MYSQL8;
+    case -1:
+    case 'UNRECOGNIZED':
+    default:
+      return TypeEnum.UNRECOGNIZED;
+  }
+}
+
+export function typeEnumToJSON(object: TypeEnum): string {
+  switch (object) {
+    case TypeEnum.DEFAULT_TYPE:
+      return 'DEFAULT_TYPE';
+    case TypeEnum.SQLITE:
+      return 'SQLITE';
+    case TypeEnum.MARIADB:
+      return 'MARIADB';
+    case TypeEnum.MYSQL8:
+      return 'MYSQL8';
+    case TypeEnum.UNRECOGNIZED:
     default:
       return 'UNRECOGNIZED';
   }

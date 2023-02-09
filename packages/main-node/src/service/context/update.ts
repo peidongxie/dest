@@ -16,7 +16,7 @@ const updateContext = (
   const scheduler = readMemo<Scheduler<Context>>(['context', type, name]);
   if (!scheduler) return null;
   const promise = scheduler.runTask(async (context) => {
-    await context.setEvents(schemas, events);
+    await context.setDataset(schemas, events);
     return scheduler;
   });
   return promise;
