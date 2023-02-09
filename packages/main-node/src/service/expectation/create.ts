@@ -7,8 +7,8 @@ import {
 import { createMemo } from '../memo';
 
 const createExpectation = <T>(
+  snapshots: ClientSnapshot<unknown>[],
   parts: AssertionPart<T>[],
-  snapshots?: ClientSnapshot<unknown>[],
 ): AssertionExpectation<T> | null => {
   const uuid = randomUUID();
   return createMemo(['expectation', uuid], {

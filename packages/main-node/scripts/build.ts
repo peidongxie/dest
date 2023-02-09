@@ -73,6 +73,7 @@ const buildMainProtoOptions: BuildOptions = {
     'protos/actuality.proto',
     'protos/client.proto',
     'protos/context.proto',
+    'protos/expectation.proto',
   ],
   // Output contents
   format: 'esm',
