@@ -25,25 +25,33 @@ const getEntryPoints = (dir: string): string[] => {
 };
 
 const buildOptions: BuildOptions = {
+  // General options
   bundle: true,
-  define: {},
-  entryPoints: getEntryPoints('.'),
-  external: ['busboy', 'get-stream', 'iconv-lite', 'whatwg-mimetype'],
-  format: 'esm',
-  inject: [],
-  loader: {},
-  minify: true,
-  minifyWhitespace: true,
-  minifyIdentifiers: true,
-  minifySyntax: true,
-  outdir: '.',
   platform: 'node',
-  sourcemap: false,
+  tsconfig: 'tsconfig.json',
+  // Input
+  entryPoints: getEntryPoints('.'),
+  // Output contents
+  format: 'esm',
   splitting: true,
-  target: 'es2018',
-  watch: false,
-  write: true,
+  // Output location
   chunkNames: 'chunks/[hash]',
+  outdir: '.',
+  write: true,
+  // Path resolution
+  external: ['busboy', 'get-stream', 'iconv-lite', 'whatwg-mimetype'],
+  // Transformation
+  target: 'es2018',
+  // Optimization
+  minify: true,
+  // Source maps
+  sourcemap: false,
+  // Build metadata
+  metafile: true,
+  // Logging
+  color: true,
+  // Plugins
+  plugins: [],
 };
 
 (async () => {
