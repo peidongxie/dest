@@ -7,8 +7,8 @@ const postAgentByHttp: Route = {
   method: 'POST',
   pathname: '/agent',
   handler: async (req) => {
-    const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== readSecret()) {
+    const secret = req.url.searchParams.get('secret') || '';
+    if (secret !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -17,7 +17,7 @@ const postAgentByHttp: Route = {
       };
     }
     const { url } = req;
-    const token = url.searchParams.get('token');
+    const token = url.searchParams.get('token') || '';
     if (!token) {
       return {
         code: 400,
@@ -49,7 +49,7 @@ const postAgentByRpc: Plugin<AgentDefinition> = {
   handlers: {
     postAgent: async (req) => {
       const { secret } = req;
-      if ((secret || '') !== readSecret()) {
+      if (secret !== readSecret()) {
         return {
           success: false,
         };

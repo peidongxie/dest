@@ -7,8 +7,8 @@ const deleteDatabaseByHttp: Route = {
   method: 'DELETE',
   pathname: '/database',
   handler: async (req) => {
-    const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== readSecret()) {
+    const secret = req.url.searchParams.get('secret') || '';
+    if (secret !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -17,8 +17,8 @@ const deleteDatabaseByHttp: Route = {
       };
     }
     const { url } = req;
-    const name = url.searchParams.get('name');
-    const type = url.searchParams.get('type');
+    const name = url.searchParams.get('name') || '';
+    const type = url.searchParams.get('type') || '';
     const adapterType = readType(type);
     if (!adapterType || !name) {
       return {
@@ -51,7 +51,7 @@ const deleteDatabaseByRpc: Plugin<DatabaseDefinition> = {
   handlers: {
     deleteDatabase: async (req) => {
       const { secret } = req;
-      if ((secret || '') !== readSecret()) {
+      if (secret !== readSecret()) {
         return {
           success: false,
         };

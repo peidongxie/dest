@@ -7,8 +7,8 @@ const getAgentByHttp: Route = {
   method: 'GET',
   pathname: '/agent',
   handler: async (req) => {
-    const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== readSecret()) {
+    const secret = req.url.searchParams.get('secret') || '';
+    if (secret !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -42,7 +42,7 @@ const getAgentByRpc: Plugin<AgentDefinition> = {
   handlers: {
     getAgent: async (req) => {
       const { secret } = req;
-      if ((secret || '') !== readSecret()) {
+      if (secret !== readSecret()) {
         return {
           success: false,
           token: '',

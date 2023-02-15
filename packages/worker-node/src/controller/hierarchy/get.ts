@@ -16,8 +16,8 @@ const getHierarchyByHttp: Route = {
   method: 'GET',
   pathname: '/hierarchy',
   handler: async (req) => {
-    const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== readSecret()) {
+    const secret = req.url.searchParams.get('secret') || '';
+    if (secret !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -27,10 +27,10 @@ const getHierarchyByHttp: Route = {
       };
     }
     const { url } = req;
-    const level = url.searchParams.get('level');
-    const name = url.searchParams.get('name');
-    const table = url.searchParams.get('table');
-    const type = url.searchParams.get('type');
+    const level = url.searchParams.get('level') || '';
+    const name = url.searchParams.get('name') || '';
+    const table = url.searchParams.get('table') || '';
+    const type = url.searchParams.get('type') || '';
     const adapterType = readType(type);
     const hierarchyLevel = readLevel(level);
     if (
@@ -53,15 +53,11 @@ const getHierarchyByHttp: Route = {
       hierarchyLevel === 'environment'
         ? await readHierarchyEnvironment()
         : hierarchyLevel === 'database'
-        ? await readHierarchyDatabase(adapterType || undefined)
+        ? await readHierarchyDatabase(adapterType)
         : hierarchyLevel === 'table'
-        ? await readHierarchyTable(adapterType || undefined, name || undefined)
+        ? await readHierarchyTable(adapterType, name)
         : hierarchyLevel === 'row'
-        ? await readHierarchyRow(
-            adapterType || undefined,
-            name || undefined,
-            table || undefined,
-          )
+        ? await readHierarchyRow(adapterType, name, table)
         : [];
     return {
       code: 200,
@@ -81,7 +77,7 @@ const getHierarchyByRpc: Plugin<HierarchyDefinition> = {
   handlers: {
     getHierarchy: async (req) => {
       const { secret } = req;
-      if ((secret || '') !== readSecret()) {
+      if (secret !== readSecret()) {
         return {
           success: false,
           environments: [],
@@ -107,18 +103,11 @@ const getHierarchyByRpc: Plugin<HierarchyDefinition> = {
         hierarchyLevel === 'environment'
           ? await readHierarchyEnvironment()
           : hierarchyLevel === 'database'
-          ? await readHierarchyDatabase(adapterType || undefined)
+          ? await readHierarchyDatabase(adapterType)
           : hierarchyLevel === 'table'
-          ? await readHierarchyTable(
-              adapterType || undefined,
-              name || undefined,
-            )
+          ? await readHierarchyTable(adapterType, name)
           : hierarchyLevel === 'row'
-          ? await readHierarchyRow(
-              adapterType || undefined,
-              name || undefined,
-              table || undefined,
-            )
+          ? await readHierarchyRow(adapterType, name, table)
           : [];
       return {
         success: true,
