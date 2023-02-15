@@ -1,14 +1,20 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { QueryDefinition, type ActionEnum } from '../../domain';
-import { createQuery, readAction, readSecret, readType } from '../../service';
+import {
+  createDeserializedObject,
+  createQuery,
+  readAction,
+  readSecret,
+  readType,
+} from '../../service';
 
 const postQueryByHttp: Route = {
   method: 'POST',
   pathname: '/query',
   handler: async (req) => {
-    const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== readSecret()) {
+    const secret = req.url.searchParams.get('secret') || '';
+    if (secret !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -22,23 +28,35 @@ const postQueryByHttp: Route = {
       };
     }
     const { body, url } = req;
-    const name = url.searchParams.get('name');
-    const type = url.searchParams.get('type');
+    const name = url.searchParams.get('name') || '';
+    const type = url.searchParams.get('type') || '';
     const event = await body.json<{
       action: ActionEnum;
       target: string;
       values: unknown[];
     }>();
     const adapterType = readType(type);
-    const databaseAction = readAction(event?.action);
+    const databaseEvent = createDeserializedObject(
+      event,
+      (source) => {
+        const action = readAction(source.action);
+        if (!action) return null;
+        return {
+          ...source,
+          action,
+        };
+      },
+      (target) => {
+        if (typeof target.target !== 'string') return false;
+        if (!Array.isArray(target.values)) return false;
+        return true;
+      },
+    );
     if (
       !adapterType ||
-      (!name && databaseAction !== 'root') ||
-      (name && databaseAction === 'root') ||
-      !event ||
-      !databaseAction ||
-      !event.target ||
-      !Array.isArray(event.values)
+      !databaseEvent ||
+      (!name && databaseEvent.action !== 'root') ||
+      (name && databaseEvent.action === 'root')
     ) {
       return {
         code: 400,
@@ -52,10 +70,7 @@ const postQueryByHttp: Route = {
         },
       };
     }
-    const promise = createQuery(adapterType, name || '', {
-      ...event,
-      action: databaseAction,
-    });
+    const promise = createQuery(adapterType, name, databaseEvent);
     if (!promise) {
       return {
         code: 404,
@@ -97,7 +112,7 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
   handlers: {
     postQuery: async (req) => {
       const { secret } = req;
-      if ((secret || '') !== readSecret()) {
+      if (secret !== readSecret()) {
         return {
           success: false,
           result: {
@@ -109,15 +124,25 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
       }
       const { event, name, type } = req;
       const adapterType = readType(type);
-      const databaseAction = readAction(event?.action);
+      const databaseEvent = createDeserializedObject(
+        event,
+        (source) => {
+          const action = readAction(source.action);
+          if (!action) return null;
+          const values = source.values.map((value) => JSON.parse(value));
+          return {
+            ...source,
+            action,
+            values,
+          };
+        },
+        () => true,
+      );
       if (
         !adapterType ||
-        (!name && databaseAction !== 'root') ||
-        (name && databaseAction === 'root') ||
-        !event ||
-        !databaseAction ||
-        !event.target ||
-        !Array.isArray(event.values)
+        !databaseEvent ||
+        (!name && databaseEvent.action !== 'root') ||
+        (name && databaseEvent.action === 'root')
       ) {
         return {
           success: false,
@@ -128,11 +153,7 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
           },
         };
       }
-      const promise = createQuery(adapterType, name || '', {
-        ...event,
-        action: databaseAction,
-        values: event.values.map((value) => JSON.parse(value)),
-      });
+      const promise = createQuery(adapterType, name, databaseEvent);
       if (!promise) {
         return {
           success: false,
