@@ -1,7 +1,12 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { DatabaseDefinition } from '../../domain';
-import { readDatabase, readSecret, readType } from '../../service';
+import {
+  createSerializedObject,
+  readDatabase,
+  readSecret,
+  readType,
+} from '../../service';
 
 const getDatabaseByHttp: Route = {
   method: 'GET',
@@ -40,11 +45,12 @@ const getDatabaseByHttp: Route = {
         },
       };
     }
+    const schemas = scheduler.getTarget().getSchemas();
     return {
       code: 200,
       body: {
         success: true,
-        schemas: scheduler.getTarget().getSchemas(),
+        schemas,
       },
     };
   },
@@ -76,12 +82,19 @@ const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
           schemas: [],
         };
       }
+      const schemas = createSerializedObject(
+        scheduler.getTarget().getSchemas(),
+        (source, stringifier) => source.map(stringifier),
+      );
+      if (!schemas) {
+        return {
+          success: false,
+          schemas: [],
+        };
+      }
       return {
         success: true,
-        schemas: scheduler
-          .getTarget()
-          .getSchemas()
-          .map((schema) => JSON.stringify(schema)),
+        schemas,
       };
     },
   },

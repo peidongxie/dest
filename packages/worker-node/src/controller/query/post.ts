@@ -4,6 +4,7 @@ import { QueryDefinition, type ActionEnum } from '../../domain';
 import {
   createDeserializedObject,
   createQuery,
+  createSerializedObject,
   readAction,
   readSecret,
   readType,
@@ -164,7 +165,13 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
           },
         };
       }
-      const result = await promise;
+      const result = createSerializedObject(
+        await promise,
+        (source, stringifier) => ({
+          ...source,
+          rows: source.rows.map(stringifier),
+        }),
+      );
       if (!result) {
         return {
           success: false,
@@ -177,10 +184,7 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
       }
       return {
         success: true,
-        result: {
-          ...result,
-          rows: result.rows.map((row) => JSON.stringify(row)),
-        },
+        result,
       };
     },
   },

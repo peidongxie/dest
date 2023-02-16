@@ -2,6 +2,7 @@ import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { HierarchyDefinition } from '../../domain';
 import {
+  createSerializedObject,
   readEnum,
   readHierarchyDatabase,
   readHierarchyEnvironment,
@@ -49,7 +50,7 @@ const getHierarchyByHttp: Route = {
         },
       };
     }
-    const environments =
+    const environments = createSerializedObject(
       hierarchyLevel === 'environment'
         ? await readHierarchyEnvironment()
         : hierarchyLevel === 'database'
@@ -58,15 +59,18 @@ const getHierarchyByHttp: Route = {
         ? await readHierarchyTable(adapterType, name)
         : hierarchyLevel === 'row'
         ? await readHierarchyRow(adapterType, name, table)
-        : [];
+        : [],
+      (source) =>
+        source.map((environment) => ({
+          ...environment,
+          type: readEnum(environment.type),
+        })),
+    );
     return {
       code: 200,
       body: {
         success: true,
-        environments: environments.map((environment) => ({
-          ...environment,
-          type: readEnum(environment.type),
-        })),
+        environments,
       },
     };
   },
@@ -99,7 +103,7 @@ const getHierarchyByRpc: Plugin<HierarchyDefinition> = {
           environments: [],
         };
       }
-      const environments =
+      const environments = createSerializedObject(
         hierarchyLevel === 'environment'
           ? await readHierarchyEnvironment()
           : hierarchyLevel === 'database'
@@ -108,19 +112,28 @@ const getHierarchyByRpc: Plugin<HierarchyDefinition> = {
           ? await readHierarchyTable(adapterType, name)
           : hierarchyLevel === 'row'
           ? await readHierarchyRow(adapterType, name, table)
-          : [];
-      return {
-        success: true,
-        environments: environments.map((environment) => ({
-          type: readEnum(environment.type),
-          databases: environment.databases.map((database) => ({
-            ...database,
-            snapshots: database.snapshots.map((snapshot) => ({
-              ...snapshot,
-              rows: snapshot.rows.map((row) => JSON.stringify(row)),
+          : [],
+        (source, stringifier) =>
+          source.map((environment) => ({
+            type: readEnum(environment.type),
+            databases: environment.databases.map((database) => ({
+              ...database,
+              snapshots: database.snapshots.map((snapshot) => ({
+                ...snapshot,
+                rows: snapshot.rows.map(stringifier),
+              })),
             })),
           })),
-        })),
+      );
+      if (!environments) {
+        return {
+          success: false,
+          environments: [],
+        };
+      }
+      return {
+        success: true,
+        environments,
       };
     },
   },
