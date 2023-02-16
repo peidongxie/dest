@@ -4,5 +4,6 @@ export * from './client';
 export * from './constant';
 export * from './context';
 export * from './expectation';
+export * from './json';
 export * from './memo';
 export * from './server';
