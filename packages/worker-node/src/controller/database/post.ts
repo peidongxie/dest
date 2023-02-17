@@ -26,8 +26,8 @@ const postDatabaseByHttp: Route = {
     const name = url.searchParams.get('name') || '';
     const type = url.searchParams.get('type') || '';
     const schemas = await body.json<EntitySchemaOptions<unknown>[]>();
-    const entitySchemas = createDeserializedObject(
-      schemas,
+    const entitySchemas = await createDeserializedObject(
+      () => schemas,
       (source) => source,
       (target) => {
         for (const schema of target) {
@@ -76,8 +76,8 @@ const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
       }
       const { name, schemas, type } = req;
       const adapterType = readType(type);
-      const entitySchemas = createDeserializedObject(
-        schemas,
+      const entitySchemas = await createDeserializedObject(
+        () => schemas,
         (source, parser) =>
           source.map((schema) => parser<EntitySchemaOptions<unknown>>(schema)),
         (target) => {

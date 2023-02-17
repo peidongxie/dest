@@ -15,7 +15,7 @@ const createActuality = <T>(
   if (!scheduler) return null;
   const promise = scheduler.runTask(async (context) => {
     const actuality = await context[condition.action]<T>(
-      condition.query,
+      condition.target,
       condition.values,
       condition.tables,
     );

@@ -4,6 +4,7 @@ import { QueryDefinition, type ActionEnum } from '../../domain';
 import {
   createDeserializedObject,
   createQuery,
+  createSerializedObject,
   readAction,
   readSecret,
   readType,
@@ -30,14 +31,14 @@ const postQueryByHttp: Route = {
     const { body, url } = req;
     const name = url.searchParams.get('name') || '';
     const type = url.searchParams.get('type') || '';
-    const event = await body.json<{
-      action: ActionEnum;
-      target: string;
-      values: unknown[];
-    }>();
     const adapterType = readType(type);
-    const databaseEvent = createDeserializedObject(
-      event,
+    const databaseEvent = await createDeserializedObject(
+      async () =>
+        await body.json<{
+          action: ActionEnum;
+          target: string;
+          values: unknown[];
+        }>(),
       (source) => {
         const action = readAction(source.action);
         if (!action) return null;
@@ -124,8 +125,8 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
       }
       const { event, name, type } = req;
       const adapterType = readType(type);
-      const databaseEvent = createDeserializedObject(
-        event,
+      const databaseEvent = await createDeserializedObject(
+        () => event,
         (source) => {
           const action = readAction(source.action);
           if (!action) return null;
@@ -164,7 +165,13 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
           },
         };
       }
-      const result = await promise;
+      const result = await createSerializedObject(
+        async () => await promise,
+        (source, stringifier) => ({
+          ...source,
+          rows: source.rows.map(stringifier),
+        }),
+      );
       if (!result) {
         return {
           success: false,
@@ -177,10 +184,7 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
       }
       return {
         success: true,
-        result: {
-          ...result,
-          rows: result.rows.map((row) => JSON.stringify(row)),
-        },
+        result,
       };
     },
   },
