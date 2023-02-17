@@ -50,7 +50,7 @@ class Context {
   }
 
   public async read<T>(
-    query: string,
+    target: string,
     values: unknown[],
   ): Promise<AssertionActuality<T>> {
     const client = this.getClient();
@@ -59,7 +59,7 @@ class Context {
     const name = this.name;
     const { result: readResult } = await client.postQuery<T>(type, name, {
       action: 'read',
-      target: query,
+      target,
       values,
     });
     return {
@@ -122,7 +122,7 @@ class Context {
   }
 
   public async write<T>(
-    query: string,
+    target: string,
     values: unknown[],
     tables: string[],
   ): Promise<AssertionActuality<T>> {
@@ -136,7 +136,7 @@ class Context {
     }
     const { result: writeResult } = await client.postQuery<T>(type, name, {
       action: 'write',
-      target: query,
+      target,
       values,
     });
     const { result: introspectResult } = await client.postQuery<

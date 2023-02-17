@@ -128,7 +128,7 @@ export interface NameRequest {
 
 export interface ConditionItem {
   action: ActionEnum;
-  query: string;
+  target: string;
   values: string[];
   tables: string[];
 }
@@ -382,7 +382,7 @@ export const NameRequest = {
 };
 
 function createBaseConditionItem(): ConditionItem {
-  return { action: 0, query: '', values: [], tables: [] };
+  return { action: 0, target: '', values: [], tables: [] };
 }
 
 export const ConditionItem = {
@@ -393,8 +393,8 @@ export const ConditionItem = {
     if (message.action !== 0) {
       writer.uint32(8).int32(message.action);
     }
-    if (message.query !== '') {
-      writer.uint32(18).string(message.query);
+    if (message.target !== '') {
+      writer.uint32(18).string(message.target);
     }
     for (const v of message.values) {
       writer.uint32(26).string(v!);
@@ -416,7 +416,7 @@ export const ConditionItem = {
           message.action = reader.int32() as any;
           break;
         case 2:
-          message.query = reader.string();
+          message.target = reader.string();
           break;
         case 3:
           message.values.push(reader.string());
@@ -435,7 +435,7 @@ export const ConditionItem = {
   fromJSON(object: any): ConditionItem {
     return {
       action: isSet(object.action) ? actionEnumFromJSON(object.action) : 0,
-      query: isSet(object.query) ? String(object.query) : '',
+      target: isSet(object.target) ? String(object.target) : '',
       values: Array.isArray(object?.values)
         ? object.values.map((e: any) => String(e))
         : [],
@@ -449,7 +449,7 @@ export const ConditionItem = {
     const obj: any = {};
     message.action !== undefined &&
       (obj.action = actionEnumToJSON(message.action));
-    message.query !== undefined && (obj.query = message.query);
+    message.target !== undefined && (obj.target = message.target);
     if (message.values) {
       obj.values = message.values.map((e) => e);
     } else {
@@ -474,7 +474,7 @@ export const ConditionItem = {
   ): ConditionItem {
     const message = createBaseConditionItem();
     message.action = object.action ?? 0;
-    message.query = object.query ?? '';
+    message.target = object.target ?? '';
     message.values = object.values?.map((e) => e) || [];
     message.tables = object.tables?.map((e) => e) || [];
     return message;
