@@ -82,8 +82,8 @@ const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
           schemas: [],
         };
       }
-      const schemas = createSerializedObject(
-        scheduler.getTarget().getSchemas(),
+      const schemas = await createSerializedObject(
+        () => scheduler.getTarget().getSchemas(),
         (source, stringifier) => source.map(stringifier),
       );
       if (!schemas) {

@@ -50,16 +50,17 @@ const getHierarchyByHttp: Route = {
         },
       };
     }
-    const environments = createSerializedObject(
-      hierarchyLevel === 'environment'
-        ? await readHierarchyEnvironment()
-        : hierarchyLevel === 'database'
-        ? await readHierarchyDatabase(adapterType)
-        : hierarchyLevel === 'table'
-        ? await readHierarchyTable(adapterType, name)
-        : hierarchyLevel === 'row'
-        ? await readHierarchyRow(adapterType, name, table)
-        : [],
+    const environments = await createSerializedObject(
+      async () =>
+        hierarchyLevel === 'environment'
+          ? await readHierarchyEnvironment()
+          : hierarchyLevel === 'database'
+          ? await readHierarchyDatabase(adapterType)
+          : hierarchyLevel === 'table'
+          ? await readHierarchyTable(adapterType, name)
+          : hierarchyLevel === 'row'
+          ? await readHierarchyRow(adapterType, name, table)
+          : [],
       (source) =>
         source.map((environment) => ({
           ...environment,
@@ -103,16 +104,17 @@ const getHierarchyByRpc: Plugin<HierarchyDefinition> = {
           environments: [],
         };
       }
-      const environments = createSerializedObject(
-        hierarchyLevel === 'environment'
-          ? await readHierarchyEnvironment()
-          : hierarchyLevel === 'database'
-          ? await readHierarchyDatabase(adapterType)
-          : hierarchyLevel === 'table'
-          ? await readHierarchyTable(adapterType, name)
-          : hierarchyLevel === 'row'
-          ? await readHierarchyRow(adapterType, name, table)
-          : [],
+      const environments = await createSerializedObject(
+        async () =>
+          hierarchyLevel === 'environment'
+            ? await readHierarchyEnvironment()
+            : hierarchyLevel === 'database'
+            ? await readHierarchyDatabase(adapterType)
+            : hierarchyLevel === 'table'
+            ? await readHierarchyTable(adapterType, name)
+            : hierarchyLevel === 'row'
+            ? await readHierarchyRow(adapterType, name, table)
+            : [],
         (source, stringifier) =>
           source.map((environment) => ({
             type: readEnum(environment.type),
