@@ -7,8 +7,7 @@ const deleteActualityByHttp: Route = {
   method: 'DELETE',
   pathname: '/actuality',
   handler: async (req) => {
-    const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== readSecret()) {
+    if ((req.url.searchParams.get('secret') || '') !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -16,8 +15,7 @@ const deleteActualityByHttp: Route = {
         },
       };
     }
-    const { url } = req;
-    const uuid = url.searchParams.get('uuid');
+    const uuid = req.url.searchParams.get('uuid') || '';
     if (!uuid) {
       return {
         code: 400,
@@ -48,13 +46,12 @@ const deleteActualityByRpc: Plugin<ActualityDefinition> = {
   definition: ActualityDefinition,
   handlers: {
     deleteActuality: async (req) => {
-      const { secret } = req;
-      if ((secret || '') !== readSecret()) {
+      if (req.secret !== readSecret()) {
         return {
           success: false,
         };
       }
-      const { uuid } = req;
+      const uuid = req.uuid;
       if (!uuid) {
         return {
           success: false,

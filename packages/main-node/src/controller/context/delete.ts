@@ -7,8 +7,7 @@ const deleteContextByHttp: Route = {
   method: 'DELETE',
   pathname: '/context',
   handler: async (req) => {
-    const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== readSecret()) {
+    if ((req.url.searchParams.get('secret') || '') !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -16,11 +15,9 @@ const deleteContextByHttp: Route = {
         },
       };
     }
-    const { url } = req;
-    const name = url.searchParams.get('name');
-    const type = url.searchParams.get('type');
-    const clientType = readType(type);
-    if (!clientType || !name) {
+    const type = readType(req.url.searchParams.get('type'));
+    const name = req.url.searchParams.get('name') || '';
+    if (!type || !name) {
       return {
         code: 400,
         body: {
@@ -28,7 +25,7 @@ const deleteContextByHttp: Route = {
         },
       };
     }
-    const scheduler = await deleteContext(clientType, name);
+    const scheduler = await deleteContext(type, name);
     if (!scheduler) {
       return {
         code: 404,
@@ -50,20 +47,19 @@ const deleteContextByRpc: Plugin<ContextDefinition> = {
   definition: ContextDefinition,
   handlers: {
     deleteContext: async (req) => {
-      const { secret } = req;
-      if ((secret || '') !== readSecret()) {
+      if (req.secret !== readSecret()) {
         return {
           success: false,
         };
       }
-      const { name, type } = req;
-      const clientType = readType(type);
-      if (!clientType || !name) {
+      const type = readType(req.type);
+      const name = req.name;
+      if (!type || !name) {
         return {
           success: false,
         };
       }
-      const scheduler = await deleteContext(clientType, name);
+      const scheduler = await deleteContext(type, name);
       if (!scheduler) {
         return {
           success: false,

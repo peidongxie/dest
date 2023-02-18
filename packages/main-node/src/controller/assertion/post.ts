@@ -1,14 +1,17 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { AssertionDefinition } from '../../domain';
-import { createAssertion, readSecret } from '../../service';
+import {
+  createAssertion,
+  createSerializedObject,
+  readSecret,
+} from '../../service';
 
 const postAssertionByHttp: Route = {
   method: 'POST',
   pathname: '/assertion',
   handler: async (req) => {
-    const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== readSecret()) {
+    if ((req.url.searchParams.get('secret') || '') !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -17,9 +20,8 @@ const postAssertionByHttp: Route = {
         },
       };
     }
-    const { url } = req;
-    const actuality = url.searchParams.get('actuality');
-    const expectation = url.searchParams.get('expectation');
+    const actuality = req.url.searchParams.get('actuality') || '';
+    const expectation = req.url.searchParams.get('expectation') || '';
     if (!actuality || !expectation) {
       return {
         code: 400,
@@ -54,20 +56,29 @@ const postAssertionByRpc: Plugin<AssertionDefinition> = {
   handlers: {
     postAssertion: async (req) => {
       const { secret } = req;
-      if ((secret || '') !== readSecret()) {
+      if (secret !== readSecret()) {
         return {
           success: false,
           differences: [],
         };
       }
-      const { actuality, expectation } = req;
+      const actuality = req.actuality;
+      const expectation = req.expectation;
       if (!actuality || !expectation) {
         return {
           success: false,
           differences: [],
         };
       }
-      const differences = createAssertion(actuality, expectation);
+      const differences = await createSerializedObject(
+        () => createAssertion(actuality, expectation),
+        (source, stringifier) =>
+          source.map((difference) => ({
+            ...difference,
+            row: stringifier(difference.row),
+            rows: difference.rows.map(stringifier),
+          })),
+      );
       if (!differences) {
         return {
           success: false,
@@ -76,11 +87,7 @@ const postAssertionByRpc: Plugin<AssertionDefinition> = {
       }
       return {
         success: true,
-        differences: differences.map((difference) => ({
-          ...difference,
-          row: JSON.stringify(difference.row),
-          rows: difference.rows.map((row) => JSON.stringify(row)),
-        })),
+        differences,
       };
     },
   },

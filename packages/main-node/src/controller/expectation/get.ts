@@ -1,14 +1,17 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { ExpectationDefinition } from '../../domain';
-import { readExpectation, readSecret } from '../../service';
+import {
+  createSerializedObject,
+  readExpectation,
+  readSecret,
+} from '../../service';
 
 const getExpectationByHttp: Route = {
   method: 'GET',
   pathname: '/expectation',
   handler: async (req) => {
-    const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== readSecret()) {
+    if ((req.url.searchParams.get('secret') || '') !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -19,8 +22,7 @@ const getExpectationByHttp: Route = {
         },
       };
     }
-    const { url } = req;
-    const uuid = url.searchParams.get('uuid');
+    const uuid = req.url.searchParams.get('uuid') || '';
     if (!uuid) {
       return {
         code: 400,
@@ -58,8 +60,7 @@ const getExpectationByRpc: Plugin<ExpectationDefinition> = {
   definition: ExpectationDefinition,
   handlers: {
     getExpectation: async (req) => {
-      const { secret } = req;
-      if ((secret || '') !== readSecret()) {
+      if ((req.secret || '') !== readSecret()) {
         return {
           success: false,
           uuid: '',
@@ -67,7 +68,7 @@ const getExpectationByRpc: Plugin<ExpectationDefinition> = {
           parts: [],
         };
       }
-      const { uuid } = req;
+      const uuid = req.uuid;
       if (!uuid) {
         return {
           success: false,
@@ -76,7 +77,20 @@ const getExpectationByRpc: Plugin<ExpectationDefinition> = {
           parts: [],
         };
       }
-      const expectation = await readExpectation(uuid);
+      const expectation = await createSerializedObject(
+        () => readExpectation(uuid),
+        (source, stringifier) => ({
+          ...source,
+          snapshots: source.snapshots.map((snapshot) => ({
+            ...snapshot,
+            rows: snapshot.rows.map(stringifier),
+          })),
+          parts: source.parts.map((part) => ({
+            ...part,
+            rows: part.rows.map(stringifier),
+          })),
+        }),
+      );
       if (!expectation) {
         return {
           success: false,
@@ -88,14 +102,6 @@ const getExpectationByRpc: Plugin<ExpectationDefinition> = {
       return {
         success: true,
         ...expectation,
-        snapshots: expectation.snapshots.map((snapshot) => ({
-          ...snapshot,
-          rows: snapshot.rows.map((row) => JSON.stringify(row)),
-        })),
-        parts: expectation.parts.map((part) => ({
-          ...part,
-          rows: part.rows.map((row) => JSON.stringify(row)),
-        })),
       };
     },
   },

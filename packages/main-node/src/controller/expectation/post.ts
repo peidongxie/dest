@@ -5,14 +5,17 @@ import {
   type AssertionPart,
   type ClientSnapshot,
 } from '../../domain';
-import { createExpectation, readSecret } from '../../service';
+import {
+  createDeserializedObject,
+  createExpectation,
+  readSecret,
+} from '../../service';
 
 const postExpectationByHttp: Route = {
   method: 'POST',
   pathname: '/expectation',
   handler: async (req) => {
-    const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== readSecret()) {
+    if ((req.url.searchParams.get('secret') || '') !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -21,31 +24,26 @@ const postExpectationByHttp: Route = {
         },
       };
     }
-    const { body } = req;
-    const benchmark = await body.json<{
-      snapshots: ClientSnapshot<unknown>[];
-      parts: { count: number; rows: unknown[] }[];
-    }>();
-    const clientSnapshots =
-      benchmark?.snapshots.map<ClientSnapshot<unknown> | null>((snapshot) => {
-        if (typeof snapshot.table !== 'string') return null;
-        if (!Array.isArray(snapshot.rows)) return null;
-        return snapshot;
-      });
-    const assertionParts = benchmark?.parts.map<AssertionPart<unknown> | null>(
-      (part) => {
-        if (typeof part.count !== 'number') return null;
-        if (!Array.isArray(part.rows)) return null;
-        return part;
+    const benchmark = await createDeserializedObject(
+      () =>
+        req.body.json<{
+          snapshots: ClientSnapshot<unknown>[];
+          parts: AssertionPart<unknown>[];
+        }>(),
+      (source) => source,
+      (target) => {
+        for (const snapshot of target.snapshots) {
+          if (typeof snapshot.table !== 'string') return false;
+          if (!Array.isArray(snapshot.rows)) return false;
+        }
+        for (const part of target.parts) {
+          if (typeof part.count !== 'number') return false;
+          if (!Array.isArray(part.rows)) return false;
+        }
+        return true;
       },
     );
-    if (
-      !benchmark ||
-      !Array.isArray(clientSnapshots) ||
-      !clientSnapshots?.every((snapshot) => snapshot !== null) ||
-      !Array.isArray(assertionParts) ||
-      !assertionParts?.every((part) => part !== null)
-    ) {
+    if (!benchmark) {
       return {
         code: 400,
         body: {
@@ -55,8 +53,8 @@ const postExpectationByHttp: Route = {
       };
     }
     const expectation = await createExpectation(
-      clientSnapshots as ClientSnapshot<unknown>[],
-      assertionParts as AssertionPart<unknown>[],
+      benchmark.snapshots,
+      benchmark.parts,
     );
     if (!expectation) {
       return {
@@ -81,47 +79,47 @@ const postExpectationByRpc: Plugin<ExpectationDefinition> = {
   definition: ExpectationDefinition,
   handlers: {
     postExpectation: async (req) => {
-      const { secret } = req;
-      if ((secret || '') !== readSecret()) {
+      if (req.secret !== readSecret()) {
         return {
           success: false,
           uuid: '',
         };
       }
-      const { benchmark } = req;
-      const assertionParts =
-        benchmark?.parts.map<AssertionPart<unknown> | null>((part) => {
-          if (typeof part.count !== 'number') return null;
-          if (!Array.isArray(part.rows)) return null;
-          return {
-            ...part,
-            rows: part.rows.map((row) => JSON.parse(row)),
-          };
-        });
-      const clientSnapshots =
-        benchmark?.snapshots.map<ClientSnapshot<unknown> | null>((snapshot) => {
-          if (typeof snapshot.table !== 'string') return null;
-          if (!Array.isArray(snapshot.rows)) return null;
-          return {
+      const benchmark = await createDeserializedObject(
+        () => req.benchmark,
+        (source, parser) => ({
+          ...source,
+          snapshots: source.snapshots.map((snapshot) => ({
             ...snapshot,
-            rows: snapshot.rows.map((row) => JSON.parse(row)),
-          };
-        });
-      if (
-        !benchmark ||
-        !Array.isArray(clientSnapshots) ||
-        !clientSnapshots?.every((snapshot) => snapshot !== null) ||
-        !Array.isArray(assertionParts) ||
-        !assertionParts?.every((part) => part !== null)
-      ) {
+            rows: snapshot.rows.map(parser),
+          })),
+          parts: source.parts.map((part) => ({
+            ...part,
+            rows: part.rows.map(parser),
+          })),
+        }),
+        (target) => {
+          for (const snapshot of target.snapshots) {
+            if (typeof snapshot.table !== 'string') return false;
+            if (!Array.isArray(snapshot.rows)) return false;
+          }
+          for (const part of target.parts) {
+            if (typeof part.count !== 'number') return false;
+            if (!Array.isArray(part.rows)) return false;
+          }
+          return true;
+        },
+      );
+
+      if (!benchmark) {
         return {
           success: false,
           uuid: '',
         };
       }
       const expectation = await createExpectation(
-        clientSnapshots as ClientSnapshot<unknown>[],
-        assertionParts as AssertionPart<unknown>[],
+        benchmark.snapshots,
+        benchmark.parts,
       );
       if (!expectation) {
         return {

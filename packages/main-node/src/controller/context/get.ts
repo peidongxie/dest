@@ -1,14 +1,19 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { ContextDefinition } from '../../domain';
-import { readContext, readEnum, readSecret, readType } from '../../service';
+import {
+  createSerializedObject,
+  readContext,
+  readEnum,
+  readSecret,
+  readType,
+} from '../../service';
 
 const getContextByHttp: Route = {
   method: 'GET',
   pathname: '/context',
   handler: async (req) => {
-    const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== readSecret()) {
+    if ((req.url.searchParams.get('secret') || '') !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -21,8 +26,8 @@ const getContextByHttp: Route = {
       };
     }
     const { url } = req;
-    const name = url.searchParams.get('name');
-    const type = url.searchParams.get('type');
+    const name = url.searchParams.get('name') || '';
+    const type = url.searchParams.get('type') || '';
     const clientType = readType(type);
     if (!clientType || !name) {
       return {
@@ -64,8 +69,7 @@ const getContextByRpc: Plugin<ContextDefinition> = {
   definition: ContextDefinition,
   handlers: {
     getContext: async (req) => {
-      const { secret } = req;
-      if ((secret || '') !== readSecret()) {
+      if (req.secret !== readSecret()) {
         return {
           success: false,
           dataset: {
@@ -74,9 +78,9 @@ const getContextByRpc: Plugin<ContextDefinition> = {
           },
         };
       }
-      const { name, type } = req;
-      const adapterType = readType(type);
-      if (!adapterType || !name) {
+      const type = readType(req.type);
+      const name = req.name;
+      if (!type || !name) {
         return {
           success: false,
           dataset: {
@@ -85,7 +89,7 @@ const getContextByRpc: Plugin<ContextDefinition> = {
           },
         };
       }
-      const scheduler = readContext(adapterType, name);
+      const scheduler = readContext(type, name);
       if (!scheduler) {
         return {
           success: false,
@@ -95,17 +99,29 @@ const getContextByRpc: Plugin<ContextDefinition> = {
           },
         };
       }
-      const dataset = scheduler.getTarget().getDataset();
-      return {
-        success: true,
-        dataset: {
-          schemas: dataset.schemas.map((schema) => JSON.stringify(schema)),
-          events: dataset.events.map((event) => ({
+      const dataset = await createSerializedObject(
+        () => scheduler.getTarget().getDataset(),
+        (source, stringifier) => ({
+          schemas: source.schemas.map(stringifier),
+          events: source.events.map((event) => ({
             ...event,
             action: readEnum(event.action),
-            values: event.values.map((value) => JSON.stringify(value)),
+            values: event.values.map(stringifier),
           })),
-        },
+        }),
+      );
+      if (!dataset) {
+        return {
+          success: false,
+          dataset: {
+            schemas: [],
+            events: [],
+          },
+        };
+      }
+      return {
+        success: true,
+        dataset,
       };
     },
   },
