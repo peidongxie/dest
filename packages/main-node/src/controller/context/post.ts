@@ -2,14 +2,19 @@ import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { type EntitySchemaOptions } from 'typeorm';
 import { ContextDefinition, type ClientEvent } from '../../domain';
-import { createContext, readAction, readSecret, readType } from '../../service';
+import {
+  createContext,
+  createDeserializedObject,
+  readAction,
+  readSecret,
+  readType,
+} from '../../service';
 
 const postContextByHttp: Route = {
   method: 'POST',
   pathname: '/context',
   handler: async (req) => {
-    const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== readSecret()) {
+    if ((req.url.searchParams.get('secret') || '') !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -17,39 +22,44 @@ const postContextByHttp: Route = {
         },
       };
     }
-    const { body, url } = req;
-    const name = url.searchParams.get('name');
-    const type = url.searchParams.get('type');
-    const dataset = await body.json<{
-      schemas: EntitySchemaOptions<unknown>[];
-      events: ClientEvent<unknown>[];
-    }>();
-    const clientType = readType(type);
-    const clientEvents = dataset?.events?.map<ClientEvent<unknown> | null>(
-      (event) => {
-        const clientAction = readAction(event?.action);
-        if (
-          (clientAction !== 'save' &&
-            clientAction !== 'remove' &&
-            clientAction !== 'write') ||
-          !event.target ||
-          !Array.isArray(event.values)
-        )
-          return null;
+    const type = readType(req.url.searchParams.get('type'));
+    const name = req.url.searchParams.get('name') || '';
+    const dataset = await createDeserializedObject(
+      () =>
+        req.body.json<{
+          schemas: EntitySchemaOptions<unknown>[];
+          events: ClientEvent<unknown>[];
+        }>(),
+      (source) => {
+        const events = [];
+        for (const event of source.events) {
+          const action = readAction(event.action);
+          if (action !== 'save' && action !== 'remove' && action !== 'write') {
+            return null;
+          }
+          events.push({
+            ...event,
+            action,
+          });
+        }
         return {
-          ...event,
-          action: clientAction,
+          ...source,
+          events,
         };
       },
+      (target) => {
+        for (const schema of target.schemas) {
+          if (!schema) return false;
+          if (typeof schema !== 'object') return false;
+        }
+        for (const event of target.events) {
+          if (typeof event.target !== 'string') return false;
+          if (!Array.isArray(event.values)) return false;
+        }
+        return true;
+      },
     );
-    if (
-      !clientType ||
-      !name ||
-      !dataset ||
-      !Array.isArray(dataset.schemas) ||
-      !Array.isArray(dataset.events) ||
-      !clientEvents?.every((event) => event !== null)
-    ) {
+    if (!type || !name || !dataset) {
       return {
         code: 400,
         body: {
@@ -58,10 +68,10 @@ const postContextByHttp: Route = {
       };
     }
     const scheduler = await createContext(
-      clientType,
+      type,
       name,
       dataset.schemas,
-      clientEvents as ClientEvent<unknown>[],
+      dataset.events,
     );
     if (!scheduler) {
       return {
@@ -84,49 +94,63 @@ const postContextByRpc: Plugin<ContextDefinition> = {
   definition: ContextDefinition,
   handlers: {
     postContext: async (req) => {
-      const { secret } = req;
-      if ((secret || '') !== readSecret()) {
+      if (req.secret !== readSecret()) {
         return {
           success: false,
         };
       }
-      const { dataset, name, type } = req;
-      const clientType = readType(type);
-      const clientEvents = dataset?.events?.map<ClientEvent<unknown> | null>(
-        (event) => {
-          const clientAction = readAction(event?.action);
-          if (
-            (clientAction !== 'save' &&
-              clientAction !== 'remove' &&
-              clientAction !== 'write') ||
-            !event.target ||
-            !Array.isArray(event.values)
-          )
-            return null;
+      const type = readType(req.type);
+      const name = req.name;
+      const dataset = await createDeserializedObject(
+        () => req.dataset,
+        (source, parser) => {
+          const events = [];
+          for (const event of source.events) {
+            const action = readAction(event.action);
+            if (
+              action !== 'save' &&
+              action !== 'remove' &&
+              action !== 'write'
+            ) {
+              return null;
+            }
+            events.push({
+              ...event,
+              action,
+              values: event.values.map(parser),
+            });
+          }
           return {
-            ...event,
-            action: clientAction,
-            values: event.values.map((value) => JSON.parse(value)),
+            ...source,
+            schemas: source.schemas.map((schema) =>
+              parser<EntitySchemaOptions<unknown>>(schema),
+            ),
+            events,
           };
         },
+        (target) => {
+          for (const schema of target.schemas) {
+            if (!schema) return false;
+            if (typeof schema !== 'object') return false;
+          }
+          for (const event of target.events) {
+            if (typeof event.target !== 'string') return false;
+            if (!Array.isArray(event.values)) return false;
+          }
+          return true;
+        },
       );
-      if (
-        !clientType ||
-        !name ||
-        !dataset ||
-        !Array.isArray(dataset.schemas) ||
-        !Array.isArray(dataset.events) ||
-        !clientEvents?.every((event) => event !== null)
-      ) {
+
+      if (!type || !name || !dataset) {
         return {
           success: false,
         };
       }
       const scheduler = await createContext(
-        clientType,
+        type,
         name,
-        dataset.schemas.map((schema) => JSON.parse(schema)),
-        clientEvents as ClientEvent<unknown>[],
+        dataset.schemas,
+        dataset.events,
       );
       if (!scheduler) {
         return {

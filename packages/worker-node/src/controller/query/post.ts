@@ -137,7 +137,6 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
             values,
           };
         },
-        () => true,
       );
       if (
         !adapterType ||

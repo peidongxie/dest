@@ -1,14 +1,17 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { ActualityDefinition } from '../../domain';
-import { readActuality, readSecret } from '../../service';
+import {
+  createSerializedObject,
+  readActuality,
+  readSecret,
+} from '../../service';
 
 const getActualityByHttp: Route = {
   method: 'GET',
   pathname: '/actuality',
   handler: async (req) => {
-    const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== readSecret()) {
+    if ((req.url.searchParams.get('secret') || '') !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -21,8 +24,7 @@ const getActualityByHttp: Route = {
         },
       };
     }
-    const { url } = req;
-    const uuid = url.searchParams.get('uuid');
+    const uuid = req.url.searchParams.get('uuid') || '';
     if (!uuid) {
       return {
         code: 400,
@@ -64,8 +66,7 @@ const getActualityByRpc: Plugin<ActualityDefinition> = {
   definition: ActualityDefinition,
   handlers: {
     getActuality: async (req) => {
-      const { secret } = req;
-      if ((secret || '') !== readSecret()) {
+      if (req.secret !== readSecret()) {
         return {
           success: false,
           uuid: '',
@@ -75,7 +76,7 @@ const getActualityByRpc: Plugin<ActualityDefinition> = {
           time: 0,
         };
       }
-      const { uuid } = req;
+      const uuid = req.uuid;
       if (!uuid) {
         return {
           success: false,
@@ -86,7 +87,17 @@ const getActualityByRpc: Plugin<ActualityDefinition> = {
           time: 0,
         };
       }
-      const actuality = readActuality(uuid);
+      const actuality = await createSerializedObject(
+        () => readActuality(uuid),
+        (source, stringifier) => ({
+          ...source,
+          snapshots: source.snapshots.map((snapshot) => ({
+            ...snapshot,
+            rows: snapshot.rows.map((row) => stringifier(row)),
+          })),
+          rows: source.rows.map((row) => stringifier(row)),
+        }),
+      );
       if (!actuality) {
         return {
           success: false,
@@ -100,11 +111,6 @@ const getActualityByRpc: Plugin<ActualityDefinition> = {
       return {
         success: true,
         ...actuality,
-        snapshots: actuality.snapshots.map((snapshot) => ({
-          ...snapshot,
-          rows: snapshot.rows.map((row) => JSON.stringify(row)),
-        })),
-        rows: actuality.rows.map((row) => JSON.stringify(row)),
       };
     },
   },

@@ -1,14 +1,17 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { ClientDefinition } from '../../domain';
-import { createClient, readSecret } from '../../service';
+import {
+  createClient,
+  createDeserializedObject,
+  readSecret,
+} from '../../service';
 
 const postClientByHttp: Route = {
   method: 'POST',
   pathname: '/client',
   handler: async (req) => {
-    const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== readSecret()) {
+    if ((req.url.searchParams.get('secret') || '') !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -16,20 +19,23 @@ const postClientByHttp: Route = {
         },
       };
     }
-    const { body, url } = req;
-    const token = url.searchParams.get('token');
-    const setup = await body.json<{
-      api: 'http' | 'rpc';
-      hostname: string;
-      port: number;
-    }>();
-    if (
-      !token ||
-      !setup ||
-      (setup.api !== 'http' && setup.api !== 'rpc') ||
-      !setup.hostname ||
-      !setup.port
-    ) {
+    const token = req.url.searchParams.get('token') || '';
+    const setup = await createDeserializedObject(
+      () =>
+        req.body.json<{
+          api: 'http' | 'rpc';
+          hostname: string;
+          port: number;
+        }>(),
+      (source) => source,
+      (target) => {
+        if (target.api !== 'http' && target.api !== 'rpc') return false;
+        if (typeof target.hostname !== 'string') return false;
+        if (typeof target.port !== 'number') return false;
+        return true;
+      },
+    );
+    if (!token || !setup) {
       return {
         code: 400,
         body: {
@@ -60,19 +66,21 @@ const postClientByRpc: Plugin<ClientDefinition> = {
   handlers: {
     postClient: async (req) => {
       const { secret } = req;
-      if ((secret || '') !== readSecret()) {
+      if (secret !== readSecret()) {
         return {
           success: false,
         };
       }
-      const { setup, token } = req;
-      if (
-        !token ||
-        !setup ||
-        (setup.api !== 'http' && setup.api !== 'rpc') ||
-        !setup.hostname ||
-        !setup.port
-      ) {
+      const token = req.token;
+      const setup = await createDeserializedObject(
+        () => req.setup,
+        (source) => source,
+        (target) => {
+          if (target.api !== 'http' && target.api !== 'rpc') return false;
+          return true;
+        },
+      );
+      if (!token || !setup) {
         return {
           success: false,
         };

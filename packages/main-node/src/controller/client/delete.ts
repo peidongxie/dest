@@ -7,8 +7,7 @@ const deleteClientByHttp: Route = {
   method: 'DELETE',
   pathname: '/client',
   handler: async (req) => {
-    const secret = req.url.searchParams.get('secret');
-    if ((secret || '') !== readSecret()) {
+    if ((req.url.searchParams.get('secret') || '') !== readSecret()) {
       return {
         code: 401,
         body: {
@@ -16,8 +15,7 @@ const deleteClientByHttp: Route = {
         },
       };
     }
-    const { url } = req;
-    const token = url.searchParams.get('token');
+    const token = req.url.searchParams.get('token') || '';
     if (!token) {
       return {
         code: 400,
@@ -48,13 +46,12 @@ const deleteClientByRpc: Plugin<ClientDefinition> = {
   definition: ClientDefinition,
   handlers: {
     deleteClient: async (req) => {
-      const { secret } = req;
-      if ((secret || '') !== readSecret()) {
+      if (req.secret !== readSecret()) {
         return {
           success: false,
         };
       }
-      const { token } = req;
+      const token = req.token;
       if (!token) {
         return {
           success: false,
