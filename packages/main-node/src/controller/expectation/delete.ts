@@ -1,7 +1,11 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { ExpectationDefinition } from '../../domain';
-import { deleteExpectation, readSecret } from '../../service';
+import {
+  createSerializedObject,
+  deleteExpectation,
+  readSecret,
+} from '../../service';
 
 const deleteExpectationByHttp: Route = {
   method: 'DELETE',
@@ -24,7 +28,9 @@ const deleteExpectationByHttp: Route = {
         },
       };
     }
-    const expectation = await deleteExpectation(uuid);
+    const expectation = await createSerializedObject(() =>
+      deleteExpectation(uuid),
+    );
     if (!expectation) {
       return {
         code: 404,
@@ -57,7 +63,9 @@ const deleteExpectationByRpc: Plugin<ExpectationDefinition> = {
           success: false,
         };
       }
-      const expectation = await deleteExpectation(uuid);
+      const expectation = await createSerializedObject(() =>
+        deleteExpectation(uuid),
+      );
       if (!expectation) {
         return {
           success: false,

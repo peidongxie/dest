@@ -25,11 +25,9 @@ const getContextByHttp: Route = {
         },
       };
     }
-    const { url } = req;
-    const name = url.searchParams.get('name') || '';
-    const type = url.searchParams.get('type') || '';
-    const clientType = readType(type);
-    if (!clientType || !name) {
+    const type = readType(req.url.searchParams.get('type'));
+    const name = req.url.searchParams.get('name') || '';
+    if (!type || !name) {
       return {
         code: 400,
         body: {
@@ -41,8 +39,10 @@ const getContextByHttp: Route = {
         },
       };
     }
-    const scheduler = readContext(clientType, name);
-    if (!scheduler) {
+    const dataset = await createSerializedObject(
+      () => readContext(type, name)?.getTarget().getDataset() || null,
+    );
+    if (!dataset) {
       return {
         code: 404,
         body: {
@@ -54,7 +54,6 @@ const getContextByHttp: Route = {
         },
       };
     }
-    const dataset = scheduler.getTarget().getDataset();
     return {
       code: 200,
       body: {
@@ -89,18 +88,8 @@ const getContextByRpc: Plugin<ContextDefinition> = {
           },
         };
       }
-      const scheduler = readContext(type, name);
-      if (!scheduler) {
-        return {
-          success: false,
-          dataset: {
-            schemas: [],
-            events: [],
-          },
-        };
-      }
       const dataset = await createSerializedObject(
-        () => scheduler.getTarget().getDataset(),
+        () => readContext(type, name)?.getTarget().getDataset() || null,
         (source, stringifier) => ({
           schemas: source.schemas.map(stringifier),
           events: source.events.map((event) => ({

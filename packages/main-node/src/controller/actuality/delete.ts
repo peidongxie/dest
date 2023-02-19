@@ -1,7 +1,11 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { ActualityDefinition } from '../../domain';
-import { deleteActuality, readSecret } from '../../service';
+import {
+  createSerializedObject,
+  deleteActuality,
+  readSecret,
+} from '../../service';
 
 const deleteActualityByHttp: Route = {
   method: 'DELETE',
@@ -24,7 +28,7 @@ const deleteActualityByHttp: Route = {
         },
       };
     }
-    const actuality = deleteActuality(uuid);
+    const actuality = await createSerializedObject(() => deleteActuality(uuid));
     if (!actuality) {
       return {
         code: 404,
@@ -57,7 +61,9 @@ const deleteActualityByRpc: Plugin<ActualityDefinition> = {
           success: false,
         };
       }
-      const actuality = deleteActuality(uuid);
+      const actuality = await createSerializedObject(() =>
+        deleteActuality(uuid),
+      );
       if (!actuality) {
         return {
           success: false,

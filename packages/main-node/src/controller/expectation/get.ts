@@ -34,7 +34,9 @@ const getExpectationByHttp: Route = {
         },
       };
     }
-    const expectation = await readExpectation(uuid);
+    const expectation = await createSerializedObject(() =>
+      readExpectation(uuid),
+    );
     if (!expectation) {
       return {
         code: 404,

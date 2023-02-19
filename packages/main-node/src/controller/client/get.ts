@@ -1,7 +1,7 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { ClientDefinition } from '../../domain';
-import { readClient, readSecret } from '../../service';
+import { createSerializedObject, readClient, readSecret } from '../../service';
 
 const getClientByHttp: Route = {
   method: 'GET',
@@ -34,7 +34,7 @@ const getClientByHttp: Route = {
         },
       };
     }
-    const client = await readClient(token);
+    const client = await createSerializedObject(() => readClient(token));
     if (!client) {
       return {
         code: 404,
@@ -83,7 +83,7 @@ const getClientByRpc: Plugin<ClientDefinition> = {
           },
         };
       }
-      const client = await readClient(token);
+      const client = await createSerializedObject(() => readClient(token));
       if (!client) {
         return {
           success: false,

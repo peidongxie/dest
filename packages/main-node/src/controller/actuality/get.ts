@@ -38,7 +38,7 @@ const getActualityByHttp: Route = {
         },
       };
     }
-    const actuality = readActuality(uuid);
+    const actuality = await createSerializedObject(() => readActuality(uuid));
     if (!actuality) {
       return {
         code: 404,

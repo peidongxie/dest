@@ -1,7 +1,12 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { ContextDefinition } from '../../domain';
-import { deleteContext, readSecret, readType } from '../../service';
+import {
+  createSerializedObject,
+  deleteContext,
+  readSecret,
+  readType,
+} from '../../service';
 
 const deleteContextByHttp: Route = {
   method: 'DELETE',
@@ -25,7 +30,9 @@ const deleteContextByHttp: Route = {
         },
       };
     }
-    const scheduler = await deleteContext(type, name);
+    const scheduler = await createSerializedObject(() =>
+      deleteContext(type, name),
+    );
     if (!scheduler) {
       return {
         code: 404,
@@ -59,7 +66,9 @@ const deleteContextByRpc: Plugin<ContextDefinition> = {
           success: false,
         };
       }
-      const scheduler = await deleteContext(type, name);
+      const scheduler = await createSerializedObject(() =>
+        deleteContext(type, name),
+      );
       if (!scheduler) {
         return {
           success: false,
