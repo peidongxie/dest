@@ -4,6 +4,7 @@ import { ClientDefinition } from '../../domain';
 import {
   createClient,
   createDeserializedObject,
+  createSerializedObject,
   readSecret,
 } from '../../service';
 
@@ -29,9 +30,12 @@ const postClientByHttp: Route = {
         }>(),
       (source) => source,
       (target) => {
+        if (typeof target.api !== 'string') return false;
         if (target.api !== 'http' && target.api !== 'rpc') return false;
         if (typeof target.hostname !== 'string') return false;
-        if (typeof target.port !== 'number') return false;
+        if (target.hostname === '') return false;
+        if (!Number.isInteger(target.port)) return false;
+        if (target.port <= 0 || target.port >= 65536) return false;
         return true;
       },
     );
@@ -43,7 +47,9 @@ const postClientByHttp: Route = {
         },
       };
     }
-    const client = await createClient(token, setup);
+    const client = await createSerializedObject(() =>
+      createClient(token, setup),
+    );
     if (!client) {
       return {
         code: 404,
@@ -65,8 +71,7 @@ const postClientByRpc: Plugin<ClientDefinition> = {
   definition: ClientDefinition,
   handlers: {
     postClient: async (req) => {
-      const { secret } = req;
-      if (secret !== readSecret()) {
+      if (req.secret !== readSecret()) {
         return {
           success: false,
         };
@@ -77,6 +82,8 @@ const postClientByRpc: Plugin<ClientDefinition> = {
         (source) => source,
         (target) => {
           if (target.api !== 'http' && target.api !== 'rpc') return false;
+          if (target.hostname === '') return false;
+          if (target.port <= 0 || target.port >= 65536) return false;
           return true;
         },
       );
@@ -85,7 +92,9 @@ const postClientByRpc: Plugin<ClientDefinition> = {
           success: false,
         };
       }
-      const client = await createClient(token, setup);
+      const client = await createSerializedObject(() =>
+        createClient(token, setup),
+      );
       if (!client) {
         return {
           success: false,

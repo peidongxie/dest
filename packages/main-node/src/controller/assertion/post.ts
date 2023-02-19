@@ -31,7 +31,9 @@ const postAssertionByHttp: Route = {
         },
       };
     }
-    const differences = createAssertion(actuality, expectation);
+    const differences = await createSerializedObject(() =>
+      createAssertion(actuality, expectation),
+    );
     if (!differences) {
       return {
         code: 404,
@@ -55,8 +57,7 @@ const postAssertionByRpc: Plugin<AssertionDefinition> = {
   definition: AssertionDefinition,
   handlers: {
     postAssertion: async (req) => {
-      const { secret } = req;
-      if (secret !== readSecret()) {
+      if (req.secret !== readSecret()) {
         return {
           success: false,
           differences: [],

@@ -4,6 +4,7 @@ import { ActualityDefinition } from '../../domain';
 import {
   createActuality,
   createDeserializedObject,
+  createSerializedObject,
   readAction,
   readSecret,
   readType,
@@ -43,8 +44,15 @@ const postActualityByHttp: Route = {
       },
       (target) => {
         if (typeof target.target !== 'string') return false;
+        if (target.target === '') return false;
         if (!Array.isArray(target.values)) return false;
-        if (target.tables.some((table) => typeof table !== 'string')) {
+        if (!Array.isArray(target.tables)) return false;
+        if (
+          target.tables.some((table) => {
+            if (typeof table !== 'string') return true;
+            return false;
+          })
+        ) {
           return false;
         }
         return true;
@@ -59,7 +67,9 @@ const postActualityByHttp: Route = {
         },
       };
     }
-    const actuality = await createActuality(type, name, condition);
+    const actuality = await createSerializedObject(() =>
+      createActuality(type, name, condition),
+    );
     if (!actuality) {
       return {
         code: 404,
@@ -93,15 +103,19 @@ const postActualityByRpc: Plugin<ActualityDefinition> = {
       const name = req.name;
       const condition = await createDeserializedObject(
         () => req.condition,
-        (source) => {
+        (source, parser) => {
           const action = readAction(source.action);
           if (action !== 'read' && action !== 'write') return null;
-          const values = source.values.map((value) => JSON.parse(value));
+          const values = source.values.map(parser);
           return {
             ...source,
             action,
             values,
           };
+        },
+        (target) => {
+          if (target.target === '') return false;
+          return true;
         },
       );
       if (!type || !name || !condition) {
@@ -110,7 +124,9 @@ const postActualityByRpc: Plugin<ActualityDefinition> = {
           uuid: '',
         };
       }
-      const actuality = await createActuality(type, name, condition);
+      const actuality = await createSerializedObject(() =>
+        createActuality(type, name, condition),
+      );
       if (!actuality) {
         return {
           success: false,

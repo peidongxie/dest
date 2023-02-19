@@ -48,13 +48,25 @@ const postContextByHttp: Route = {
         };
       },
       (target) => {
-        for (const schema of target.schemas) {
-          if (!schema) return false;
-          if (typeof schema !== 'object') return false;
+        if (!Array.isArray(target.schemas)) return false;
+        if (
+          target.schemas.some((schema) => {
+            if (typeof schema !== 'object') return true;
+            return false;
+          })
+        ) {
+          return false;
         }
-        for (const event of target.events) {
-          if (typeof event.target !== 'string') return false;
-          if (!Array.isArray(event.values)) return false;
+        if (!Array.isArray(target.events)) return false;
+        if (
+          target.events.some((event) => {
+            if (typeof event.target !== 'string') return true;
+            if (event.target === '') return true;
+            if (!Array.isArray(event.values)) return true;
+            return false;
+          })
+        ) {
+          return false;
         }
         return true;
       },
@@ -129,18 +141,25 @@ const postContextByRpc: Plugin<ContextDefinition> = {
           };
         },
         (target) => {
-          for (const schema of target.schemas) {
-            if (!schema) return false;
-            if (typeof schema !== 'object') return false;
+          if (
+            target.schemas.some((schema) => {
+              if (typeof schema !== 'object') return true;
+              return false;
+            })
+          ) {
+            return false;
           }
-          for (const event of target.events) {
-            if (typeof event.target !== 'string') return false;
-            if (!Array.isArray(event.values)) return false;
+          if (
+            target.events.some((event) => {
+              if (event.target === '') return true;
+              return false;
+            })
+          ) {
+            return false;
           }
           return true;
         },
       );
-
       if (!type || !name || !dataset) {
         return {
           success: false,

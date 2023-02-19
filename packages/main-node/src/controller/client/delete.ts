@@ -1,7 +1,11 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { ClientDefinition } from '../../domain';
-import { deleteClient, readSecret } from '../../service';
+import {
+  createSerializedObject,
+  deleteClient,
+  readSecret,
+} from '../../service';
 
 const deleteClientByHttp: Route = {
   method: 'DELETE',
@@ -24,7 +28,7 @@ const deleteClientByHttp: Route = {
         },
       };
     }
-    const client = await deleteClient(token);
+    const client = await createSerializedObject(() => deleteClient(token));
     if (!client) {
       return {
         code: 404,
@@ -57,7 +61,7 @@ const deleteClientByRpc: Plugin<ClientDefinition> = {
           success: false,
         };
       }
-      const client = await deleteClient(token);
+      const client = await createSerializedObject(() => deleteClient(token));
       if (!client) {
         return {
           success: false,

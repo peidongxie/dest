@@ -1,6 +1,6 @@
 type Parser = <T>(text: string) => T;
 
-const createDeserializedObject = async <S, T>(
+const createDeserializedObject = async <S, T = S>(
   creator: () => S | null | Promise<S | null>,
   transformer?: (
     source: NonNullable<S>,
@@ -26,7 +26,7 @@ const createDeserializedObject = async <S, T>(
 
 type Stringifier = (value: unknown) => string;
 
-const createSerializedObject = async <S, T>(
+const createSerializedObject = async <S, T = S>(
   creator: () => S | null | Promise<S | null>,
   transformer?: (
     source: NonNullable<S>,

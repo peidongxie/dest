@@ -8,6 +8,7 @@ import {
 import {
   createDeserializedObject,
   createExpectation,
+  createSerializedObject,
   readSecret,
 } from '../../service';
 
@@ -32,13 +33,27 @@ const postExpectationByHttp: Route = {
         }>(),
       (source) => source,
       (target) => {
-        for (const snapshot of target.snapshots) {
-          if (typeof snapshot.table !== 'string') return false;
-          if (!Array.isArray(snapshot.rows)) return false;
+        if (!Array.isArray(target.snapshots)) return false;
+        if (
+          target.snapshots.some((snapshot) => {
+            if (typeof snapshot.table !== 'string') return true;
+            if (snapshot.table === '') return true;
+            if (!Array.isArray(snapshot.rows)) return true;
+            return false;
+          })
+        ) {
+          return false;
         }
-        for (const part of target.parts) {
-          if (typeof part.count !== 'number') return false;
-          if (!Array.isArray(part.rows)) return false;
+        if (!Array.isArray(target.parts)) return false;
+        if (
+          target.parts.map((part) => {
+            if (!Number.isInteger(part.count)) return true;
+            if (part.count < 0) return true;
+            if (!Array.isArray(part.rows)) return true;
+            return false;
+          })
+        ) {
+          return false;
         }
         return true;
       },
@@ -52,9 +67,8 @@ const postExpectationByHttp: Route = {
         },
       };
     }
-    const expectation = await createExpectation(
-      benchmark.snapshots,
-      benchmark.parts,
+    const expectation = await createSerializedObject(() =>
+      createExpectation(benchmark.snapshots, benchmark.parts),
     );
     if (!expectation) {
       return {
@@ -99,13 +113,13 @@ const postExpectationByRpc: Plugin<ExpectationDefinition> = {
           })),
         }),
         (target) => {
-          for (const snapshot of target.snapshots) {
-            if (typeof snapshot.table !== 'string') return false;
-            if (!Array.isArray(snapshot.rows)) return false;
-          }
-          for (const part of target.parts) {
-            if (typeof part.count !== 'number') return false;
-            if (!Array.isArray(part.rows)) return false;
+          if (
+            target.snapshots.some((snapshot) => {
+              if (snapshot.table === '') return true;
+              return false;
+            })
+          ) {
+            return false;
           }
           return true;
         },
@@ -117,9 +131,8 @@ const postExpectationByRpc: Plugin<ExpectationDefinition> = {
           uuid: '',
         };
       }
-      const expectation = await createExpectation(
-        benchmark.snapshots,
-        benchmark.parts,
+      const expectation = await createSerializedObject(() =>
+        createExpectation(benchmark.snapshots, benchmark.parts),
       );
       if (!expectation) {
         return {
