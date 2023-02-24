@@ -38,8 +38,7 @@ const deleteAgentByRpc: Plugin<AgentDefinition> = {
   definition: AgentDefinition,
   handlers: {
     deleteAgent: async (req) => {
-      const { secret } = req;
-      if (secret !== readSecret()) {
+      if (req.secret !== readSecret()) {
         return {
           success: false,
         };

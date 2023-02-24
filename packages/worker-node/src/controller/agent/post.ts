@@ -16,8 +16,7 @@ const postAgentByHttp: Route = {
         },
       };
     }
-    const { url } = req;
-    const token = url.searchParams.get('token') || '';
+    const token = req.url.searchParams.get('token') || '';
     if (!token) {
       return {
         code: 400,
@@ -48,8 +47,7 @@ const postAgentByRpc: Plugin<AgentDefinition> = {
   definition: AgentDefinition,
   handlers: {
     postAgent: async (req) => {
-      const { secret } = req;
-      if (secret !== readSecret()) {
+      if (req.secret !== readSecret()) {
         return {
           success: false,
         };

@@ -16,11 +16,9 @@ const deleteDatabaseByHttp: Route = {
         },
       };
     }
-    const { url } = req;
-    const name = url.searchParams.get('name') || '';
-    const type = url.searchParams.get('type') || '';
-    const adapterType = readType(type);
-    if (!adapterType || !name) {
+    const type = readType(req.url.searchParams.get('type'));
+    const name = req.url.searchParams.get('name') || '';
+    if (!type || !name) {
       return {
         code: 400,
         body: {
@@ -28,7 +26,7 @@ const deleteDatabaseByHttp: Route = {
         },
       };
     }
-    const scheduler = await deleteDatabase(adapterType, name);
+    const scheduler = await deleteDatabase(type, name);
     if (!scheduler) {
       return {
         code: 404,
@@ -50,20 +48,19 @@ const deleteDatabaseByRpc: Plugin<DatabaseDefinition> = {
   definition: DatabaseDefinition,
   handlers: {
     deleteDatabase: async (req) => {
-      const { secret } = req;
-      if (secret !== readSecret()) {
+      if (req.secret !== readSecret()) {
         return {
           success: false,
         };
       }
-      const { name, type } = req;
-      const adapterType = readType(type);
-      if (!adapterType || !name) {
+      const type = readType(req.type);
+      const name = req.name;
+      if (!type || !name) {
         return {
           success: false,
         };
       }
-      const scheduler = await deleteDatabase(adapterType, name);
+      const scheduler = await deleteDatabase(type, name);
       if (!scheduler) {
         return {
           success: false,

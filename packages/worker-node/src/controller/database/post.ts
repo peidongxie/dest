@@ -22,12 +22,10 @@ const postDatabaseByHttp: Route = {
         },
       };
     }
-    const { body, url } = req;
-    const name = url.searchParams.get('name') || '';
-    const type = url.searchParams.get('type') || '';
-    const schemas = await body.json<EntitySchemaOptions<unknown>[]>();
-    const entitySchemas = await createDeserializedObject(
-      () => schemas,
+    const type = readType(req.url.searchParams.get('type'));
+    const name = req.url.searchParams.get('name') || '';
+    const schemas = await createDeserializedObject(
+      () => req.body.json<EntitySchemaOptions<unknown>[]>(),
       (source) => source,
       (target) => {
         for (const schema of target) {
@@ -37,8 +35,7 @@ const postDatabaseByHttp: Route = {
         return true;
       },
     );
-    const adapterType = readType(type);
-    if (!adapterType || !name || !entitySchemas) {
+    if (!type || !name || !schemas) {
       return {
         code: 400,
         body: {
@@ -46,7 +43,7 @@ const postDatabaseByHttp: Route = {
         },
       };
     }
-    const scheduler = await createDatabase(adapterType, name, entitySchemas);
+    const scheduler = await createDatabase(type, name, schemas);
     if (!scheduler) {
       return {
         code: 409,
@@ -68,16 +65,15 @@ const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
   definition: DatabaseDefinition,
   handlers: {
     postDatabase: async (req) => {
-      const { secret } = req;
-      if (secret !== readSecret()) {
+      if (req.secret !== readSecret()) {
         return {
           success: false,
         };
       }
-      const { name, schemas, type } = req;
-      const adapterType = readType(type);
-      const entitySchemas = await createDeserializedObject(
-        () => schemas,
+      const type = readType(req.type);
+      const name = req.name;
+      const schemas = await createDeserializedObject(
+        () => req.schemas,
         (source, parser) =>
           source.map((schema) => parser<EntitySchemaOptions<unknown>>(schema)),
         (target) => {
@@ -88,12 +84,12 @@ const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
           return true;
         },
       );
-      if (!adapterType || !name || !entitySchemas) {
+      if (!type || !name || !schemas) {
         return {
           success: false,
         };
       }
-      const scheduler = await createDatabase(adapterType, name, entitySchemas);
+      const scheduler = await createDatabase(type, name, schemas);
       if (!scheduler) {
         return {
           success: false,

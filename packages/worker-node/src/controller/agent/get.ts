@@ -41,8 +41,7 @@ const getAgentByRpc: Plugin<AgentDefinition> = {
   definition: AgentDefinition,
   handlers: {
     getAgent: async (req) => {
-      const { secret } = req;
-      if (secret !== readSecret()) {
+      if (req.secret !== readSecret()) {
         return {
           success: false,
           token: '',
