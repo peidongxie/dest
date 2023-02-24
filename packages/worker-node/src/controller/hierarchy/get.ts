@@ -27,20 +27,17 @@ const getHierarchyByHttp: Route = {
         },
       };
     }
-    const { url } = req;
-    const level = url.searchParams.get('level') || '';
-    const name = url.searchParams.get('name') || '';
-    const table = url.searchParams.get('table') || '';
-    const type = url.searchParams.get('type') || '';
-    const adapterType = readType(type);
-    const hierarchyLevel = readLevel(level);
+    const type = readType(req.url.searchParams.get('type'));
+    const name = req.url.searchParams.get('name') || '';
+    const table = req.url.searchParams.get('table') || '';
+    const level = readLevel(req.url.searchParams.get('level'));
     if (
-      adapterType === null ||
-      hierarchyLevel === null ||
-      (!adapterType && !name && table) ||
-      (!adapterType && name && !table) ||
-      (!adapterType && name && table) ||
-      (adapterType && !name && table)
+      type === null ||
+      level === null ||
+      (!type && !name && table) ||
+      (!type && name && !table) ||
+      (!type && name && table) ||
+      (type && !name && table)
     ) {
       return {
         code: 400,
@@ -52,14 +49,14 @@ const getHierarchyByHttp: Route = {
     }
     const environments = await createSerializedObject(
       async () =>
-        hierarchyLevel === 'environment'
+        level === 'environment'
           ? await readHierarchyEnvironment()
-          : hierarchyLevel === 'database'
-          ? await readHierarchyDatabase(adapterType)
-          : hierarchyLevel === 'table'
-          ? await readHierarchyTable(adapterType, name)
-          : hierarchyLevel === 'row'
-          ? await readHierarchyRow(adapterType, name, table)
+          : level === 'database'
+          ? await readHierarchyDatabase(type)
+          : level === 'table'
+          ? await readHierarchyTable(type, name)
+          : level === 'row'
+          ? await readHierarchyRow(type, name, table)
           : [],
       (source) =>
         source.map((environment) => ({
@@ -81,23 +78,23 @@ const getHierarchyByRpc: Plugin<HierarchyDefinition> = {
   definition: HierarchyDefinition,
   handlers: {
     getHierarchy: async (req) => {
-      const { secret } = req;
-      if (secret !== readSecret()) {
+      if (req.secret !== readSecret()) {
         return {
           success: false,
           environments: [],
         };
       }
-      const { level, name, table, type } = req;
-      const adapterType = readType(type);
-      const hierarchyLevel = readLevel(level);
+      const type = readType(req.type);
+      const name = req.name;
+      const table = req.table;
+      const level = readLevel(req.level);
       if (
-        adapterType === null ||
-        hierarchyLevel === null ||
-        (!adapterType && !name && table) ||
-        (!adapterType && name && !table) ||
-        (!adapterType && name && table) ||
-        (adapterType && !name && table)
+        type === null ||
+        level === null ||
+        (!type && !name && table) ||
+        (!type && name && !table) ||
+        (!type && name && table) ||
+        (type && !name && table)
       ) {
         return {
           success: false,
@@ -106,14 +103,14 @@ const getHierarchyByRpc: Plugin<HierarchyDefinition> = {
       }
       const environments = await createSerializedObject(
         async () =>
-          hierarchyLevel === 'environment'
+          level === 'environment'
             ? await readHierarchyEnvironment()
-            : hierarchyLevel === 'database'
-            ? await readHierarchyDatabase(adapterType)
-            : hierarchyLevel === 'table'
-            ? await readHierarchyTable(adapterType, name)
-            : hierarchyLevel === 'row'
-            ? await readHierarchyRow(adapterType, name, table)
+            : level === 'database'
+            ? await readHierarchyDatabase(type)
+            : level === 'table'
+            ? await readHierarchyTable(type, name)
+            : level === 'row'
+            ? await readHierarchyRow(type, name, table)
             : [],
         (source, stringifier) =>
           source.map((environment) => ({

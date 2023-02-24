@@ -22,11 +22,9 @@ const getDatabaseByHttp: Route = {
         },
       };
     }
-    const { url } = req;
-    const name = url.searchParams.get('name') || '';
-    const type = url.searchParams.get('type') || '';
-    const adapterType = readType(type);
-    if (!adapterType || !name) {
+    const type = readType(req.url.searchParams.get('type'));
+    const name = req.url.searchParams.get('name') || '';
+    if (!type || !name) {
       return {
         code: 400,
         body: {
@@ -35,7 +33,7 @@ const getDatabaseByHttp: Route = {
         },
       };
     }
-    const scheduler = readDatabase(adapterType, name);
+    const scheduler = readDatabase(type, name);
     if (!scheduler) {
       return {
         code: 404,
@@ -60,22 +58,21 @@ const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
   definition: DatabaseDefinition,
   handlers: {
     getDatabase: async (req) => {
-      const { secret } = req;
-      if (secret !== readSecret()) {
+      if (req.secret !== readSecret()) {
         return {
           success: false,
           schemas: [],
         };
       }
-      const { name, type } = req;
-      const adapterType = readType(type);
-      if (!adapterType || !name) {
+      const type = readType(req.type);
+      const name = req.name;
+      if (!type || !name) {
         return {
           success: false,
           schemas: [],
         };
       }
-      const scheduler = readDatabase(adapterType, name);
+      const scheduler = readDatabase(type, name);
       if (!scheduler) {
         return {
           success: false,

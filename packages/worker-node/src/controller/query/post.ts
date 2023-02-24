@@ -28,13 +28,11 @@ const postQueryByHttp: Route = {
         },
       };
     }
-    const { body, url } = req;
-    const name = url.searchParams.get('name') || '';
-    const type = url.searchParams.get('type') || '';
-    const adapterType = readType(type);
-    const databaseEvent = await createDeserializedObject(
-      async () =>
-        await body.json<{
+    const type = readType(req.url.searchParams.get('type'));
+    const name = req.url.searchParams.get('name') || '';
+    const event = await createDeserializedObject(
+      () =>
+        req.body.json<{
           action: ActionEnum;
           target: string;
           values: unknown[];
@@ -54,10 +52,10 @@ const postQueryByHttp: Route = {
       },
     );
     if (
-      !adapterType ||
-      !databaseEvent ||
-      (!name && databaseEvent.action !== 'root') ||
-      (name && databaseEvent.action === 'root')
+      !type ||
+      !event ||
+      (!name && event.action !== 'root') ||
+      (name && event.action === 'root')
     ) {
       return {
         code: 400,
@@ -71,7 +69,7 @@ const postQueryByHttp: Route = {
         },
       };
     }
-    const promise = createQuery(adapterType, name, databaseEvent);
+    const promise = createQuery(type, name, event);
     if (!promise) {
       return {
         code: 404,
@@ -112,8 +110,7 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
   definition: QueryDefinition,
   handlers: {
     postQuery: async (req) => {
-      const { secret } = req;
-      if (secret !== readSecret()) {
+      if (req.secret !== readSecret()) {
         return {
           success: false,
           result: {
@@ -123,14 +120,14 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
           },
         };
       }
-      const { event, name, type } = req;
-      const adapterType = readType(type);
-      const databaseEvent = await createDeserializedObject(
-        () => event,
-        (source) => {
+      const type = readType(req.type);
+      const name = req.name;
+      const event = await createDeserializedObject(
+        () => req.event,
+        (source, parser) => {
           const action = readAction(source.action);
           if (!action) return null;
-          const values = source.values.map((value) => JSON.parse(value));
+          const values = source.values.map(parser);
           return {
             ...source,
             action,
@@ -139,10 +136,10 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
         },
       );
       if (
-        !adapterType ||
-        !databaseEvent ||
-        (!name && databaseEvent.action !== 'root') ||
-        (name && databaseEvent.action === 'root')
+        !type ||
+        !event ||
+        (!name && event.action !== 'root') ||
+        (name && event.action === 'root')
       ) {
         return {
           success: false,
@@ -153,7 +150,7 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
           },
         };
       }
-      const promise = createQuery(adapterType, name, databaseEvent);
+      const promise = createQuery(type, name, event);
       if (!promise) {
         return {
           success: false,
