@@ -1,7 +1,7 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { AgentDefinition } from '../../domain';
-import { createAgent, readSecret } from '../../service';
+import { createAgent, createSerializedObject, readSecret } from '../../service';
 
 const postAgentByHttp: Route = {
   method: 'POST',
@@ -25,17 +25,17 @@ const postAgentByHttp: Route = {
         },
       };
     }
-    const agent = await createAgent(token);
+    const agent = await createSerializedObject(() => createAgent(token));
     if (!agent) {
       return {
-        code: 409,
+        code: 500,
         body: {
           success: false,
         },
       };
     }
     return {
-      code: 200,
+      code: 201,
       body: {
         success: true,
       },
@@ -58,7 +58,7 @@ const postAgentByRpc: Plugin<AgentDefinition> = {
           success: false,
         };
       }
-      const agent = await createAgent(token);
+      const agent = await createSerializedObject(() => createAgent(token));
       if (!agent) {
         return {
           success: false,

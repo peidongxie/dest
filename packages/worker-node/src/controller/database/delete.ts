@@ -1,7 +1,12 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { DatabaseDefinition } from '../../domain';
-import { deleteDatabase, readSecret, readType } from '../../service';
+import {
+  createSerializedObject,
+  deleteDatabase,
+  readSecret,
+  readType,
+} from '../../service';
 
 const deleteDatabaseByHttp: Route = {
   method: 'DELETE',
@@ -26,10 +31,12 @@ const deleteDatabaseByHttp: Route = {
         },
       };
     }
-    const scheduler = await deleteDatabase(type, name);
+    const scheduler = await createSerializedObject(() =>
+      deleteDatabase(type, name),
+    );
     if (!scheduler) {
       return {
-        code: 404,
+        code: 500,
         body: {
           success: false,
         },
@@ -60,7 +67,9 @@ const deleteDatabaseByRpc: Plugin<DatabaseDefinition> = {
           success: false,
         };
       }
-      const scheduler = await deleteDatabase(type, name);
+      const scheduler = await createSerializedObject(() =>
+        deleteDatabase(type, name),
+      );
       if (!scheduler) {
         return {
           success: false,

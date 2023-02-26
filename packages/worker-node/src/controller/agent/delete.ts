@@ -1,7 +1,7 @@
 import { type Plugin } from '@dest-toolkit/grpc-server';
 import { type Route } from '@dest-toolkit/http-server';
 import { AgentDefinition } from '../../domain';
-import { deleteAgent, readSecret } from '../../service';
+import { createSerializedObject, deleteAgent, readSecret } from '../../service';
 
 const deleteAgentByHttp: Route = {
   method: 'DELETE',
@@ -16,10 +16,10 @@ const deleteAgentByHttp: Route = {
         },
       };
     }
-    const agent = await deleteAgent();
+    const agent = await createSerializedObject(() => deleteAgent());
     if (!agent) {
       return {
-        code: 404,
+        code: 500,
         body: {
           success: false,
         },
@@ -43,7 +43,7 @@ const deleteAgentByRpc: Plugin<AgentDefinition> = {
           success: false,
         };
       }
-      const agent = await deleteAgent();
+      const agent = await createSerializedObject(() => deleteAgent());
       if (!agent) {
         return {
           success: false,

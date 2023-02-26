@@ -5,6 +5,7 @@ import { DatabaseDefinition } from '../../domain';
 import {
   createDatabase,
   createDeserializedObject,
+  createSerializedObject,
   readSecret,
   readType,
 } from '../../service';
@@ -43,10 +44,12 @@ const postDatabaseByHttp: Route = {
         },
       };
     }
-    const scheduler = await createDatabase(type, name, schemas);
+    const scheduler = await createSerializedObject(() =>
+      createDatabase(type, name, schemas),
+    );
     if (!scheduler) {
       return {
-        code: 409,
+        code: 500,
         body: {
           success: false,
         },
@@ -89,7 +92,9 @@ const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
           success: false,
         };
       }
-      const scheduler = await createDatabase(type, name, schemas);
+      const scheduler = await createSerializedObject(() =>
+        createDatabase(type, name, schemas),
+      );
       if (!scheduler) {
         return {
           success: false,

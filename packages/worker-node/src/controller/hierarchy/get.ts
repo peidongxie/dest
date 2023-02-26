@@ -48,15 +48,15 @@ const getHierarchyByHttp: Route = {
       };
     }
     const environments = await createSerializedObject(
-      async () =>
+      () =>
         level === 'environment'
-          ? await readHierarchyEnvironment()
+          ? readHierarchyEnvironment()
           : level === 'database'
-          ? await readHierarchyDatabase(type)
+          ? readHierarchyDatabase(type)
           : level === 'table'
-          ? await readHierarchyTable(type, name)
+          ? readHierarchyTable(type, name)
           : level === 'row'
-          ? await readHierarchyRow(type, name, table)
+          ? readHierarchyRow(type, name, table)
           : [],
       (source) =>
         source.map((environment) => ({
@@ -64,6 +64,15 @@ const getHierarchyByHttp: Route = {
           type: readEnum(environment.type),
         })),
     );
+    if (!environments) {
+      return {
+        code: 404,
+        body: {
+          success: false,
+          environments: [],
+        },
+      };
+    }
     return {
       code: 200,
       body: {
@@ -104,13 +113,13 @@ const getHierarchyByRpc: Plugin<HierarchyDefinition> = {
       const environments = await createSerializedObject(
         async () =>
           level === 'environment'
-            ? await readHierarchyEnvironment()
+            ? readHierarchyEnvironment()
             : level === 'database'
-            ? await readHierarchyDatabase(type)
+            ? readHierarchyDatabase(type)
             : level === 'table'
-            ? await readHierarchyTable(type, name)
+            ? readHierarchyTable(type, name)
             : level === 'row'
-            ? await readHierarchyRow(type, name, table)
+            ? readHierarchyRow(type, name, table)
             : [],
         (source, stringifier) =>
           source.map((environment) => ({
