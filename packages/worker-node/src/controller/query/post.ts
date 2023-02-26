@@ -69,23 +69,12 @@ const postQueryByHttp: Route = {
         },
       };
     }
-    const promise = createQuery(type, name, event);
-    if (!promise) {
-      return {
-        code: 404,
-        body: {
-          success: false,
-          result: {
-            time: 0,
-            error: '',
-            rows: [],
-          },
-        },
-      };
-    }
-    const result = await promise;
+    const result = await createSerializedObject(() =>
+      createQuery(type, name, event),
+    );
     if (!result) {
       return {
+        code: 500,
         body: {
           success: false,
           result: {
@@ -150,19 +139,8 @@ const postQueryByRpc: Plugin<QueryDefinition> = {
           },
         };
       }
-      const promise = createQuery(type, name, event);
-      if (!promise) {
-        return {
-          success: false,
-          result: {
-            time: 0,
-            error: '',
-            rows: [],
-          },
-        };
-      }
       const result = await createSerializedObject(
-        async () => await promise,
+        () => createQuery(type, name, event),
         (source, stringifier) => ({
           ...source,
           rows: source.rows.map(stringifier),

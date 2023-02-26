@@ -33,8 +33,10 @@ const getDatabaseByHttp: Route = {
         },
       };
     }
-    const scheduler = readDatabase(type, name);
-    if (!scheduler) {
+    const schemas = await createSerializedObject(
+      () => readDatabase(type, name)?.getTarget().getSchemas() || null,
+    );
+    if (!schemas) {
       return {
         code: 404,
         body: {
@@ -43,7 +45,6 @@ const getDatabaseByHttp: Route = {
         },
       };
     }
-    const schemas = scheduler.getTarget().getSchemas();
     return {
       code: 200,
       body: {
@@ -72,15 +73,8 @@ const getDatabaseByRpc: Plugin<DatabaseDefinition> = {
           schemas: [],
         };
       }
-      const scheduler = readDatabase(type, name);
-      if (!scheduler) {
-        return {
-          success: false,
-          schemas: [],
-        };
-      }
       const schemas = await createSerializedObject(
-        () => scheduler.getTarget().getSchemas(),
+        () => readDatabase(type, name)?.getTarget().getSchemas() || null,
         (source, stringifier) => source.map(stringifier),
       );
       if (!schemas) {
