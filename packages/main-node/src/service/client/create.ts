@@ -19,17 +19,19 @@ const createClient = (
       ? createMemo(['client', token], new RpcClient(setup, token, secret))
       : null;
   if (!client) return null;
-  const postAgent = client.postAgent();
-  const promises = [];
-  const schedulers = readContexts();
-  for (const scheduler of schedulers) {
-    const promise = scheduler.runTask(async (context) => {
-      await postAgent;
-      await context.addClient(client);
-    });
-    promises.push(promise);
-  }
-  return Promise.allSettled(promises).then(() => client);
+  return (async () => {
+    await client.postAgent();
+    const promises = [];
+    const schedulers = readContexts();
+    for (const scheduler of schedulers) {
+      const promise = scheduler.runTask((context) => {
+        context.addClient(client);
+      });
+      promises.push(promise);
+    }
+    await Promise.allSettled(promises);
+    return client;
+  })();
 };
 
 export { createClient };
