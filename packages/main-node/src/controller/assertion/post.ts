@@ -36,7 +36,7 @@ const postAssertionByHttp: Route = {
     );
     if (!differences) {
       return {
-        code: 404,
+        code: 500,
         body: {
           success: false,
           differences: [],
@@ -44,7 +44,7 @@ const postAssertionByHttp: Route = {
       };
     }
     return {
-      code: 200,
+      code: 201,
       body: {
         success: true,
         differences,

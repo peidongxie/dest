@@ -35,7 +35,7 @@ const deleteContextByHttp: Route = {
     );
     if (!scheduler) {
       return {
-        code: 404,
+        code: 500,
         body: {
           success: false,
         },

@@ -31,7 +31,7 @@ const deleteActualityByHttp: Route = {
     const actuality = await createSerializedObject(() => deleteActuality(uuid));
     if (!actuality) {
       return {
-        code: 404,
+        code: 500,
         body: {
           success: false,
         },

@@ -52,14 +52,14 @@ const postClientByHttp: Route = {
     );
     if (!client) {
       return {
-        code: 404,
+        code: 500,
         body: {
           success: false,
         },
       };
     }
     return {
-      code: 200,
+      code: 201,
       body: {
         success: true,
       },

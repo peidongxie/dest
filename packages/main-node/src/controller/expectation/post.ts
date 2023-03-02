@@ -72,7 +72,7 @@ const postExpectationByHttp: Route = {
     );
     if (!expectation) {
       return {
-        code: 404,
+        code: 500,
         body: {
           success: false,
           uuid: '',
@@ -80,7 +80,7 @@ const postExpectationByHttp: Route = {
       };
     }
     return {
-      code: 200,
+      code: 201,
       body: {
         success: true,
         uuid: expectation.uuid,

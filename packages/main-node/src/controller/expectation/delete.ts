@@ -33,7 +33,7 @@ const deleteExpectationByHttp: Route = {
     );
     if (!expectation) {
       return {
-        code: 404,
+        code: 500,
         body: {
           success: false,
         },
