@@ -87,7 +87,7 @@ const postContextByHttp: Route = {
     );
     if (!scheduler) {
       return {
-        code: 409,
+        code: 500,
         body: {
           success: false,
         },

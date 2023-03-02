@@ -31,7 +31,7 @@ const deleteClientByHttp: Route = {
     const client = await createSerializedObject(() => deleteClient(token));
     if (!client) {
       return {
-        code: 404,
+        code: 500,
         body: {
           success: false,
         },
