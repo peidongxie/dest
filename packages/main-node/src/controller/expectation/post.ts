@@ -46,7 +46,7 @@ const postExpectationByHttp: Route = {
         }
         if (!Array.isArray(target.parts)) return false;
         if (
-          target.parts.map((part) => {
+          target.parts.some((part) => {
             if (!Number.isInteger(part.count)) return true;
             if (part.count < 0) return true;
             if (!Array.isArray(part.rows)) return true;
