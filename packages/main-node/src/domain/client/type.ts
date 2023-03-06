@@ -9,7 +9,7 @@ interface ClientSetup extends ClientHost {
   api: 'http' | 'rpc';
 }
 
-type ClientType = 'mariadb' | 'mysql8' | 'sqlite';
+type ClientType = 'mariadb' | 'mysql57' | 'mysql8' | 'sqlite';
 
 type ClientLevel = 'environment' | 'database' | 'table' | 'row';
 

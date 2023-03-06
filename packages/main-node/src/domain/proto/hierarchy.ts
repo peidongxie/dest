@@ -59,6 +59,7 @@ export enum TypeEnum {
   SQLITE = 2049,
   MARIADB = 3306,
   MYSQL8 = 3307,
+  MYSQL57 = 3308,
   UNRECOGNIZED = -1,
 }
 
@@ -76,6 +77,9 @@ export function typeEnumFromJSON(object: any): TypeEnum {
     case 3307:
     case 'MYSQL8':
       return TypeEnum.MYSQL8;
+    case 3308:
+    case 'MYSQL57':
+      return TypeEnum.MYSQL57;
     case -1:
     case 'UNRECOGNIZED':
     default:
@@ -93,6 +97,8 @@ export function typeEnumToJSON(object: TypeEnum): string {
       return 'MARIADB';
     case TypeEnum.MYSQL8:
       return 'MYSQL8';
+    case TypeEnum.MYSQL57:
+      return 'MYSQL57';
     case TypeEnum.UNRECOGNIZED:
     default:
       return 'UNRECOGNIZED';
