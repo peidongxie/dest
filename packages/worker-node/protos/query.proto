@@ -23,6 +23,7 @@ enum TypeEnum {
   SQLITE = 2049;
   MARIADB = 3306;
   MYSQL8 = 3307;
+  MYSQL57 = 3308;
 }
 
 // Secret

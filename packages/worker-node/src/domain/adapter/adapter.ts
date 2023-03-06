@@ -1,5 +1,6 @@
 import { EntitySchema, type EntitySchemaOptions } from 'typeorm';
 import { Mariadb } from './mariadb';
+import { Mysql57 } from './mysql57';
 import { Mysql8 } from './mysql8';
 import { Default } from './default';
 import { Sqlite } from './sqlite';
@@ -14,6 +15,8 @@ const createAdapter = (
   switch (type) {
     case 'mariadb':
       return new Mariadb(name, entities);
+    case 'mysql57':
+      return new Mysql57(name, entities);
     case 'mysql8':
       return new Mysql8(name, entities);
     case 'sqlite':

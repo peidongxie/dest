@@ -219,6 +219,7 @@ class HttpClient implements Client {
 
   private getType(type: TypeEnum): ClientType | '' {
     if (type === TypeEnum.MARIADB) return 'mariadb';
+    if (type === TypeEnum.MYSQL57) return 'mysql57';
     if (type === TypeEnum.MYSQL8) return 'mysql8';
     if (type === TypeEnum.SQLITE) return 'sqlite';
     return '';
@@ -226,6 +227,7 @@ class HttpClient implements Client {
 
   private getTypeEnum(type: ClientType | ''): TypeEnum {
     if (type === 'mariadb') return TypeEnum.MARIADB;
+    if (type === 'mysql57') return TypeEnum.MYSQL57;
     if (type === 'mysql8') return TypeEnum.MYSQL8;
     if (type === 'sqlite') return TypeEnum.SQLITE;
     return TypeEnum.DEFAULT_TYPE;
