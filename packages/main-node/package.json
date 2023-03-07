@@ -42,6 +42,7 @@
     "@dest-toolkit/grpc-server": "workspace:^0.1.19",
     "@dest-toolkit/http-client": "workspace:^0.1.19",
     "@dest-toolkit/http-server": "workspace:^0.1.19",
+    "nanoid": "^4.0.1",
     "protobufjs": "^7.2.2"
   },
   "devDependencies": {

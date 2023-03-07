@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto';
+import { nanoid } from 'nanoid';
 import {
   type AssertionExpectation,
   type AssertionPart,
@@ -10,7 +10,7 @@ const createExpectation = <T>(
   snapshots: ClientSnapshot<unknown>[],
   parts: AssertionPart<T>[],
 ): AssertionExpectation<T> | null => {
-  const uuid = randomUUID();
+  const uuid = nanoid();
   return createMemo(['expectation', uuid], {
     uuid,
     snapshots: snapshots || [],
