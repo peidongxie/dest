@@ -1,4 +1,5 @@
-import { randomInt, randomUUID } from 'crypto';
+import { randomInt } from 'crypto';
+import { nanoid } from 'nanoid';
 import { type EntitySchemaOptions } from 'typeorm';
 import { type AssertionActuality } from '../assertion';
 import {
@@ -63,7 +64,7 @@ class Context {
       values,
     });
     return {
-      uuid: randomUUID(),
+      uuid: nanoid(),
       snapshots: [],
       rows: readResult.rows,
       error: readResult.error || '',
@@ -129,7 +130,7 @@ class Context {
     const client = this.getClient();
     if (!client) throw new TypeError('No Client');
     const type = this.type;
-    const name = `${this.name}_${randomUUID().replaceAll('-', '_')}`;
+    const name = `${this.name} ${nanoid()}`;
     await client.postDatabase(type, name, this.schemas);
     for (const event of this.events) {
       await client.postQuery(type, name, event);
@@ -148,7 +149,7 @@ class Context {
     });
     await client.deleteDatabase(type, name);
     return {
-      uuid: randomUUID(),
+      uuid: nanoid(),
       snapshots: introspectResult.rows,
       rows: writeResult.rows,
       error: writeResult.error || introspectResult.error || '',

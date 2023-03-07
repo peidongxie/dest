@@ -178,6 +178,7 @@ importers:
       eslint-plugin-prettier: ^4.2.1
       fs-extra: ^11.1.0
       grpc-tools: ^1.12.4
+      nanoid: ^4.0.1
       prettier: ^2.8.4
       protobufjs: ^7.2.2
       sort-package-json: ^2.4.1
@@ -189,6 +190,7 @@ importers:
       '@dest-toolkit/grpc-server': link:../grpc-server
       '@dest-toolkit/http-client': link:../http-client
       '@dest-toolkit/http-server': link:../http-server
+      nanoid: 4.0.1
       protobufjs: 7.2.2
     devDependencies:
       '@types/fs-extra': 11.0.1
@@ -2075,6 +2077,12 @@ packages:
     engines: {node: '>=12.0.0'}
     dependencies:
       lru-cache: 7.18.1
+    dev: false
+
+  /nanoid/4.0.1:
+    resolution: {integrity: sha512-udKGtCCUafD3nQtJg9wBhRP3KMbPglUsgV5JVsXhvyBs/oefqb4sqMEhKBBgqZncYowu58p1prsZQBYvAj/Gww==}
+    engines: {node: ^14 || ^16 || >=18}
+    hasBin: true
     dev: false
 
   /natural-compare-lite/1.4.0:
