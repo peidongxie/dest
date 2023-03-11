@@ -28,6 +28,7 @@ import {
   createAction,
   createEnum,
   createLevel,
+  createSecret,
   createServer,
   createType,
 } from './service';
@@ -43,6 +44,7 @@ const config = {
   ] as DatabaseAction[],
   levels: ['environment', 'database', 'table', 'row'] as HierarchyLevel[],
   types: ['sqlite'] as AdapterType[],
+  secret: '',
   server: {
     3001: 'http',
     3002: 'rpc',
@@ -64,6 +66,8 @@ for (const type of config.types) {
   key && createType(key, type);
   key && createEnum(type, key);
 }
+
+createSecret(config.secret);
 
 for (const [port, call] of Object.entries(config.server)) {
   if (call === 'http') {
