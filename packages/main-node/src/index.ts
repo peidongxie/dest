@@ -34,7 +34,13 @@ import {
   type ClientAction,
   type ClientType,
 } from './domain';
-import { createAction, createEnum, createServer, createType } from './service';
+import {
+  createAction,
+  createEnum,
+  createSecret,
+  createServer,
+  createType,
+} from './service';
 
 const config = {
   actions: [
@@ -46,6 +52,7 @@ const config = {
     'introspect',
   ] as ClientAction[],
   types: ['sqlite'] as ClientType[],
+  secret: '',
   server: {
     3003: 'http',
     3004: 'rpc',
@@ -62,6 +69,8 @@ for (const type of config.types) {
   const key = TypeEnum[type.toUpperCase() as Uppercase<ClientType>];
   key && createType(key, type);
 }
+
+createSecret(config.secret);
 
 for (const [port, call] of Object.entries(config.server)) {
   if (call === 'http') {
