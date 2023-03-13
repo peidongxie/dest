@@ -52,6 +52,7 @@ const putContextByHttp: Route = {
         if (
           target.schemas.some((schema) => {
             if (typeof schema !== 'object') return true;
+            if (schema === null) return true;
             return false;
           })
         ) {
@@ -145,6 +146,7 @@ const putContextByRpc: Plugin<ContextDefinition> = {
           if (
             target.schemas.some((schema) => {
               if (typeof schema !== 'object') return true;
+              if (schema === null) return true;
               return false;
             })
           ) {

@@ -32,6 +32,7 @@ const postDatabaseByHttp: Route = {
         for (const schema of target) {
           if (!schema) return false;
           if (typeof schema !== 'object') return false;
+          if (schema === null) return true;
         }
         return true;
       },
@@ -83,6 +84,7 @@ const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
           for (const schema of target) {
             if (!schema) return false;
             if (typeof schema !== 'object') return false;
+            if (schema === null) return true;
           }
           return true;
         },
