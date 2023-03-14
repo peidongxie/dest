@@ -29,10 +29,15 @@ const postDatabaseByHttp: Route = {
       () => req.body.json<EntitySchemaOptions<unknown>[]>(),
       (source) => source,
       (target) => {
-        for (const schema of target) {
-          if (!schema) return false;
-          if (typeof schema !== 'object') return false;
-          if (schema === null) return true;
+        if (!Array.isArray(target)) return false;
+        if (
+          target.some((schema) => {
+            if (typeof schema !== 'object') return true;
+            if (schema === null) return true;
+            return false;
+          })
+        ) {
+          return false;
         }
         return true;
       },
@@ -81,10 +86,15 @@ const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
         (source, parser) =>
           source.map((schema) => parser<EntitySchemaOptions<unknown>>(schema)),
         (target) => {
-          for (const schema of target) {
-            if (!schema) return false;
-            if (typeof schema !== 'object') return false;
-            if (schema === null) return true;
+          if (!Array.isArray(target)) return false;
+          if (
+            target.some((schema) => {
+              if (typeof schema !== 'object') return true;
+              if (schema === null) return true;
+              return false;
+            })
+          ) {
+            return false;
           }
           return true;
         },
