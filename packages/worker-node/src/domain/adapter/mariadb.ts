@@ -30,9 +30,9 @@ const writePrivileges = [
 class Mariadb implements Adapter {
   public static root: DataSource;
 
-  public name: string;
-  public readable: DataSource;
-  public writable: DataSource;
+  public readonly name: string;
+  public readonly readable: DataSource;
+  public readonly writable: DataSource;
 
   constructor(name?: string, entities?: EntitySchema[]) {
     this.name = name || '';

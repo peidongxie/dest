@@ -19,12 +19,12 @@ import {
 } from './type';
 
 class RpcClient implements Client {
-  private host: ClientHost;
-  private raw: ClientRaw<
+  private readonly host: ClientHost;
+  private readonly raw: ClientRaw<
     AgentDefinition | DatabaseDefinition | HierarchyDefinition | QueryDefinition
   >;
-  private secret: string;
-  private token: string;
+  private readonly secret: string;
+  private readonly token: string;
 
   constructor(host: ClientHost, token: string, secret?: string) {
     this.raw = new ClientRaw(

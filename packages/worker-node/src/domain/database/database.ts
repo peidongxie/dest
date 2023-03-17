@@ -3,9 +3,9 @@ import { createAdapter, type Adapter, type AdapterType } from '../adapter';
 import { type DatabaseEvent, type DatabaseResult } from './type';
 
 class Database {
-  private adapter: Adapter;
-  private name: string;
-  private schemas: EntitySchemaOptions<unknown>[];
+  private readonly adapter: Adapter;
+  private readonly name: string;
+  private readonly schemas: EntitySchemaOptions<unknown>[];
 
   constructor(
     type?: AdapterType,

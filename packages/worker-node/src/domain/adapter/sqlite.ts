@@ -33,9 +33,9 @@ const writeDriver = {
 const protectedTables = ['sql_master', 'sqlite_sequence'];
 
 class Sqlite implements Adapter {
-  name: string;
-  readable: DataSource | null;
-  writable: DataSource | null;
+  public readonly name: string;
+  public readonly readable: DataSource | null;
+  public readonly writable: DataSource | null;
 
   constructor(name?: string, entities?: EntitySchema[]) {
     this.name = name || '';

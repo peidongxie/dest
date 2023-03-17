@@ -4,9 +4,9 @@ interface TaskGroup {
 }
 
 class Scheduler<T> {
-  private groups: TaskGroup[];
-  private stakeholders: Set<Scheduler<unknown>>;
-  private target: T;
+  private readonly groups: TaskGroup[];
+  private readonly stakeholders: Set<Scheduler<unknown>>;
+  private readonly target: T;
 
   constructor(target: T) {
     this.groups = [];
