@@ -10,11 +10,11 @@ import {
 } from '../client';
 
 class Context {
-  private clients: Set<Client>;
-  private name: string;
+  private readonly clients: Set<Client>;
+  private readonly name: string;
   private events: ClientEvent<unknown>[];
   private schemas: EntitySchemaOptions<unknown>[];
-  private type: ClientType;
+  private readonly type: ClientType;
 
   constructor(type: ClientType, name: string) {
     this.type = type;

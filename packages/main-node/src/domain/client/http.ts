@@ -14,10 +14,10 @@ import {
 } from './type';
 
 class HttpClient implements Client {
-  private host: ClientHost;
-  private raw: ClientRaw;
-  private secret: string;
-  private token: string;
+  private readonly host: ClientHost;
+  private readonly raw: ClientRaw;
+  private readonly secret: string;
+  private readonly token: string;
 
   constructor(host: ClientHost, token: string, secret?: string) {
     const router = new Router({ host: 'localhost' });

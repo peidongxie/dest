@@ -11,7 +11,7 @@ import {
 } from '@dest-toolkit/http-server';
 
 class Server {
-  private raw: HttpServer | RpcServer;
+  private readonly raw: HttpServer | RpcServer;
 
   constructor(api: Route[] | Plugin<ProtoDefinition>[]) {
     const routes = api as Route[];

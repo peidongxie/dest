@@ -1,5 +1,5 @@
 class Memo<K, V> {
-  private children: Map<K, Memo<K, V>>;
+  private readonly children: Map<K, Memo<K, V>>;
   private childrenSize: number;
   private current: V | undefined;
   private currentSize: 0 | 1;
