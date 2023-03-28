@@ -50,21 +50,21 @@ const putContextByHttp: Route = {
       (target) => {
         if (!Array.isArray(target.schemas)) return false;
         if (
-          target.schemas.some((schema) => {
-            if (typeof schema !== 'object') return true;
-            if (schema === null) return true;
-            return false;
+          !target.schemas.every((schema) => {
+            if (typeof schema !== 'object') return false;
+            if (!schema) return false;
+            return true;
           })
         ) {
           return false;
         }
         if (!Array.isArray(target.events)) return false;
         if (
-          target.events.some((event) => {
-            if (typeof event.target !== 'string') return true;
-            if (event.target === '') return true;
-            if (!Array.isArray(event.values)) return true;
-            return false;
+          !target.events.every((event) => {
+            if (typeof event.target !== 'string') return false;
+            if (!event.target) return false;
+            if (!Array.isArray(event.values)) return false;
+            return true;
           })
         ) {
           return false;
@@ -144,21 +144,21 @@ const putContextByRpc: Plugin<ContextDefinition> = {
         (target) => {
           if (!Array.isArray(target.schemas)) return false;
           if (
-            target.schemas.some((schema) => {
-              if (typeof schema !== 'object') return true;
-              if (schema === null) return true;
-              return false;
+            !target.schemas.every((schema) => {
+              if (typeof schema !== 'object') return false;
+              if (!schema) return false;
+              return true;
             })
           ) {
             return false;
           }
           if (!Array.isArray(target.events)) return false;
           if (
-            target.events.some((event) => {
-              if (typeof event.target !== 'string') return true;
-              if (event.target === '') return true;
-              if (!Array.isArray(event.values)) return true;
-              return false;
+            !target.events.every((event) => {
+              if (typeof event.target !== 'string') return false;
+              if (!event.target) return false;
+              if (!Array.isArray(event.values)) return false;
+              return true;
             })
           ) {
             return false;

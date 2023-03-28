@@ -27,14 +27,13 @@ const postDatabaseByHttp: Route = {
     const name = req.url.searchParams.get('name') || '';
     const schemas = await createDeserializedObject(
       () => req.body.json<EntitySchemaOptions<unknown>[]>(),
-      (source) => source,
+      (source) => source.map((schema) => schema),
       (target) => {
-        if (!Array.isArray(target)) return false;
         if (
-          target.some((schema) => {
-            if (typeof schema !== 'object') return true;
-            if (schema === null) return true;
-            return false;
+          !target.every((schema) => {
+            if (typeof schema !== 'object') return false;
+            if (!schema) return false;
+            return true;
           })
         ) {
           return false;
@@ -86,12 +85,11 @@ const postDatabaseByRpc: Plugin<DatabaseDefinition> = {
         (source, parser) =>
           source.map((schema) => parser<EntitySchemaOptions<unknown>>(schema)),
         (target) => {
-          if (!Array.isArray(target)) return false;
           if (
-            target.some((schema) => {
-              if (typeof schema !== 'object') return true;
-              if (schema === null) return true;
-              return false;
+            !target.every((schema) => {
+              if (typeof schema !== 'object') return false;
+              if (!schema) return false;
+              return true;
             })
           ) {
             return false;

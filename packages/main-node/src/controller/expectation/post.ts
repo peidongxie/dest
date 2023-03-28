@@ -31,26 +31,26 @@ const postExpectationByHttp: Route = {
           snapshots: ClientSnapshot<unknown>[];
           parts: AssertionPart<unknown>[];
         }>(),
-      (source) => source,
+      (source) => ({ ...source }),
       (target) => {
         if (!Array.isArray(target.snapshots)) return false;
         if (
-          target.snapshots.some((snapshot) => {
-            if (typeof snapshot.table !== 'string') return true;
-            if (snapshot.table === '') return true;
-            if (!Array.isArray(snapshot.rows)) return true;
-            return false;
+          !target.snapshots.every((snapshot) => {
+            if (typeof snapshot.table !== 'string') return false;
+            if (!snapshot.table) return false;
+            if (!Array.isArray(snapshot.rows)) return false;
+            return true;
           })
         ) {
           return false;
         }
         if (!Array.isArray(target.parts)) return false;
         if (
-          target.parts.some((part) => {
-            if (!Number.isInteger(part.count)) return true;
-            if (part.count < 0) return true;
-            if (!Array.isArray(part.rows)) return true;
-            return false;
+          !target.parts.every((part) => {
+            if (!Number.isInteger(part.count)) return false;
+            if (part.count < 0) return false;
+            if (!Array.isArray(part.rows)) return false;
+            return true;
           })
         ) {
           return false;
@@ -114,9 +114,17 @@ const postExpectationByRpc: Plugin<ExpectationDefinition> = {
         }),
         (target) => {
           if (
-            target.snapshots.some((snapshot) => {
-              if (snapshot.table === '') return true;
-              return false;
+            !target.snapshots.every((snapshot) => {
+              if (!snapshot.table) return false;
+              return true;
+            })
+          ) {
+            return false;
+          }
+          if (
+            !target.parts.every((part) => {
+              if (part.count < 0) return false;
+              return true;
             })
           ) {
             return false;

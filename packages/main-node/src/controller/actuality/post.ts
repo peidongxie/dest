@@ -44,13 +44,14 @@ const postActualityByHttp: Route = {
       },
       (target) => {
         if (typeof target.target !== 'string') return false;
-        if (target.target === '') return false;
+        if (!target.target) return false;
         if (!Array.isArray(target.values)) return false;
         if (!Array.isArray(target.tables)) return false;
         if (
-          target.tables.some((table) => {
-            if (typeof table !== 'string') return true;
-            return false;
+          !target.tables.every((table) => {
+            if (typeof table !== 'string') return false;
+            if (!table) return false;
+            return true;
           })
         ) {
           return false;
@@ -114,7 +115,15 @@ const postActualityByRpc: Plugin<ActualityDefinition> = {
           };
         },
         (target) => {
-          if (target.target === '') return false;
+          if (!target.target) return false;
+          if (
+            !target.tables.every((table) => {
+              if (!table) return false;
+              return true;
+            })
+          ) {
+            return false;
+          }
           return true;
         },
       );
