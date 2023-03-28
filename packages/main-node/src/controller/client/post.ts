@@ -28,12 +28,12 @@ const postClientByHttp: Route = {
           hostname: string;
           port: number;
         }>(),
-      (source) => source,
+      (source) => ({ ...source }),
       (target) => {
         if (typeof target.api !== 'string') return false;
         if (target.api !== 'http' && target.api !== 'rpc') return false;
         if (typeof target.hostname !== 'string') return false;
-        if (target.hostname === '') return false;
+        if (!target.hostname) return false;
         if (!Number.isInteger(target.port)) return false;
         if (target.port <= 0 || target.port >= 65536) return false;
         return true;
@@ -79,10 +79,10 @@ const postClientByRpc: Plugin<ClientDefinition> = {
       const token = req.token;
       const setup = await createDeserializedObject(
         () => req.setup,
-        (source) => source,
+        (source) => ({ ...source }),
         (target) => {
           if (target.api !== 'http' && target.api !== 'rpc') return false;
-          if (target.hostname === '') return false;
+          if (!target.hostname) return false;
           if (target.port <= 0 || target.port >= 65536) return false;
           return true;
         },
