@@ -1,10 +1,10 @@
-interface TaskGroup {
+interface ResultGroup<T> {
   parallel: boolean;
-  tasks: Promise<unknown>[];
+  results: Promise<T>[];
 }
 
 class Scheduler<T> {
-  private readonly groups: TaskGroup[];
+  private readonly groups: ResultGroup<unknown>[];
   private readonly stakeholders: Set<Scheduler<unknown>>;
   private readonly target: T;
 
@@ -38,33 +38,30 @@ class Scheduler<T> {
     standalone = false,
   ): Promise<Awaited<R>> {
     if (!this.groups.at(-1)?.parallel || !parallel) {
-      this.groups.push({ parallel, tasks: [] });
+      this.groups.push({ parallel, results: [] });
     }
-    const tasksOfLastGroup = this.groups.at(-2)?.tasks || [];
-    const tasksOfNextGroup = this.groups.at(-1)?.tasks || [];
-    const newTask = Promise.allSettled(tasksOfLastGroup).then(
+    const resultsOfLastGroup = this.groups.at(-2)?.results || [];
+    const resultsOfNextGroup = this.groups.at(-1)?.results || [];
+    const result = Promise.allSettled(resultsOfLastGroup).then(
       async (): Promise<Awaited<R>> => {
         try {
-          const result = await task(this.target);
+          const value = await task(this.target);
           this.groups.shift();
-          return result;
+          return value;
         } catch (e) {
           this.groups.shift();
           throw e;
         }
       },
     );
-    tasksOfNextGroup.push(newTask);
+    resultsOfNextGroup.push(result);
     if (!standalone) {
+      const newTask = () => Promise.allSettled([result]);
       for (const stakeholder of this.stakeholders) {
-        stakeholder.runTask(
-          () => Promise.allSettled([newTask]),
-          parallel,
-          true,
-        );
+        stakeholder.runTask(newTask, parallel, true);
       }
     }
-    return newTask;
+    return result;
   }
 }
 
