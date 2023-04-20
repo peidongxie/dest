@@ -4,10 +4,10 @@ import sqlite3 from 'sqlite3';
 import { DataSource, EntitySchema } from 'typeorm';
 import { type Adapter } from './type';
 
+const dir = `docker/${process.env.DEST_PORT || 'dev'}/sqlite`;
+
 const driver = sqlite3.verbose();
 const { Database, OPEN_CREATE, OPEN_READONLY, OPEN_READWRITE } = driver;
-const dir = 'docker/sqlite';
-
 const readDriver = {
   verbose: () => ({
     ...driver,
@@ -18,7 +18,6 @@ const readDriver = {
     },
   }),
 };
-
 const writeDriver = {
   verbose: () => ({
     ...driver,
