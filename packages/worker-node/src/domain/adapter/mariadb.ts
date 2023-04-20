@@ -1,15 +1,9 @@
 import { DataSource, EntitySchema } from 'typeorm';
 import { type Adapter } from './type';
 
-const protectedDatabases = [
-  'information_schema',
-  'mysql',
-  'performance_schema',
-  'sys',
-];
+const host = process.env.DEST_PORT ? 'mariadb' : 'localhost';
 
 const readPrivileges = ['SELECT', 'SHOW DATABASES', 'SHOW VIEW'];
-
 const writePrivileges = [
   'ALTER',
   'CREATE',
@@ -27,6 +21,13 @@ const writePrivileges = [
   'UPDATE',
 ];
 
+const protectedDatabases = [
+  'information_schema',
+  'mysql',
+  'performance_schema',
+  'sys',
+];
+
 class Mariadb implements Adapter {
   public static root: DataSource;
 
@@ -39,7 +40,7 @@ class Mariadb implements Adapter {
     if (name) {
       this.readable = new DataSource({
         type: 'mariadb',
-        host: 'localhost',
+        host,
         port: 3306,
         database: name,
         username: 'read',
@@ -47,7 +48,7 @@ class Mariadb implements Adapter {
       });
       this.writable = new DataSource({
         type: 'mariadb',
-        host: 'localhost',
+        host,
         port: 3306,
         database: name,
         username: 'write',
@@ -60,7 +61,7 @@ class Mariadb implements Adapter {
         Mariadb.root ||
         new DataSource({
           type: 'mariadb',
-          host: 'localhost',
+          host,
           port: 3306,
           username: 'root',
           password: 'dest-toolkit',
