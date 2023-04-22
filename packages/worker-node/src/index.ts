@@ -1,3 +1,4 @@
+import assert from 'assert';
 import {
   deleteAgentByHttp,
   deleteAgentByRpc,
@@ -33,71 +34,66 @@ import {
   createType,
 } from './service';
 
-const config = {
-  actions: [
-    'save',
-    'remove',
-    'read',
-    'write',
-    'root',
-    'introspect',
-  ] as DatabaseAction[],
-  levels: ['environment', 'database', 'table', 'row'] as HierarchyLevel[],
-  types: ['sqlite'] as AdapterType[],
-  secret: '',
-  server: {
-    3001: 'http',
-    3002: 'rpc',
-  } as Record<number, 'http' | 'rpc'>,
-};
-
-for (const action of config.actions) {
+const actions: DatabaseAction[] = [
+  'save',
+  'remove',
+  'read',
+  'write',
+  'root',
+  'introspect',
+];
+for (const action of actions) {
   const key = ActionEnum[action.toUpperCase() as Uppercase<DatabaseAction>];
   key && createAction(key, action);
 }
 
-for (const level of config.levels) {
+const levels: HierarchyLevel[] = ['environment', 'database', 'table', 'row'];
+for (const level of levels) {
   const key = LevelEnum[level.toUpperCase() as Uppercase<HierarchyLevel>];
   key && createLevel(key, level);
 }
 
-for (const type of config.types) {
+const types: AdapterType[] = ['sqlite'];
+for (const type of types) {
   const key = TypeEnum[type.toUpperCase() as Uppercase<AdapterType>];
   key && createType(key, type);
   key && createEnum(type, key);
 }
 
-createSecret(config.secret);
+const secret = process.env.DEST_SECRET || '';
+createSecret(secret);
 
-for (const [port, call] of Object.entries(config.server)) {
-  if (call === 'http') {
-    await createServer(
-      [
-        deleteAgentByHttp,
-        deleteDatabaseByHttp,
-        getAgentByHttp,
-        getDatabaseByHttp,
-        getHierarchyByHttp,
-        postAgentByHttp,
-        postDatabaseByHttp,
-        postQueryByHttp,
-      ],
-      Number(port),
-    );
-  }
-  if (call === 'rpc') {
-    await createServer(
-      [
-        deleteAgentByRpc,
-        deleteDatabaseByRpc,
-        getAgentByRpc,
-        getDatabaseByRpc,
-        getHierarchyByRpc,
-        postAgentByRpc,
-        postDatabaseByRpc,
-        postQueryByRpc,
-      ],
-      Number(port),
-    );
-  }
+const call = process.env.DEST_CALL || 'http';
+const port = Number(process.env.DEST_PORT);
+assert(call === 'http' || call === 'rpc', 'Invalid call');
+assert(Number.isInteger(port) && port > 0 && port < 65536, 'Invalid port');
+if (call === 'http') {
+  await createServer(
+    [
+      deleteAgentByHttp,
+      deleteDatabaseByHttp,
+      getAgentByHttp,
+      getDatabaseByHttp,
+      getHierarchyByHttp,
+      postAgentByHttp,
+      postDatabaseByHttp,
+      postQueryByHttp,
+    ],
+    port,
+  );
+}
+if (call === 'rpc') {
+  await createServer(
+    [
+      deleteAgentByRpc,
+      deleteDatabaseByRpc,
+      getAgentByRpc,
+      getDatabaseByRpc,
+      getHierarchyByRpc,
+      postAgentByRpc,
+      postDatabaseByRpc,
+      postQueryByRpc,
+    ],
+    port,
+  );
 }
