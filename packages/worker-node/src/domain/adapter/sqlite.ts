@@ -4,7 +4,8 @@ import sqlite3 from 'sqlite3';
 import { DataSource, EntitySchema } from 'typeorm';
 import { type Adapter } from './type';
 
-const dir = `docker/${process.env.DEST_PORT || 'dev'}/sqlite`;
+const isProd = process.env.NODE_ENV === 'production';
+const dir = `docker/${isProd ? Number(process.env.DEST_PORT) : 'dev'}/sqlite`;
 
 const driver = sqlite3.verbose();
 const { Database, OPEN_CREATE, OPEN_READONLY, OPEN_READWRITE } = driver;

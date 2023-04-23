@@ -1,7 +1,8 @@
 import { DataSource, EntitySchema } from 'typeorm';
 import { type Adapter } from './type';
 
-const host = process.env.DEST_PORT ? 'mariadb' : 'localhost';
+const isProd = process.env.NODE_ENV === 'production';
+const host = isProd ? 'mariadb' : 'localhost';
 
 const readPrivileges = ['SELECT', 'SHOW DATABASES', 'SHOW VIEW'];
 const writePrivileges = [
