@@ -60,11 +60,11 @@ for (const type of types) {
   key && createEnum(type, key);
 }
 
-const secret = process.env.DEST_SECRET || '';
+const secret = process.env.APP_SECRET || '';
 createSecret(secret);
 
-const call = process.env.DEST_CALL || 'http';
-const port = Number(process.env.DEST_PORT);
+const call = process.env.APP_CALL || 'http';
+const port = Number(process.env.APP_PORT);
 assert(call === 'http' || call === 'rpc', 'Invalid call');
 assert(Number.isInteger(port) && port > 0 && port < 65536, 'Invalid port');
 if (call === 'http') {

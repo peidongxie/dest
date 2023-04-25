@@ -32,11 +32,11 @@
   "scripts": {
     "build": "cat scripts/build.ts | esbuild --format=iife --loader=ts | node",
     "dev": "cat scripts/dev.ts | esbuild --format=iife --loader=ts | node",
+    "down": "docker compose -p dest-${APP_PORT} down",
     "fix": "eslint src --ext .ts --fix",
     "lint": "eslint src --ext .ts",
-    "start": "node dist/index.js",
-    "up:dev": "docker compose -f docker/compose.dev.yaml -p dest-dev up -d",
-    "up:prod": "docker compose -f docker/compose.prod.yaml -p dest-$DEST_PORT up -d"
+    "start": "docker compose -f docker/compose.prod.yaml -p dest-${APP_PORT} up -d",
+    "up": "docker compose -f docker/compose.dev.yaml -p dest-${APP_PORT} up -d"
   },
   "dependencies": {
     "@dest-toolkit/grpc-server": "workspace:^0.1.19",
