@@ -6,6 +6,7 @@
     { "path": "packages/grpc-server" },
     { "path": "packages/http-client" },
     { "path": "packages/http-server" },
+    { "path": "packages/main-node" },
     { "path": "packages/worker-node" }
   ],
   "compilerOptions": {
