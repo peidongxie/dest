@@ -1,19 +1,18 @@
 version: '3'
 
 networks:
-  dest_network:
-    name: dest_network_dev
+  bridge_network:
+    name: dest_${APP_PORT}
 services:
   mariadb:
-    container_name: dest-mariadb-dev
+    container_name: dest_${APP_PORT}_mariadb
     environment:
       MARIADB_ROOT_PASSWORD: dest-toolkit
     image: mariadb:latest
     networks:
-      - dest_network
+      - bridge_network
     ports:
       - 3306:3306
     restart: always
     volumes:
-      - ./dev/mariadb:/var/lib/mysql
-  
+      - ./${APP_PORT}/mariadb:/var/lib/mysql
