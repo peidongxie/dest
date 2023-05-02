@@ -38,19 +38,19 @@
     "up:dev": "docker compose -f docker/compose.dev.yaml -p dest up -d"
   },
   "dependencies": {
-    "@dest-toolkit/grpc-client": "workspace:^0.1.19",
-    "@dest-toolkit/grpc-server": "workspace:^0.1.19",
-    "@dest-toolkit/http-client": "workspace:^0.1.19",
-    "@dest-toolkit/http-server": "workspace:^0.1.19",
+    "@dest-toolkit/grpc-client": "workspace:^",
+    "@dest-toolkit/grpc-server": "workspace:^",
+    "@dest-toolkit/http-client": "workspace:^",
+    "@dest-toolkit/http-server": "workspace:^",
     "nanoid": "^4.0.2",
     "protobufjs": "^7.2.3"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.1",
-    "@types/node": "^18.16.0",
+    "@types/node": "^18.16.3",
     "@types/sqlite3": "^3.1.8",
-    "@typescript-eslint/eslint-plugin": "^5.59.0",
-    "@typescript-eslint/parser": "^5.59.0",
+    "@typescript-eslint/eslint-plugin": "^5.59.2",
+    "@typescript-eslint/parser": "^5.59.2",
     "esbuild": "^0.17.18",
     "eslint": "^8.39.0",
     "eslint-config-prettier": "^8.8.0",
