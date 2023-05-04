@@ -101,11 +101,13 @@ const buildProtoOptions: BuildOptions = {
         build.onLoad({ filter: /\.proto$/ }, (args) => {
           const protoPath = args.path;
           const tsPath = protoPath.replace(/\.proto$/, '.ts');
+          const bakPath = tsPath + '.bak';
           protoc(protoPath, dirname(tsPath));
           sed(tsPath);
           eslint(tsPath);
           const contents = readFileSync(tsPath);
           removeSync(tsPath);
+          removeSync(bakPath);
           return {
             contents,
             loader: 'copy',
