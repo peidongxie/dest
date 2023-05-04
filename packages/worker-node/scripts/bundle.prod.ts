@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { spawn } from 'child_process';
 import { build, type BuildOptions } from 'esbuild';
 import {
   existsSync,
@@ -9,23 +9,32 @@ import {
 } from 'fs-extra';
 import { dirname, extname } from 'path';
 
-const execCommand = (command: string[]): void => {
-  try {
-    execSync(command.join(' '));
-  } catch (e) {
-    const { stdout } = e as { stdout: Buffer };
-    console.error(stdout?.toString());
+const runCommand = async (
+  command: string,
+  args: string[],
+  ignore = false,
+): Promise<void> => {
+  const child = spawn(command, args);
+  if (!ignore) {
+    child.stdout.on('data', (chunk) => {
+      console.log(chunk.toString());
+    });
+    child.stderr.on('data', (chunk) => {
+      console.error(chunk.toString());
+    });
   }
+  return new Promise((resolve) => {
+    child.on('close', resolve);
+  });
 };
 
-const protoc = (protoPath: string, tsPath: string): void => {
+const protoc = async (protoPath: string, tsPath: string): Promise<void> => {
   if (!existsSync(protoPath)) return;
   const stats = statSync(protoPath);
   if (!stats.isFile()) return;
   const ext = extname(protoPath);
   if (ext !== '.proto') return;
-  execCommand([
-    'grpc_tools_node_protoc',
+  return runCommand('grpc_tools_node_protoc', [
     '--proto_path=' + dirname(protoPath),
     '--plugin=node_modules/.bin/protoc-gen-ts_proto',
     '--ts_proto_out=' + tsPath,
@@ -34,14 +43,13 @@ const protoc = (protoPath: string, tsPath: string): void => {
   ]);
 };
 
-const sed = (path: string): void => {
+const sed = async (path: string): Promise<void> => {
   if (!existsSync(path)) return;
   const stats = statSync(path);
   if (!stats.isFile()) return;
   const ext = extname(path);
   if (ext !== '.ts') return;
-  execCommand([
-    'sed',
+  return runCommand('sed', [
     '-i.bak',
     '-e',
     '"s/eslint-disable/eslint-disable @typescript-eslint\\/no-explicit-any,@typescript-eslint\\/no-non-null-assertion/g"',
@@ -53,13 +61,13 @@ const sed = (path: string): void => {
   ]);
 };
 
-const eslint = (path: string): void => {
+const eslint = async (path: string): Promise<void> => {
   if (!existsSync(path)) return;
   const stats = statSync(path);
   if (!stats.isFile()) return;
   const ext = extname(path);
   if (ext !== '.ts') return;
-  execCommand(['eslint', '--fix', path]);
+  return runCommand('eslint', ['--fix', path]);
 };
 
 const buildProtoOptions: BuildOptions = {
@@ -97,13 +105,13 @@ const buildProtoOptions: BuildOptions = {
     {
       name: 'proto',
       setup(build) {
-        build.onLoad({ filter: /\.proto$/ }, (args) => {
+        build.onLoad({ filter: /\.proto$/ }, async (args) => {
           const protoPath = args.path;
           const tsPath = protoPath.replace(/\.proto$/, '.ts');
           const bakPath = tsPath + '.bak';
-          protoc(protoPath, dirname(tsPath));
-          sed(tsPath);
-          eslint(tsPath);
+          await protoc(protoPath, dirname(tsPath));
+          await sed(tsPath);
+          await eslint(tsPath);
           const contents = readFileSync(tsPath);
           removeSync(tsPath);
           removeSync(bakPath);

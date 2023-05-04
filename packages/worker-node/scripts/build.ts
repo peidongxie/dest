@@ -1,13 +1,5 @@
 import { spawn } from 'child_process';
 
-const buildArgs = {
-  APP_PORT: process.env.APP_PORT || '',
-  NPM_REGISTRY: process.env.NPM_REGISTRY || '',
-};
-const file = 'docker/Dockerfile';
-const tag = 'peidongxie/dest-worker-node';
-const path = '../../';
-
 const runCommand = async (
   command: string,
   args: string[],
@@ -26,6 +18,14 @@ const runCommand = async (
     child.on('close', resolve);
   });
 };
+
+const buildArgs = {
+  APP_PORT: process.env.APP_PORT || '',
+  NPM_REGISTRY: process.env.NPM_REGISTRY || '',
+};
+const file = 'docker/Dockerfile';
+const tag = 'peidongxie/dest-worker-node';
+const path = '../../';
 
 (async () => {
   await runCommand('docker', ['rmi', tag], true);
