@@ -30,7 +30,7 @@
   "types": "index.d.ts",
   "files": [],
   "scripts": {
-    "build": "docker build --build-arg APP_PORT=${APP_PORT} --build-arg NPM_REGISTRY=${NPM_REGISTRY} -f docker/Dockerfile -t peidongxie/dest-worker-node ../../",
+    "build": "cat scripts/build.ts | esbuild --format=iife --loader=ts | node",
     "bundle:dev": "cat scripts/bundle.dev.ts | esbuild --format=iife --loader=ts | node",
     "bundle:prod": "cat scripts/bundle.prod.ts | esbuild --format=iife --loader=ts | node",
     "dev": "cat scripts/dev.ts | esbuild --format=iife --loader=ts | node",
@@ -53,7 +53,6 @@
     "@types/sqlite3": "^3.1.8",
     "@typescript-eslint/eslint-plugin": "^5.59.2",
     "@typescript-eslint/parser": "^5.59.2",
-    "dockerode": "^3.3.5",
     "esbuild": "^0.17.18",
     "eslint": "^8.39.0",
     "eslint-config-prettier": "^8.8.0",
