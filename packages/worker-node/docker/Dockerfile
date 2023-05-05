@@ -2,7 +2,7 @@ FROM node:lts
 ARG APP_PORT
 ENV APP_PORT=${APP_PORT:-3002}
 ARG NPM_REGISTRY
-ENV NPM_REGISTRY=${NPM_REGISTRY:-https://registry.npmmirror.com/}
+ENV NPM_REGISTRY=${NPM_REGISTRY:-https://registry.npmjs.org/}
 WORKDIR /usr/src/app
 RUN corepack enable pnpm
 COPY pnpm-lock.yaml ./

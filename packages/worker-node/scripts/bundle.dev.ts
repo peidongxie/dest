@@ -9,23 +9,26 @@ import {
 } from 'fs-extra';
 import { dirname, extname } from 'path';
 
-const runCommand = async (
+const createChildProcess = (
   command: string,
   args: string[],
   ignore = false,
-): Promise<void> => {
-  const child = spawn(command, args);
+): [ChildProcess, Promise<number | null>] => {
+  const childProcess = spawn(command, args);
   if (!ignore) {
-    child.stdout.on('data', (chunk) => {
+    childProcess.stdout.on('data', (chunk) => {
       console.log(chunk.toString());
     });
-    child.stderr.on('data', (chunk) => {
+    childProcess.stderr.on('data', (chunk) => {
       console.error(chunk.toString());
     });
   }
-  return new Promise((resolve) => {
-    child.on('close', resolve);
-  });
+  return [
+    childProcess,
+    new Promise((resolve) => {
+      childProcess.on('close', resolve);
+    }),
+  ];
 };
 
 const protoc = async (protoPath: string, tsPath: string): Promise<void> => {
@@ -34,13 +37,13 @@ const protoc = async (protoPath: string, tsPath: string): Promise<void> => {
   if (!stats.isFile()) return;
   const ext = extname(protoPath);
   if (ext !== '.proto') return;
-  return runCommand('grpc_tools_node_protoc', [
+  await createChildProcess('grpc_tools_node_protoc', [
     '--proto_path=' + dirname(protoPath),
     '--plugin=node_modules/.bin/protoc-gen-ts_proto',
     '--ts_proto_out=' + tsPath,
     '--ts_proto_opt=esModuleInterop=true,outputServices=generic-definitions',
     protoPath,
-  ]);
+  ])[1];
 };
 
 const sed = async (path: string): Promise<void> => {
@@ -49,16 +52,16 @@ const sed = async (path: string): Promise<void> => {
   if (!stats.isFile()) return;
   const ext = extname(path);
   if (ext !== '.ts') return;
-  return runCommand('sed', [
+  await createChildProcess('sed', [
     '-i.bak',
     '-e',
-    '"s/eslint-disable/eslint-disable @typescript-eslint\\/no-explicit-any,@typescript-eslint\\/no-non-null-assertion/g"',
+    's/eslint-disable/eslint-disable @typescript-eslint\\/no-explicit-any,@typescript-eslint\\/no-non-null-assertion/g',
     '-e',
-    '"s/| Function/| ((...args: never[]) => void)/g"',
+    's/| Function/| ((...args: never[]) => void)/g',
     '-e',
-    '"s/T extends {}/T extends Record<string, unknown>/g"',
+    's/T extends {}/T extends Record<string, unknown>/g',
     path,
-  ]);
+  ])[1];
 };
 
 const eslint = async (path: string): Promise<void> => {
@@ -67,7 +70,7 @@ const eslint = async (path: string): Promise<void> => {
   if (!stats.isFile()) return;
   const ext = extname(path);
   if (ext !== '.ts') return;
-  return runCommand('eslint', ['--fix', path]);
+  await createChildProcess('eslint', ['--fix', path])[1];
 };
 
 const buildProtoOptions: BuildOptions = {
@@ -168,6 +171,12 @@ const buildTsOptions: BuildOptions = {
       name: 'dev',
       setup(build) {
         let childProcess: ChildProcess | null = null;
+        const shutdown = () => {
+          childProcess?.kill();
+          process.exit(0);
+        };
+        process.on('SIGINT', shutdown);
+        process.on('SIGTERM', shutdown);
         build.onEnd(() => {
           childProcess?.kill();
           childProcess = fork('dist/index.js');

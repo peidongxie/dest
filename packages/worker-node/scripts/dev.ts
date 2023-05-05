@@ -24,25 +24,23 @@ const createChildProcess = (
 };
 
 const port = Number(process.env.APP_PORT);
-const registry = process.env.NPM_REGISTRY || 'https://registry.npmjs.org/';
-const file = 'docker/Dockerfile';
-const tag = 'peidongxie/dest-worker-node';
-const path = '../../';
 assert(Number.isInteger(port) && port > 0 && port < 65536, 'Invalid port');
 
 (async () => {
-  await createChildProcess('docker', ['rmi', tag], true)[1];
   await createChildProcess('docker', [
-    'build',
-    '--build-arg',
-    'APP_PORT=' + port,
-    '--build-arg',
-    'NPM_REGISTRY=' + registry,
+    'compose',
     '-f',
-    file,
-    '-t',
-    tag,
-    '--progress=plain',
-    path,
+    'docker/compose.dev.yaml',
+    '-p',
+    `dest-${port}`,
+    'up',
+    '-d',
   ])[1];
+  const childProcess = createChildProcess('pnpm', ['bundle:dev'])[0];
+  const shutdown = () => {
+    childProcess?.kill();
+    process.exit(0);
+  };
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
 })();
