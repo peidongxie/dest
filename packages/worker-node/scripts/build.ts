@@ -1,45 +1,48 @@
-import { spawn } from 'child_process';
+import assert from 'assert';
+import { spawn, type ChildProcess } from 'child_process';
 
-const runCommand = async (
+const createChildProcess = (
   command: string,
   args: string[],
   ignore = false,
-): Promise<void> => {
-  const child = spawn(command, args);
+): [ChildProcess, Promise<number | null>] => {
+  const childProcess = spawn(command, args);
   if (!ignore) {
-    child.stdout.on('data', (chunk) => {
+    childProcess.stdout.on('data', (chunk) => {
       console.log(chunk.toString());
     });
-    child.stderr.on('data', (chunk) => {
+    childProcess.stderr.on('data', (chunk) => {
       console.error(chunk.toString());
     });
   }
-  return new Promise((resolve) => {
-    child.on('close', resolve);
-  });
+  return [
+    childProcess,
+    new Promise((resolve) => {
+      childProcess.on('close', resolve);
+    }),
+  ];
 };
 
-const buildArgs = {
-  APP_PORT: process.env.APP_PORT || '',
-  NPM_REGISTRY: process.env.NPM_REGISTRY || '',
-};
+const port = Number(process.env.APP_PORT);
+const registry = process.env.NPM_REGISTRY || 'https://registry.npmjs.org/';
 const file = 'docker/Dockerfile';
 const tag = 'peidongxie/dest-worker-node';
 const path = '../../';
+assert(Number.isInteger(port) && port > 0 && port < 65536, 'Invalid port');
 
 (async () => {
-  await runCommand('docker', ['rmi', tag], true);
-  await runCommand('docker', [
+  await createChildProcess('docker', ['rmi', tag], true)[1];
+  await createChildProcess('docker', [
     'build',
-    ...Object.entries(buildArgs)
-      .filter(([key, value]) => key && value)
-      .map(([key, value]) => ['--build-arg', `${key}=${value}`])
-      .flat(),
+    '--build-arg',
+    'APP_PORT=' + port,
+    '--build-arg',
+    'NPM_REGISTRY=' + registry,
     '-f',
     file,
     '-t',
     tag,
     '--progress=plain',
     path,
-  ]);
+  ])[1];
 })();
