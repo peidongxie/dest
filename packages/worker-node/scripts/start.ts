@@ -1,3 +1,4 @@
+import assert from 'assert';
 import { spawn, type ChildProcess } from 'child_process';
 
 const createChildProcess = (
@@ -22,21 +23,17 @@ const createChildProcess = (
   ];
 };
 
-const registry = process.env.NPM_REGISTRY || 'https://registry.npmjs.org/';
-const file = 'docker/Dockerfile';
-const tag = 'peidongxie/dest-worker-node';
-const path = '../../';
+const port = Number(process.env.APP_PORT);
+assert(Number.isInteger(port) && port > 0 && port < 65536, 'Invalid port');
 
 (async () => {
-  await createChildProcess('docker', ['rmi', tag], true)[1];
   await createChildProcess('docker', [
-    'build',
-    '--build-arg',
-    'NPM_REGISTRY=' + registry,
+    'compose',
     '-f',
-    file,
-    '-t',
-    tag,
-    path,
+    'docker/compose.prod.yaml',
+    '-p',
+    `dest-${port}`,
+    'up',
+    '-d',
   ])[1];
 })();
