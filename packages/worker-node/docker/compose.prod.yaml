@@ -4,6 +4,19 @@ networks:
   bridge_network:
     name: dest_${APP_PORT}
 services:
+  worker:
+    container_name: dest_${APP_PORT}_worker
+    environment:
+      APP_CALL: ${APP_CALL}
+      APP_PORT: ${APP_PORT}
+      APP_SECRET: ${APP_SECRET}
+    image: peidongxie/dest-worker-node
+    networks:
+      - bridge_network
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    volumes:
+      - ./${APP_PORT}/sqlite:/usr/src/app/packages/worker-node/docker/${APP_PORT}/sqlite
   mariadb:
     container_name: dest_${APP_PORT}_mariadb
     environment:
@@ -14,4 +27,3 @@ services:
     restart: always
     volumes:
       - ./${APP_PORT}/mariadb:/var/lib/mysql
-  
