@@ -31,11 +31,13 @@
   "files": [],
   "scripts": {
     "build": "cat scripts/build.ts | esbuild --format=iife --loader=ts | node",
+    "bundle:dev": "cat scripts/bundle.dev.ts | esbuild --format=iife --loader=ts | node",
+    "bundle:prod": "cat scripts/bundle.prod.ts | esbuild --format=iife --loader=ts | node",
     "dev": "cat scripts/dev.ts | esbuild --format=iife --loader=ts | node",
+    "down": "docker compose -p dest-${APP_PORT} down",
     "fix": "eslint src --ext .ts --fix",
     "lint": "eslint src --ext .ts",
-    "start": "node dist/index.js",
-    "up:dev": "docker compose -f docker/compose.dev.yaml -p dest-${APP_PORT} up -d"
+    "start": "cat scripts/start.ts | esbuild --format=iife --loader=ts | node"
   },
   "dependencies": {
     "@dest-toolkit/grpc-client": "workspace:^",
