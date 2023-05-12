@@ -1,3 +1,4 @@
+import assert from 'assert';
 import {
   deleteActualityByHttp,
   deleteActualityByRpc,
@@ -42,77 +43,78 @@ import {
   createType,
 } from './service';
 
-const config = {
-  actions: [
-    'save',
-    'remove',
-    'read',
-    'write',
-    'root',
-    'introspect',
-  ] as ClientAction[],
-  types: ['sqlite'] as ClientType[],
-  secret: '',
-  server: {
-    3003: 'http',
-    3004: 'rpc',
-  } as Record<number, 'http' | 'rpc'>,
-};
-
-for (const action of config.actions) {
+const actions: ClientAction[] = [
+  'save',
+  'remove',
+  'read',
+  'write',
+  'root',
+  'introspect',
+];
+for (const action of actions) {
   const key = ActionEnum[action.toUpperCase() as Uppercase<ClientAction>];
   key && createAction(key, action);
   key && createEnum(action, key);
 }
 
-for (const type of config.types) {
+const types: ClientType[] = ['mariadb', 'sqlite'];
+for (const type of types) {
   const key = TypeEnum[type.toUpperCase() as Uppercase<ClientType>];
   key && createType(key, type);
 }
 
-createSecret(config.secret);
+const secret = process.env.APP_SECRET || '';
+createSecret(secret);
 
-for (const [port, call] of Object.entries(config.server)) {
-  if (call === 'http') {
-    await createServer(
-      [
-        deleteActualityByHttp,
-        deleteClientByHttp,
-        deleteContextByHttp,
-        deleteExpectationByHttp,
-        getActualityByHttp,
-        getClientByHttp,
-        getContextByHttp,
-        getExpectationByHttp,
-        postActualityByHttp,
-        postAssertionByHttp,
-        postClientByHttp,
-        postContextByHttp,
-        postExpectationByHttp,
-        putContextByHttp,
-      ],
-      Number(port),
-    );
-  }
-  if (call === 'rpc') {
-    await createServer(
-      [
-        deleteActualityByRpc,
-        deleteClientByRpc,
-        deleteContextByRpc,
-        deleteExpectationByRpc,
-        getActualityByRpc,
-        postAssertionByRpc,
-        getClientByRpc,
-        getContextByRpc,
-        getExpectationByRpc,
-        postActualityByRpc,
-        postClientByRpc,
-        postContextByRpc,
-        postExpectationByRpc,
-        putContextByRpc,
-      ],
-      Number(port),
-    );
-  }
-}
+const call = process.env.APP_CALL || 'http';
+const port = Number(process.env.APP_PORT);
+assert(call === 'http' || call === 'rpc', 'Invalid call');
+assert(Number.isInteger(port) && port > 0 && port < 65536, 'Invalid port');
+const server =
+  call === 'http'
+    ? await createServer(
+        [
+          deleteActualityByHttp,
+          deleteClientByHttp,
+          deleteContextByHttp,
+          deleteExpectationByHttp,
+          getActualityByHttp,
+          getClientByHttp,
+          getContextByHttp,
+          getExpectationByHttp,
+          postActualityByHttp,
+          postAssertionByHttp,
+          postClientByHttp,
+          postContextByHttp,
+          postExpectationByHttp,
+          putContextByHttp,
+        ],
+        Number(port),
+      )
+    : call === 'rpc'
+    ? await createServer(
+        [
+          deleteActualityByRpc,
+          deleteClientByRpc,
+          deleteContextByRpc,
+          deleteExpectationByRpc,
+          getActualityByRpc,
+          postAssertionByRpc,
+          getClientByRpc,
+          getContextByRpc,
+          getExpectationByRpc,
+          postActualityByRpc,
+          postClientByRpc,
+          postContextByRpc,
+          postExpectationByRpc,
+          putContextByRpc,
+        ],
+        Number(port),
+      )
+    : null;
+const shutdown = async () => {
+  await server?.close();
+  process.exit(0);
+};
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
