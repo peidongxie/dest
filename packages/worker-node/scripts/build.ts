@@ -28,7 +28,7 @@ const tag = 'peidongxie/dest-worker-node';
 const path = '../../';
 
 (async () => {
-  await createChildProcess('docker', ['rmi', tag], true)[1];
+  await createChildProcess('docker', ['rmi', '-f', tag], true)[1];
   await createChildProcess('docker', [
     'build',
     '--build-arg',
