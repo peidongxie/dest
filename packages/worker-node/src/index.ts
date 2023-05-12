@@ -53,7 +53,7 @@ for (const level of levels) {
   key && createLevel(key, level);
 }
 
-const types: AdapterType[] = ['sqlite'];
+const types: AdapterType[] = ['mariadb', 'sqlite'];
 for (const type of types) {
   const key = TypeEnum[type.toUpperCase() as Uppercase<AdapterType>];
   key && createType(key, type);
@@ -67,33 +67,41 @@ const call = process.env.APP_CALL || 'http';
 const port = Number(process.env.APP_PORT);
 assert(call === 'http' || call === 'rpc', 'Invalid call');
 assert(Number.isInteger(port) && port > 0 && port < 65536, 'Invalid port');
-if (call === 'http') {
-  await createServer(
-    [
-      deleteAgentByHttp,
-      deleteDatabaseByHttp,
-      getAgentByHttp,
-      getDatabaseByHttp,
-      getHierarchyByHttp,
-      postAgentByHttp,
-      postDatabaseByHttp,
-      postQueryByHttp,
-    ],
-    port,
-  );
-}
-if (call === 'rpc') {
-  await createServer(
-    [
-      deleteAgentByRpc,
-      deleteDatabaseByRpc,
-      getAgentByRpc,
-      getDatabaseByRpc,
-      getHierarchyByRpc,
-      postAgentByRpc,
-      postDatabaseByRpc,
-      postQueryByRpc,
-    ],
-    port,
-  );
-}
+const server =
+  call === 'http'
+    ? await createServer(
+        [
+          deleteAgentByHttp,
+          deleteDatabaseByHttp,
+          getAgentByHttp,
+          getDatabaseByHttp,
+          getHierarchyByHttp,
+          postAgentByHttp,
+          postDatabaseByHttp,
+          postQueryByHttp,
+        ],
+        port,
+        '::',
+      )
+    : call === 'rpc'
+    ? await createServer(
+        [
+          deleteAgentByRpc,
+          deleteDatabaseByRpc,
+          getAgentByRpc,
+          getDatabaseByRpc,
+          getHierarchyByRpc,
+          postAgentByRpc,
+          postDatabaseByRpc,
+          postQueryByRpc,
+        ],
+        port,
+        '::',
+      )
+    : null;
+const shutdown = async () => {
+  await server?.close();
+  process.exit(0);
+};
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);

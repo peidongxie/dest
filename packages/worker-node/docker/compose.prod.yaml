@@ -4,8 +4,10 @@ networks:
   bridge_network:
     name: dest_${APP_PORT}
 services:
-  worker:
-    container_name: dest_${APP_PORT}_worker
+  app:
+    container_name: dest_${APP_PORT}_app
+    depends_on:
+      - mariadb
     environment:
       APP_CALL: ${APP_CALL}
       APP_PORT: ${APP_PORT}
