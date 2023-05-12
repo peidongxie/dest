@@ -1,4 +1,4 @@
-import { readdir, rm } from 'fs/promises';
+import { mkdir, readdir, rm } from 'fs/promises';
 import { join } from 'path';
 import sqlite3 from 'sqlite3';
 import { DataSource, EntitySchema } from 'typeorm';
@@ -83,6 +83,7 @@ class Sqlite implements Adapter {
 
   public async postCreate() {
     if (this.name) return;
+    await mkdir(dir, { recursive: true });
     for (const file of await readdir(dir)) {
       await rm(join(dir, file), { force: true });
     }
