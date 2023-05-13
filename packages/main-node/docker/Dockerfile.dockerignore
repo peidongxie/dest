@@ -1,0 +1,7 @@
+**/*.d.ts
+**/*.js
+**/dist
+**/docker
+**/node_modules
+**/tsconfig.tsbuildinfo
+.git
