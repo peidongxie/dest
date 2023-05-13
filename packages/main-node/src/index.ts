@@ -89,7 +89,8 @@ const server =
           postExpectationByHttp,
           putContextByHttp,
         ],
-        Number(port),
+        port,
+        '::',
       )
     : call === 'rpc'
     ? await createServer(
@@ -109,7 +110,8 @@ const server =
           postExpectationByRpc,
           putContextByRpc,
         ],
-        Number(port),
+        port,
+        '::',
       )
     : null;
 const shutdown = async () => {
