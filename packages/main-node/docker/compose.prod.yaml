@@ -1,0 +1,17 @@
+version: '3'
+
+networks:
+  bridge_network:
+    name: dest_${APP_PORT}
+services:
+  app:
+    container_name: dest_${APP_PORT}_app
+    environment:
+      APP_CALL: ${APP_CALL}
+      APP_PORT: ${APP_PORT}
+      APP_SECRET: ${APP_SECRET}
+    image: peidongxie/dest-main-node
+    networks:
+      - bridge_network
+    ports:
+      - ${APP_PORT}:${APP_PORT}

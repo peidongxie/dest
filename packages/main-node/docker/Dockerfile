@@ -8,7 +8,7 @@ RUN pnpm fetch --registry=${NPM_REGISTRY}
 COPY . .
 RUN pnpm i --offline -r --registry=${NPM_REGISTRY}
 RUN pnpm -F @dest-toolkit/grpc-* -F @dest-toolkit/http-* build
-RUN pnpm -F @dest-toolkit/worker-node bundle:prod
+RUN pnpm -F @dest-toolkit/main-node bundle:prod
 EXPOSE ${APP_PORT}
 ENV NODE_ENV=production
-CMD ["node", "packages/worker-node/dist/index.js"]
+CMD ["node", "packages/main-node/dist/index.js"]
