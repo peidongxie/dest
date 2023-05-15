@@ -15,3 +15,4 @@ services:
       - bridge_network
     ports:
       - ${APP_PORT}:${APP_PORT}
+    restart: always

@@ -17,15 +17,27 @@ services:
       - bridge_network
     ports:
       - ${APP_PORT}:${APP_PORT}
+    restart: always
     volumes:
-      - ./${APP_PORT}/sqlite:/usr/src/app/packages/worker-node/docker/${APP_PORT}/sqlite
+      - ./${APP_PORT}/sqlite:/usr/src/app/packages/worker-node/docker/${APP_PORT}/sqlite  
   mariadb:
     container_name: dest_${APP_PORT}_mariadb
     environment:
-      MARIADB_ROOT_PASSWORD: dest-toolkit
+      MARIADB_ROOT_PASSWORD: dest_${APP_PORT}_mariadb
     image: mariadb:latest
     networks:
       - bridge_network
     restart: always
     volumes:
       - ./${APP_PORT}/mariadb:/var/lib/mysql
+  mssql:
+    container_name: dest_${APP_PORT}_mssql
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: dest_${APP_PORT}_mssql
+    image: mcr.microsoft.com/mssql/server:latest
+    networks:
+      - bridge_network
+    restart: always
+    volumes:
+      - ./${APP_PORT}/mssql:/var/opt/mssql
