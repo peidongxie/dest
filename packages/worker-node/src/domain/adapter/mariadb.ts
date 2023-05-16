@@ -3,6 +3,7 @@ import { type Adapter } from './type';
 
 const isProd = process.env.NODE_ENV === 'production';
 const host = isProd ? 'mariadb' : 'localhost';
+const password = `dest_${Number(process.env.APP_PORT)}_mariadb`;
 
 const readPrivileges = ['SELECT', 'SHOW DATABASES', 'SHOW VIEW'];
 const writePrivileges = [
@@ -45,7 +46,7 @@ class Mariadb implements Adapter {
         port: 3306,
         database: name,
         username: 'read',
-        password: 'dest-toolkit',
+        password,
       });
       this.writable = new DataSource({
         type: 'mariadb',
@@ -53,7 +54,7 @@ class Mariadb implements Adapter {
         port: 3306,
         database: name,
         username: 'write',
-        password: 'dest-toolkit',
+        password,
         entities: entities || [],
         synchronize: true,
       });
@@ -65,7 +66,7 @@ class Mariadb implements Adapter {
           host,
           port: 3306,
           username: 'root',
-          password: 'dest-toolkit',
+          password,
         });
       this.readable = Mariadb.root;
       this.writable = Mariadb.root;
@@ -113,10 +114,10 @@ class Mariadb implements Adapter {
     await Mariadb.root.query(`DROP USER IF EXISTS 'read'@'%'`);
     await Mariadb.root.query(`DROP USER IF EXISTS 'write'@'%'`);
     await Mariadb.root.query(
-      `CREATE USER IF NOT EXISTS 'read'@'%' IDENTIFIED BY 'dest-toolkit'`,
+      `CREATE USER IF NOT EXISTS 'read'@'%' IDENTIFIED BY '${password}'`,
     );
     await Mariadb.root.query(
-      `CREATE USER IF NOT EXISTS 'write'@'%' IDENTIFIED BY 'dest-toolkit'`,
+      `CREATE USER IF NOT EXISTS 'write'@'%' IDENTIFIED BY '${password}'`,
     );
     await Mariadb.root.query(
       `GRANT ${readPrivileges.join(', ')} ON *.* TO 'read'@'%'`,

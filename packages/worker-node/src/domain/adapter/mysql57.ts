@@ -3,6 +3,7 @@ import { type Adapter } from './type';
 
 const isProd = process.env.NODE_ENV === 'production';
 const host = isProd ? 'mysql57' : 'localhost';
+const password = `dest_${Number(process.env.APP_PORT)}_mysql57`;
 
 const readPrivileges = ['SELECT', 'SHOW DATABASES', 'SHOW VIEW'];
 const writePrivileges = [
@@ -45,7 +46,7 @@ class Mysql57 implements Adapter {
         port: 3307,
         database: name,
         username: 'read',
-        password: 'dest-toolkit',
+        password,
       });
       this.writable = new DataSource({
         type: 'mysql',
@@ -53,7 +54,7 @@ class Mysql57 implements Adapter {
         port: 3307,
         database: name,
         username: 'write',
-        password: 'dest-toolkit',
+        password,
         entities: entities || [],
         synchronize: true,
       });
@@ -65,7 +66,7 @@ class Mysql57 implements Adapter {
           host,
           port: 3307,
           username: 'root',
-          password: 'dest-toolkit',
+          password,
         });
       this.readable = Mysql57.root;
       this.writable = Mysql57.root;
@@ -113,10 +114,10 @@ class Mysql57 implements Adapter {
     await Mysql57.root.query(`DROP USER IF EXISTS 'read'@'%'`);
     await Mysql57.root.query(`DROP USER IF EXISTS 'write'@'%'`);
     await Mysql57.root.query(
-      `CREATE USER IF NOT EXISTS 'read'@'%' IDENTIFIED BY 'dest-toolkit'`,
+      `CREATE USER IF NOT EXISTS 'read'@'%' IDENTIFIED BY '${password}'`,
     );
     await Mysql57.root.query(
-      `CREATE USER IF NOT EXISTS 'write'@'%' IDENTIFIED BY 'dest-toolkit'`,
+      `CREATE USER IF NOT EXISTS 'write'@'%' IDENTIFIED BY '${password}'`,
     );
     await Mysql57.root.query(
       `GRANT ${readPrivileges.join(', ')} ON *.* TO 'read'@'%'`,
