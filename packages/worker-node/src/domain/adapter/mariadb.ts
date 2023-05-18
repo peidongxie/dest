@@ -111,19 +111,19 @@ class Mariadb implements Adapter {
     for (const name of names) {
       await Mariadb.root.query(`DROP DATABASE IF EXISTS \`${name}\``);
     }
-    await Mariadb.root.query(`DROP USER IF EXISTS 'read'@'%'`);
-    await Mariadb.root.query(`DROP USER IF EXISTS 'write'@'%'`);
+    await Mariadb.root.query(`DROP USER IF EXISTS 'read'`);
+    await Mariadb.root.query(`DROP USER IF EXISTS 'write'`);
     await Mariadb.root.query(
-      `CREATE USER IF NOT EXISTS 'read'@'%' IDENTIFIED BY '${password}'`,
+      `CREATE USER IF NOT EXISTS 'read' IDENTIFIED BY '${password}'`,
     );
     await Mariadb.root.query(
-      `CREATE USER IF NOT EXISTS 'write'@'%' IDENTIFIED BY '${password}'`,
+      `CREATE USER IF NOT EXISTS 'write' IDENTIFIED BY '${password}'`,
     );
     await Mariadb.root.query(
-      `GRANT ${readPrivileges.join(', ')} ON *.* TO 'read'@'%'`,
+      `GRANT ${readPrivileges.join(', ')} ON *.* TO 'read'`,
     );
     await Mariadb.root.query(
-      `GRANT ${writePrivileges.join(', ')} ON *.* TO 'write'@'%'`,
+      `GRANT ${writePrivileges.join(', ')} ON *.* TO 'write'`,
     );
     await Mariadb.root.query(`FLUSH PRIVILEGES`);
   }
