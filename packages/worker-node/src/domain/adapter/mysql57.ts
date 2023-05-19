@@ -75,7 +75,7 @@ class Mysql57 implements Adapter {
 
   public async fetchRows(table: string) {
     if (!this.name) return null;
-    return this.readable.query(`SELECT * FROM ${table}`);
+    return this.readable.query(`SELECT * FROM \`${table}\``);
   }
 
   public async fetchTables() {
@@ -111,19 +111,19 @@ class Mysql57 implements Adapter {
     for (const name of names) {
       await Mysql57.root.query(`DROP DATABASE IF EXISTS \`${name}\``);
     }
-    await Mysql57.root.query(`DROP USER IF EXISTS 'read'`);
-    await Mysql57.root.query(`DROP USER IF EXISTS 'write'`);
+    await Mysql57.root.query(`DROP USER IF EXISTS \`read\``);
+    await Mysql57.root.query(`DROP USER IF EXISTS \`write\``);
     await Mysql57.root.query(
-      `CREATE USER IF NOT EXISTS 'read' IDENTIFIED BY '${password}'`,
+      `CREATE USER IF NOT EXISTS \`read\` IDENTIFIED BY '${password}'`,
     );
     await Mysql57.root.query(
-      `CREATE USER IF NOT EXISTS 'write' IDENTIFIED BY '${password}'`,
+      `CREATE USER IF NOT EXISTS \`write\` IDENTIFIED BY '${password}'`,
     );
     await Mysql57.root.query(
-      `GRANT ${readPrivileges.join(', ')} ON *.* TO 'read'`,
+      `GRANT ${readPrivileges.join(', ')} ON *.* TO \`read\``,
     );
     await Mysql57.root.query(
-      `GRANT ${writePrivileges.join(', ')} ON *.* TO 'write'`,
+      `GRANT ${writePrivileges.join(', ')} ON *.* TO \`write\``,
     );
     await Mysql57.root.query(`FLUSH PRIVILEGES`);
   }
