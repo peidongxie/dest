@@ -57,7 +57,7 @@ for (const action of actions) {
   key && createEnum(action, key);
 }
 
-const types: ClientType[] = ['mariadb', 'sqlite'];
+const types: ClientType[] = ['mariadb', 'mssql', 'sqlite'];
 for (const type of types) {
   const key = TypeEnum[type.toUpperCase() as Uppercase<ClientType>];
   key && createType(key, type);

@@ -42,6 +42,7 @@
   "dependencies": {
     "@dest-toolkit/grpc-server": "workspace:^",
     "@dest-toolkit/http-server": "workspace:^",
+    "mssql": "^9.1.1",
     "mysql2": "^2.3.3",
     "protobufjs": "^7.2.3",
     "sqlite3": "^5.1.6",

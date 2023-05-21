@@ -22,6 +22,7 @@ enum ActionEnum {
 
 enum TypeEnum {
   DEFAULT_TYPE = 0;
+  MSSQL = 1433;
   SQLITE = 2049;
   MARIADB = 3306;
   MYSQL8 = 3307;
