@@ -5,6 +5,7 @@ export const protobufPackage = 'dest';
 
 export enum TypeEnum {
   DEFAULT_TYPE = 0,
+  MSSQL = 1433,
   SQLITE = 2049,
   MARIADB = 3306,
   MYSQL8 = 3307,
@@ -17,6 +18,9 @@ export function typeEnumFromJSON(object: any): TypeEnum {
     case 0:
     case 'DEFAULT_TYPE':
       return TypeEnum.DEFAULT_TYPE;
+    case 1433:
+    case 'MSSQL':
+      return TypeEnum.MSSQL;
     case 2049:
     case 'SQLITE':
       return TypeEnum.SQLITE;
@@ -40,6 +44,8 @@ export function typeEnumToJSON(object: TypeEnum): string {
   switch (object) {
     case TypeEnum.DEFAULT_TYPE:
       return 'DEFAULT_TYPE';
+    case TypeEnum.MSSQL:
+      return 'MSSQL';
     case TypeEnum.SQLITE:
       return 'SQLITE';
     case TypeEnum.MARIADB:

@@ -53,7 +53,7 @@ for (const level of levels) {
   key && createLevel(key, level);
 }
 
-const types: AdapterType[] = ['mariadb', 'sqlite'];
+const types: AdapterType[] = ['mariadb', 'mssql', 'sqlite'];
 for (const type of types) {
   const key = TypeEnum[type.toUpperCase() as Uppercase<AdapterType>];
   key && createType(key, type);
