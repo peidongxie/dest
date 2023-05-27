@@ -114,10 +114,10 @@ class Mariadb implements Adapter {
     await Mariadb.root.query(`DROP USER IF EXISTS \`read\``);
     await Mariadb.root.query(`DROP USER IF EXISTS \`write\``);
     await Mariadb.root.query(
-      `CREATE USER IF NOT EXISTS \`read\` IDENTIFIED BY '${password}'`,
+      `CREATE USER \`read\` IDENTIFIED BY '${password}'`,
     );
     await Mariadb.root.query(
-      `CREATE USER IF NOT EXISTS \`write\` IDENTIFIED BY '${password}'`,
+      `CREATE USER \`write\` IDENTIFIED BY '${password}'`,
     );
     await Mariadb.root.query(
       `GRANT ${readPrivileges.join(', ')} ON *.* TO \`read\``,

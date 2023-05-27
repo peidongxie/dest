@@ -113,11 +113,9 @@ class Mysql8 implements Adapter {
     }
     await Mysql8.root.query(`DROP USER IF EXISTS \`read\``);
     await Mysql8.root.query(`DROP USER IF EXISTS \`write\``);
+    await Mysql8.root.query(`CREATE USER \`read\` IDENTIFIED BY '${password}'`);
     await Mysql8.root.query(
-      `CREATE USER IF NOT EXISTS \`read\` IDENTIFIED BY '${password}'`,
-    );
-    await Mysql8.root.query(
-      `CREATE USER IF NOT EXISTS \`write\` IDENTIFIED BY '${password}'`,
+      `CREATE USER \`write\` IDENTIFIED BY '${password}'`,
     );
     await Mysql8.root.query(
       `GRANT ${readPrivileges.join(', ')} ON *.* TO \`read\``,
