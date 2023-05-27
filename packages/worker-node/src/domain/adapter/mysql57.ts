@@ -114,10 +114,10 @@ class Mysql57 implements Adapter {
     await Mysql57.root.query(`DROP USER IF EXISTS \`read\``);
     await Mysql57.root.query(`DROP USER IF EXISTS \`write\``);
     await Mysql57.root.query(
-      `CREATE USER IF NOT EXISTS \`read\` IDENTIFIED BY '${password}'`,
+      `CREATE USER \`read\` IDENTIFIED BY '${password}'`,
     );
     await Mysql57.root.query(
-      `CREATE USER IF NOT EXISTS \`write\` IDENTIFIED BY '${password}'`,
+      `CREATE USER \`write\` IDENTIFIED BY '${password}'`,
     );
     await Mysql57.root.query(
       `GRANT ${readPrivileges.join(', ')} ON *.* TO \`read\``,
