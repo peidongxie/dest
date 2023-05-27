@@ -32,7 +32,6 @@ const getHierarchyByHttp: Route = {
     const table = req.url.searchParams.get('table') || '';
     const level = readLevel(req.url.searchParams.get('level'));
     if (
-      !type ||
       !level ||
       (!type && !name && table) ||
       (!type && name && !table) ||
@@ -98,7 +97,6 @@ const getHierarchyByRpc: Plugin<HierarchyDefinition> = {
       const table = req.table;
       const level = readLevel(req.level);
       if (
-        !type ||
         !level ||
         (!type && !name && table) ||
         (!type && name && !table) ||
