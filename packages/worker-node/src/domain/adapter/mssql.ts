@@ -8,9 +8,7 @@ const password = `dest_${Number(process.env.APP_PORT)}_mssql`;
 const readPrivileges = ['SELECT', 'VIEW DEFINITION'];
 const writePrivileges = [
   'ALTER',
-  'CONTROL',
   'DELETE',
-  'EXECUTE',
   'INSERT',
   'REFERENCES',
   'SELECT',

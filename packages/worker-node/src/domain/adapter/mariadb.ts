@@ -15,7 +15,6 @@ const writePrivileges = [
   'DROP',
   'INDEX',
   'INSERT',
-  'LOCK TABLES',
   'REFERENCES',
   'SELECT',
   'SHOW DATABASES',
