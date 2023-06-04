@@ -58,5 +58,5 @@
     "sort-package-json": "^2.4.1",
     "typescript": "^5.0.4"
   },
-  "packageManager": "pnpm@8.5.0"
+  "packageManager": "pnpm@8.6.0"
 }
