@@ -1,7 +1,7 @@
 FROM node:lts
 ARG NPM_REGISTRY
 WORKDIR /usr/src/app
-RUN corepack prepare pnpm@8.5.0
+RUN corepack prepare pnpm@8.6.0
 RUN corepack enable pnpm
 COPY pnpm-lock.yaml ./
 RUN pnpm fetch --registry=${NPM_REGISTRY}
